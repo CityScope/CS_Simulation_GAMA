@@ -22,12 +22,12 @@ experiment CityScopeVolpeDemo type: gui {
 			species people aspect: scale;
 			graphics "text" 
 			{
-               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: { 5700, 6200};
+               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: { 6000, 6100};
                draw imageRaster size:40#px at: { 7000, 6000};
             }
 		}
 			
-		display CityScopeTable  type:opengl background:#black fullscreen:2 rotate:180
+		display CityScopeTable  type:opengl background:#black fullscreen:1 rotate:180
 		camera_pos: {4463.6173,3032.9552,4033.5415} camera_look_pos: {4464.7186,3026.0023,0.1795} camera_up_vector: {0.1564,0.9877,0.0017}{
 			species amenity aspect: onTable ;
 			species people aspect: scaleTable;

@@ -33,7 +33,7 @@ global {
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
-	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
+	bool dynamicGrid <-false parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
 	
@@ -280,7 +280,7 @@ species amenity schedules:[]{
 
 species table{
 	aspect base {
-		draw shape empty:true border:rgb(125,125,125,75) color: rgb(125,125,125,75) ;
+		draw shape empty:true border:rgb(75,75,75) color: rgb(75,75,75) ;
 	}	
 }
 
