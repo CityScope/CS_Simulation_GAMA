@@ -15,8 +15,8 @@ global {
 	float angle <--9.74;
 	
 	// MOBILE DATA //
-	int start_date;
-	int end_date;
+	int global_start_date;
+	int global_end_date;
 	float lenghtMax <-0.0;
 	file my_csv_file <- csv_file("../includes/mobility/pp.csv",",");
 	matrix data <- matrix(my_csv_file);
@@ -26,12 +26,12 @@ global {
 	  loop i from: 1 to: data.rows -1{
 	     create mobileData{
 	  	   location <- point(to_GAMA_CRS({ float(data[6,i]), float(data[7,i]) }, "EPSG:4326"));
-		   lenght<-float(data[4,i]);
+		   duration<-float(data[4,i]);
 		   init_date<-int(data[10,i]);
 		 }	
 	   }
-	   start_date<-min(mobileData collect int(each["init_date"]));
-	   end_date<-max(mobileData collect int(each["init_date"]));	   
+	   global_start_date<-min(mobileData collect int(each["init_date"]));
+	   global_end_date<-max(mobileData collect int(each["init_date"]));		   
 	}
 }
 
@@ -42,13 +42,28 @@ species road  schedules: []{
 	}
 }
 
-species mobileData schedules:[]{
+species mobileData {
 	rgb color <- #red;
-	float lenght;
+	float duration;
 	int init_date;
+	bool visible <-false;
+	
+	reflex update{
+		if(global_start_date + (cycle*1000) > init_date and global_start_date + (cycle*1000) < init_date + duration){
+			visible <-true;
+		}else{
+			visible <-false;
+		}
+	}
 	
 	aspect base {
-		draw cone3D(5,lenght/100) color:#white depth:lenght/100;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
+		draw cone3D(5,duration/100) color:#white depth:duration/100;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
+	}
+	
+	aspect timelapse{
+		if (visible){
+		  draw circle(20) color:#white;	
+		}
 	}
 }
 
@@ -57,8 +72,16 @@ experiment CityScopeDev type: gui {
 	output {		
 		display CityScope  type:opengl background:#black {
 			species road aspect: base refresh:false;
-			species mobileData aspect:base;
+			species mobileData aspect:timelapse;
+			
 		}
+		
+		display Displaychart{
+			chart "Number of call" type: series  {
+				data "number_of_call" value: length(mobileData where (each.visible=true)) color: #blue ;
+		    }
+		}
+		
 	}
 }
 
