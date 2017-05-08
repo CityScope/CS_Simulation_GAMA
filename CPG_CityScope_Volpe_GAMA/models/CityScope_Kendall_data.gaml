@@ -18,16 +18,16 @@ global {
 	int global_start_date;
 	int global_end_date;
 	float lenghtMax <-0.0;
-	file my_csv_file <- csv_file("../includes/mobility/pp.csv",",");
+	file my_csv_file <- csv_file("../includes/mobility/kendall_1_08_10_2017.csv",",");
 	matrix data <- matrix(my_csv_file);
 	
 	init {
 	  create road from:roads_shapefile;
 	  loop i from: 1 to: data.rows -1{
 	     create mobileData{
-	  	   location <- point(to_GAMA_CRS({ float(data[6,i]), float(data[7,i]) }, "EPSG:4326"));
-		   duration<-float(data[4,i]);
-		   init_date<-int(data[10,i]);
+	  	   location <- point(to_GAMA_CRS({ float(data[4,i]), float(data[3,i]) }, "EPSG:4326"));
+		   duration<-float(data[1,i]);
+		   init_date<-int(data[0,i]);
 		 }	
 	   }
 	   global_start_date<-min(mobileData collect int(each["init_date"]));
@@ -52,12 +52,17 @@ species mobileData {
 		if(global_start_date + (cycle*1000) > init_date and global_start_date + (cycle*1000) < init_date + duration){
 			visible <-true;
 		}else{
-			visible <-false;
+			//visible <-false;
 		}
 	}
 	
 	aspect base {
 		draw cone3D(5,duration/100) color:#white depth:duration/100;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
+	}
+	
+	
+	aspect circle {
+		draw circle(10) color:#white;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
 	}
 	
 	aspect timelapse{
@@ -71,6 +76,12 @@ species mobileData {
 experiment CityScopeDev type: gui {	
 	output {		
 		display CityScope  type:opengl background:#black {
+			species road aspect: base refresh:false;
+			species mobileData aspect:circle;
+			
+		}
+		
+		display CityScopeTimeLapse  type:opengl background:#black {
 			species road aspect: base refresh:false;
 			species mobileData aspect:timelapse;
 			
