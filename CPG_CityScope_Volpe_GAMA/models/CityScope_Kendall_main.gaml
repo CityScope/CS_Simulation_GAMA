@@ -33,7 +33,7 @@ global {
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
-	bool dynamicGrid <-false parameter: "Update Grid:" category: "Environment";
+	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
 	
@@ -288,7 +288,7 @@ experiment CityScopeVolpe type: gui {
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScope  type:opengl background:#black {
-			species table aspect:base;
+			species table aspect:base refresh:false;
 			species road aspect: base refresh:false;
 			species amenity aspect: onScreen ;
 			species people aspect: scale;
