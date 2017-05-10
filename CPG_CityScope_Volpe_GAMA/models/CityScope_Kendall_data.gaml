@@ -40,7 +40,7 @@ global {
 	   global_start_date<-min(mobileData collect int(each["init_date"]));
 	   global_end_date<-max(mobileData collect int(each["init_date"]));	
 	}
-	reflex cluster_building {
+	reflex cluster_building when:cycle=0{
 		eps <-cycle*10;
 		list<list> instances <- mobileData collect ([each.location.x, each.location.y]);
 		//DBSCAN
@@ -142,6 +142,23 @@ experiment CityScopeDev type: gui {
 			species road aspect: base refresh:false;
 			species mobileData aspect:kmeans_aspect;
 			
+		}
+	}
+}
+
+
+experiment CityScopeVolpeDemo type: gui {	
+	float minimum_cycle_duration <- 0.02;
+	output {				
+		display CityScope  type:opengl background:#black {
+			species road aspect: base refresh:false;
+			species mobileData aspect:circle;
+		}
+			
+		display CityScopeTable  type:opengl background:#black fullscreen:1 rotate:180
+		camera_pos: {4463.6173,3032.9552,4033.5415} camera_look_pos: {4464.7186,3026.0023,0.1795} camera_up_vector: {0.1564,0.9877,0.0017}{
+			species road aspect: base refresh:false;
+			species mobileData aspect:circle;		
 		}
 	}
 }
