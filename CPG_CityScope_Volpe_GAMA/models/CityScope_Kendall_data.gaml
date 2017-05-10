@@ -18,6 +18,8 @@ global {
 	int global_start_date;
 	int global_end_date;
 	float lenghtMax <-0.0;
+	//kendall_1_08_10_2017
+	//boston_1_08_10_2017
 	file my_csv_file <- csv_file("../includes/mobility/kendall_1_08_10_2017.csv",",");
 	matrix data <- matrix(my_csv_file);
 	
@@ -67,8 +69,14 @@ species mobileData {
 	
 	aspect timelapse{
 		if (visible){
-		  draw circle(20) color:#white;	
+		  draw circle(10) color:#white;	
 		}
+	}
+	aspect timespace{
+		if (visible){
+	      draw sphere(10) color:#white at:{location.x,location.y,(init_date-global_start_date)/100};
+		}
+		  	
 	}
 }
 
@@ -87,11 +95,17 @@ experiment CityScopeDev type: gui {
 			
 		}
 		
-		display Displaychart{
+		display CityScopeTimeSpace  type:opengl background:#black {
+			species road aspect: base refresh:false;
+			species mobileData aspect:timespace;
+			
+		}
+		
+		/*display Displaychart{
 			chart "Number of call" type: series  {
 				data "number_of_call" value: length(mobileData where (each.visible=true)) color: #blue ;
 		    }
-		}
+		}*/
 		
 	}
 }
