@@ -1,5 +1,5 @@
 /**
-* Name: CityScope Kendall
+* Name: CityScope Kendall - Mobility Data Visualization
 * Author: Arnaud Grignard
 * Description: Visualization of Modbile Data in Kendall
 */
@@ -23,6 +23,11 @@ global {
 	file my_csv_file <- csv_file("../includes/mobility/kendall_1_08_10_2017.csv",",");
 	matrix data <- matrix(my_csv_file);
 	
+	//CLUSTERING
+	int k parameter: 'number of groups to create (kmeans) ' category: "Visualization" min: 1 <- 10;	
+	float eps parameter: 'the maximum radius of the neighborhood (DBscan)' category: "Visualization" min: 10.0 <- 150.0;	
+	int minPoints <- 3; //the minimum number of elements needed for a cluster (DBscan)
+	
 	init {
 	  create road from:roads_shapefile;
 	  loop i from: 1 to: data.rows -1{
@@ -33,7 +38,27 @@ global {
 		 }	
 	   }
 	   global_start_date<-min(mobileData collect int(each["init_date"]));
-	   global_end_date<-max(mobileData collect int(each["init_date"]));		   
+	   global_end_date<-max(mobileData collect int(each["init_date"]));	
+	}
+	reflex cluster_building {
+		eps <-cycle*10;
+		list<list> instances <- mobileData collect ([each.location.x, each.location.y]);
+		//DBSCAN
+		list<list<int>> clusters_dbscan <- list<list<int>>(dbscan(instances, eps,minPoints));
+       	loop cluster over: clusters_dbscan {
+			rgb col <- rnd_color(255);
+			loop i over: cluster {
+				ask mobileData[i] {color_dbscan <- col;}
+			}
+		}
+		//KMEANS
+		list<list<int>> clusters_kmeans <- list<list<int>>(kmeans(instances, k));
+		loop cluster over: clusters_kmeans {
+			rgb col <- rnd_color(255);
+			loop i over: cluster {
+				ask mobileData[i] {color_kmeans <- col;}
+			}
+		}
 	}
 }
 
@@ -78,6 +103,14 @@ species mobileData {
 		}
 		  	
 	}
+	rgb color_dbscan <- #grey;
+	rgb color_kmeans <- #grey;
+	aspect dbscan_aspect {
+		draw circle(10) color: color_dbscan;
+	}
+	aspect kmeans_aspect {
+		draw circle(10) color: color_kmeans;
+	}
 }
 
 
@@ -100,13 +133,16 @@ experiment CityScopeDev type: gui {
 			species mobileData aspect:timespace;
 			
 		}
-		
-		/*display Displaychart{
-			chart "Number of call" type: series  {
-				data "number_of_call" value: length(mobileData where (each.visible=true)) color: #blue ;
-		    }
-		}*/
-		
+		display CityScopeDBScan  type:opengl background:#black autosave:true{
+			species road aspect: base refresh:false;
+			species mobileData aspect:dbscan_aspect;
+			
+		}	
+		display CityScopeKMeans  type:opengl background:#black {
+			species road aspect: base refresh:false;
+			species mobileData aspect:kmeans_aspect;
+			
+		}
 	}
 }
 
