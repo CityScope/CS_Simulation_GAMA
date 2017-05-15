@@ -1,7 +1,7 @@
 /**
 * Name: CityScope Kendall - Mobility Data Visualization
 * Author: Arnaud Grignard
-* Description: Visualization of Modbile Data in Kendall
+* Description: Visualization of Mobile Data in Kendall
 */
 
 model CityScope_Kendall
@@ -61,14 +61,6 @@ global {
 		}
 	}
 }
-
-species road  schedules: []{
-	rgb color <- #red ;
-	aspect base {
-		draw shape color: rgb(125,125,125,75) ;
-	}
-}
-
 species mobileData {
 	rgb color <- #red;
 	float duration;
@@ -112,6 +104,14 @@ species mobileData {
 		draw circle(10) color: color_kmeans;
 	}
 }
+
+species road  schedules: []{
+	rgb color <- #red ;
+	aspect base {
+		draw shape color: rgb(125,125,125,75) ;
+	}
+}
+
 
 
 experiment CityScopeDev type: gui {	
