@@ -18,6 +18,7 @@ global {
 	int global_start_date;
 	int global_end_date;
 	float lenghtMax <-0.0;
+	list identifier;
 	//kendall_1_08_10_2017
 	//boston_1_08_10_2017
 	file my_csv_file <- csv_file("../includes/mobility/kendall_1_08_10_2017.csv",",");
@@ -40,6 +41,16 @@ global {
 	   }
 	   global_start_date<-min(mobileData collect int(each["init_date"]));
 	   global_end_date<-max(mobileData collect int(each["init_date"]));	
+	   identifier <-mobileData collect string(each["id"]);
+	   identifier <- remove_duplicates(identifier);
+	   loop i over: identifier{
+	   	 rgb c<-rnd_color(255);
+	   	 ask mobileData where (each.id=i){
+	   	 	color <-c;
+	   	 }
+	   }
+
+	   
 	}
 	reflex cluster_building when:cycle=0{
 		eps <-cycle*10;
@@ -83,17 +94,17 @@ species mobileData {
 	
 	
 	aspect circle {
-		draw circle(10) color:#white;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
+		draw circle(10) color:color;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
 	}
 	
 	aspect timelapse{
 		if (visible){
-		  draw circle(10) color:#white;	
+		  draw circle(10) color:color;	
 		}
 	}
 	aspect timespace{
 		if (visible){
-	      draw sphere(10) color:#white at:{location.x,location.y,(init_date-global_start_date)/100};
+	      draw sphere(10) color:color at:{location.x,location.y,(init_date-global_start_date)/100};
 		}
 		  	
 	}
@@ -135,7 +146,7 @@ experiment CityScopeDev type: gui {
 			species mobileData aspect:timespace;
 			
 		}
-		display CityScopeDBScan  type:opengl background:#black autosave:true{
+		display CityScopeDBScan  type:opengl background:#black {
 			species road aspect: base refresh:false;
 			species mobileData aspect:dbscan_aspect;
 			
