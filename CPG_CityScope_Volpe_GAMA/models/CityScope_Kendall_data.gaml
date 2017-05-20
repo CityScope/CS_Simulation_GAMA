@@ -35,6 +35,7 @@ global {
 	  	   location <- point(to_GAMA_CRS({ float(data[4,i]), float(data[3,i]) }, "EPSG:4326"));
 		   duration<-float(data[1,i]);
 		   init_date<-int(data[0,i]);
+		   id<-(data[2,i]);
 		 }	
 	   }
 	   global_start_date<-min(mobileData collect int(each["init_date"]));
@@ -65,6 +66,7 @@ species mobileData {
 	rgb color <- #red;
 	float duration;
 	int init_date;
+	string id;
 	bool visible <-false;
 	
 	reflex update{
