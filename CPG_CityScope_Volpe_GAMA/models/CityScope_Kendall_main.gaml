@@ -89,12 +89,9 @@ global {
 					moveOnRoad <-false;
 				}
 			}				
-		}
-		
+		}	
 	}
-	
-	
-	
+		
   action initGrid{
   		ask amenity where (each.fromGrid=true){
   			do die;
