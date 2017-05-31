@@ -35,7 +35,7 @@ global {
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
-	int refresh <- 250 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
+	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
 	
 	float step <- 10 #sec;
 	int current_hour update: (time / #hour) mod 24 ;
