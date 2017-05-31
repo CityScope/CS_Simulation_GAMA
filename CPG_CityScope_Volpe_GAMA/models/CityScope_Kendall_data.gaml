@@ -94,7 +94,7 @@ species mobileData {
 	
 	aspect timelapse{
 		if (visible){
-		  draw circle(10) color:#white;	
+		  draw circle(4) color:#white;	
 		}
 	}
 	aspect timespace{
@@ -158,7 +158,7 @@ experiment CityScopeVolpeDemo type: gui {
 		display CityScopeTable  type:opengl background:#black fullscreen:1 rotate:180
 		camera_pos: {4463.6173,3032.9552,4033.5415} camera_look_pos: {4464.7186,3026.0023,0.1795} camera_up_vector: {0.1564,0.9877,0.0017}{
 			species road aspect: base refresh:false;
-			species mobileData aspect:circle;		
+			species mobileData aspect:timelapse;		
 		}
 	}
 }
