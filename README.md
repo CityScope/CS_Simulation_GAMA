@@ -1,5 +1,5 @@
 # CPG_CityScope_Volpe
-Repository for the CityScope project of the Volpe Cite. 
+Agent based model of the Kendal CityScope using GAMA Platform 
 
 ## CPG_CityScope_Volpe_GAMA
 This is the first version of the actual ABM model running on the
