@@ -8,11 +8,11 @@ model CityScope_Kendall
 
 global {
 	// GIS FILE //	
-	file bound_shapefile <- file("../includes/Kendall/Bounds.shp");
-	file buildings_shapefile <- file("../includes/Kendall/Buildings.shp");
-	file roads_shapefile <- file("../includes/Kendall/Roads.shp");
-	file amenities_shapefile <- file("../includes/Kendall/Amenities.shp");
-	file table_bound_shapefile <- file("../includes/Kendall/table_bounds.shp");
+	file bound_shapefile <- file("../includes/Bounds.shp");
+	file buildings_shapefile <- file("../includes/Buildings.shp");
+	file roads_shapefile <- file("../includes/Roads.shp");
+	file amenities_shapefile <- file("../includes/Amenities.shp");
+	file table_bound_shapefile <- file("../includes/table_bounds.shp");
 	file imageRaster <- file('../includes/images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	graph road_graph;
@@ -35,7 +35,7 @@ global {
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
-	int refresh <- 250 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
+	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
 	
 	float step <- 10 #sec;
 	int current_hour update: (time / #hour) mod 24 ;
@@ -89,12 +89,9 @@ global {
 					moveOnRoad <-false;
 				}
 			}				
-		}
-		
+		}	
 	}
-	
-	
-	
+		
   action initGrid{
   		ask amenity where (each.fromGrid=true){
   			do die;
@@ -240,7 +237,7 @@ species people skills:[moving]{
 	}
 	
 	aspect scaleTable{
-		if(toggle1 > 4  ){
+		if(toggle1 > 4 ){
 			draw circle(4) color: color_map[scale];
 		}   
 	}

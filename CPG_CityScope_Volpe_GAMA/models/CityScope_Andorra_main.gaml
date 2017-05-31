@@ -4,15 +4,15 @@
 * Description: Agent-based model running on the CityScope Kendall
 */
 
-model CityScope_Kendall
+model CityScope_Andorra
 
 global {
 	// GIS FILE //	
-	file bound_shapefile <- file("../includes/Kendall/Bounds.shp");
-	file buildings_shapefile <- file("../includes/Kendall/Buildings.shp");
-	file roads_shapefile <- file("../includes/Kendall/Roads.shp");
-	file amenities_shapefile <- file("../includes/Kendall/Amenities.shp");
-	file table_bound_shapefile <- file("../includes/Kendall/table_bounds.shp");
+	file bound_shapefile <- file("../includes/Andorra/Bounds.shp");
+	file buildings_shapefile <- file("../includes/Andorra/Buildings.shp");
+	file roads_shapefile <- file("../includes/Andorra/Roads.shp");
+	file amenities_shapefile <- file("../includes/Andorra/Amenities.shp");
+	file table_bound_shapefile <- file("../includes/Andorra/table_bounds.shp");
 	file imageRaster <- file('../includes/images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	graph road_graph;
@@ -32,10 +32,10 @@ global {
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
-	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
+	bool onlineGrid <-false parameter: "Online Grid:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
-	int refresh <- 250 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
+	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
 	
 	float step <- 10 #sec;
 	int current_hour update: (time / #hour) mod 24 ;
@@ -70,7 +70,7 @@ global {
 		do initGrid;
 
 		ask building where  (each.usage="R"){
-			create people number: shape.area/2000 {
+			create people number:flip(0.1) ? 1:0{//} shape.area/2000 {
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -85,16 +85,13 @@ global {
 				eating_place <- one_of(amenity where (each.scale=scale )) ;
 				dining_place <- one_of(amenity where (each.scale=scale )) ;
 				objective <- "resting"; 
-				if (flip(0.1)){
+				/*if (flip(0.1)){
 					moveOnRoad <-false;
-				}
+				}*/
 			}				
-		}
-		
+		}	
 	}
-	
-	
-	
+		
   action initGrid{
   		ask amenity where (each.fromGrid=true){
   			do die;
@@ -221,7 +218,7 @@ species people skills:[moving]{
 	 
 	reflex move {
 	    if(moveOnRoad = true){
-	      do goto target: the_target on: road_graph ; 
+	      do goto target: the_target on: road_graph recompute_path:false; 
 	    }else{
 	      do goto target: the_target;
 	    }
@@ -236,11 +233,11 @@ species people skills:[moving]{
 	}
 		
 	aspect scale{
-      draw circle(14) color: color_map[scale];
+      draw circle(6) color: color_map[scale];
 	}
 	
 	aspect scaleTable{
-		if(toggle1 > 4  ){
+		if(toggle1 > 4 ){
 			draw circle(4) color: color_map[scale];
 		}   
 	}
@@ -284,18 +281,19 @@ species table{
 	}	
 }
 
-experiment CityScopeVolpe type: gui {	
+experiment CityScopeAndorra type: gui {	
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScope  type:opengl background:#black {
 			species table aspect:base refresh:false;
 			species road aspect: base refresh:false;
+			species building aspect:usage refresh:false;
 			species amenity aspect: onScreen ;
 			species people aspect: scale;
 			graphics "text" 
 			{
-               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: { 5700, 6200};
-               draw imageRaster size:40#px at: { 7000, 6000};
+               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: { 4000, 2500};
+               draw imageRaster size:40#px at: { 4000, 2000};
             }
 		}			
 	}
