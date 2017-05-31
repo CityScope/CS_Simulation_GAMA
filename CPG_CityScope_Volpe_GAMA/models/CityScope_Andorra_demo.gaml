@@ -1,10 +1,10 @@
 /**
 * Name: CityScope Kendall
 * Author: Arnaud Grignard
-* Description: Agent-based model running on the CityScope Kendall
+* Description: Agent-based model running on the CityScope Andorra
 */
 
-model CityScope_Kendall_Volpe_Demo
+model CityScope_Andorra_Demo
 
 import "CityScope_main.gaml"
 
@@ -12,8 +12,8 @@ global {
 
 }
 
-experiment CityScopeVolpeDemo type: gui {
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"kendall" among:["kendall", "Andorra"];	
+experiment CityScopeAndorraDemo type: gui {
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"Andorra" among:["kendall", "Andorra"];	
 	float minimum_cycle_duration <- 0.02;
 	output {				
 		display CityScope  type:opengl background:#black {
