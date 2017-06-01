@@ -87,9 +87,9 @@ global {
 				eating_place <- one_of(amenity where (each.scale=scale )) ;
 				dining_place <- one_of(amenity where (each.scale=scale )) ;
 				objective <- "resting"; 
-				if (flip(0.1)){
+				/*if (flip(0.1)){
 					moveOnRoad <-false;
-				}
+				}*/
 			}				
 		}		
 	}
@@ -238,7 +238,13 @@ species people skills:[moving]{
 	}
 		
 	aspect scale{
-      draw circle(14) color: color_map[scale];
+      
+      if(objective = "working"){
+      	draw square(14) color: color_map[scale];
+      }
+      else{
+      	draw circle(14) color: color_map[scale];
+      }
 	}
 	
 	aspect scaleTable{

@@ -23,8 +23,8 @@ experiment CityScopeVolpeDemo type: gui {
 			species people aspect: scale;
 			graphics "text" 
 			{
-               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: { 6000, 6100};
-               draw imageRaster size:40#px at: { 7000, 6000};
+               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
+               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
             }
 		}
 			
