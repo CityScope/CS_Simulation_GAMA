@@ -52,13 +52,30 @@ global {
 	int max_work_end <- 22; 
 	float min_speed <- 4 #km / #h;
 	float max_speed <- 6 #km / #h; 
-	float angle <--9.74;
+	float angle;
+	point center;
+	float brickSize;
+	string cityIOUrl;
 	
 	init {
 		write "cityScopeCity" + cityScopeCity + " w:" + world.shape.width + " h:" + world.shape.height;
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))];
 		create road from: roads_shapefile ;
-		road_graph <- as_edge_graph(road);
+		if(cityScopeCity= "kendall"){
+			angle <- -9.74;
+			center <-{3305,2075};
+			brickSize <- 70.0;
+			cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix_volpe";
+			
+		}
+		if(cityScopeCity= "Andorra"){
+			angle <-3.0;
+			center <-{2700,850};
+			brickSize <- 37.5;
+			cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix";
+		}
+		
+	    road_graph <- as_edge_graph(road);
 		create table from: table_bound_shapefile;
         
         if(realAmenity = true){
@@ -99,36 +116,34 @@ global {
   			do die;
   		}
 		if(onlineGrid = true){
-		  cityMatrixData <- json_file("https://cityio.media.mit.edu/table/citymatrix_volpe").contents;
+		  cityMatrixData <- json_file(cityIOUrl).contents;
 	    }
 	    else{
 	      cityMatrixData <- json_file("../includes/cityIO_Kendall.json").contents;
 	    }	
 		cityMatrixCell <- cityMatrixData["grid"];
 		density_array <- cityMatrixData["objects"]["density"];
-		toggle1 <- int(cityMatrixData["objects"]["toggle1"]);
-		if (cityScopeCity ="kendall"){
-			point center <-{3305,2075};
-			loop l over: cityMatrixCell { 
-			      create amenity {
-			      	  id <-int(l["type"]);
-			      	  x<-l["x"];
-			      	  y<-l["y"];
-					  location <- {	center.x + (13-l["x"])*world.shape.width*0.00942,	center.y+ l["y"]*world.shape.height*0.0113};  
-					  location<- {(location.x * cos(angle) + location.y * sin(angle)),-location.x * sin(angle) + location.y * cos(angle)};
-					  shape <- square(60) at_location location;	
-					  size<-10+rnd(10);
-					  fromGrid<-true;  
-					  scale <- citymatrix_map_settings[id][1];
-					  color<-color_map[scale];
-	              }	        
-	        }
-	        ask amenity{
-	          if ((x = 0 and y = 0) and fromGrid = true){
-	            do die;
-	          }
-	        }	
-		}		
+		toggle1 <- int(cityMatrixData["objects"]["toggle1"]);	
+		loop l over: cityMatrixCell { 
+		      create amenity {
+		      	  id <-int(l["type"]);
+		      	  x<-l["x"];
+		      	  y<-l["y"];
+				  location <- {	center.x + (13-l["x"])*brickSize,	center.y+ l["y"]*brickSize};  
+				  location<- {(location.x * cos(angle) + location.y * sin(angle)),-location.x * sin(angle) + location.y * cos(angle)};
+				  shape <- square(brickSize*0.9) at_location location;	
+				  size<-10+rnd(10);
+				  fromGrid<-true;  
+				  scale <- citymatrix_map_settings[id][1];
+				  color<-color_map[scale];
+              }	        
+        }
+        ask amenity{
+          if ((x = 0 and y = 0) and fromGrid = true){
+            do die;
+          }
+        }	
+				
 			
 	}
 	
@@ -239,7 +254,7 @@ species people skills:[moving]{
 		
 	aspect scale{
       
-      if(objective = "working"){
+      if(current_path = nil and objective = "working"){
       	draw square(14) color: color_map[scale];
       }
       else{
