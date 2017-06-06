@@ -8,9 +8,9 @@ model CityScope_Kendall
 
 global {
 	// GIS FILE //	
-	file bound_shapefile <- file("../includes/Bounds.shp");
-	file roads_shapefile <- file("../includes/Roads.shp");
-	file imageRaster <- file('../includes/images/gama_black.png') ;
+	file bound_shapefile <- file("./../includes/Kendall/Bounds.shp");
+	file roads_shapefile <- file("./../includes/Kendall/Roads.shp");
+	file imageRaster <- file('./../includes/images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	float angle <--9.74;
 	
@@ -20,7 +20,7 @@ global {
 	float lenghtMax <-0.0;
 	//kendall_1_08_10_2017
 	//boston_1_08_10_2017
-	file my_csv_file <- csv_file("../includes/mobility/kendall_1_08_10_2017.csv",",");
+	file my_csv_file <- csv_file("./../includes/Kendall/mobility/kendall_1_08_10_2017.csv",",");
 	matrix data <- matrix(my_csv_file);
 	
 	//CLUSTERING
