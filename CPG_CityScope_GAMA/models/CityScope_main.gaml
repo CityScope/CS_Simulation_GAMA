@@ -66,8 +66,8 @@ global {
 			angle <- -9.74;
 			center <-{3305,2075};
 			brickSize <- 70.0;
-			if(!localHost){
-				cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix_volpe";
+			if(localHost=false){
+				cityIOUrl <-"https://cityio.media.mit.edu/api/table/citymatrix_volpe";
 			}
 			else{
 				cityIOUrl <-"http://localhost:8080/table/citymatrix_volpe";
@@ -78,14 +78,12 @@ global {
 			center <-{2525,830};
 			brickSize <- 37.5;
 
-			if(!localHost){
-				cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix_andorra";
+			if(localHost=false){
+				cityIOUrl <-"https://cityio.media.mit.edu/api/table/citymatrix_andorra";
 			}
 			else{
 				cityIOUrl <-"http://localhost:8080/table/citymatrix_andorra";
 			}
-
-			cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix";
 		}
 		
 	    road_graph <- as_edge_graph(road);
