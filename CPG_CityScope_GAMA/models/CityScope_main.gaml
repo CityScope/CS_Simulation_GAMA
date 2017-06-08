@@ -79,12 +79,17 @@ global {
 			angle <-3.0;
 			center <-{2525,830};
 			brickSize <- 37.5;
+<<<<<<< HEAD
 			if(!localHost){
 				cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix_andorra";
 			}
 			else{
 				cityIOUrl <-"http://localhost:8080/table/citymatrix_andorra";
 			}
+=======
+			cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix";
+			
+>>>>>>> origin/master
 		}
 		
 	    road_graph <- as_edge_graph(road);
