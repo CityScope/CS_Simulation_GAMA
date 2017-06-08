@@ -73,6 +73,7 @@ global {
 			center <-{2700,850};
 			brickSize <- 37.5;
 			cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix";
+			
 		}
 		
 	    road_graph <- as_edge_graph(road);
