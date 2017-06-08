@@ -34,6 +34,7 @@ global {
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
+	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
@@ -65,14 +66,25 @@ global {
 			angle <- -9.74;
 			center <-{3305,2075};
 			brickSize <- 70.0;
-			cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix_volpe";
+			if(!localHost){
+				cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix_volpe";
+			}
+			else{
+				cityIOUrl <-"http://localhost:8080/table/citymatrix_volpe";
+			}
+			
 			
 		}
 		if(cityScopeCity= "Andorra"){
 			angle <-3.0;
-			center <-{2700,850};
+			center <-{2525,830};
 			brickSize <- 37.5;
-			cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix";
+			if(!localHost){
+				cityIOUrl <-"https://cityio.media.mit.edu/table/citymatrix_andorra";
+			}
+			else{
+				cityIOUrl <-"http://localhost:8080/table/citymatrix_andorra";
+			}
 		}
 		
 	    road_graph <- as_edge_graph(road);
@@ -203,7 +215,7 @@ species people skills:[moving]{
 		speed <-initialSpeed;	
 	}
 	
-    reflex updateTarget{
+    reflex updateTarget {
 		
 		if(current_hour > time_to_work and current_hour < time_to_lunch  and objective = "resting"){
 			objective <- "working" ;
@@ -354,7 +366,7 @@ experiment CityScopeMulti type: gui {
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScope  type:opengl background:#black {
-			//species building aspect:usage;
+			species building aspect:usage;
 			species table aspect:base refresh:false;
 			species road aspect: base refresh:false;
 			species amenity aspect: onScreen ;

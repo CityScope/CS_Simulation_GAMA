@@ -8,9 +8,9 @@ model CityScope_Kendall
 
 global {
 	// GIS FILE //	
-	file bound_shapefile <- file("./../includes/Kendall/Bounds.shp");
-	file roads_shapefile <- file("./../includes/Kendall/Roads.shp");
-	file imageRaster <- file('./../includes/images/gama_black.png') ;
+	file bound_shapefile <- file("../includes/Kendall/Bounds.shp");
+	file roads_shapefile <- file("../includes/Kendall/Roads.shp");
+	file imageRaster <- file('../includes/images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	float angle <--9.74;
 	
@@ -20,10 +20,11 @@ global {
 	float lenghtMax <-0.0;
 	//kendall_1_08_10_2017
 	//boston_1_08_10_2017
-	file my_csv_file <- csv_file("./../includes/Kendall/mobility/kendall_1_08_10_2017.csv",",");
+	file my_csv_file <- csv_file("../includes/Kendall/mobility/kendall_1_08_10_2017.csv",",");
 	matrix data <- matrix(my_csv_file);
 	
 	//CLUSTERING
+	bool clustering<-false;
 	int k parameter: 'number of groups to create (kmeans) ' category: "Visualization" min: 1 <- 10;	
 	float eps parameter: 'the maximum radius of the neighborhood (DBscan)' category: "Visualization" min: 10.0 <- 150.0;	
 	int minPoints <- 3; //the minimum number of elements needed for a cluster (DBscan)
@@ -40,7 +41,7 @@ global {
 	   global_start_date<-min(mobileData collect int(each["init_date"]));
 	   global_end_date<-max(mobileData collect int(each["init_date"]));	
 	}
-	reflex cluster_building when:cycle=0{
+	reflex cluster_building when:(cycle=0 and clustering=true){
 		eps <-cycle*10;
 		list<list> instances <- mobileData collect ([each.location.x, each.location.y]);
 		//DBSCAN
@@ -69,7 +70,7 @@ species road  schedules: []{
 	}
 }
 
-species mobileData {
+species mobileData skills:[moving]{
 	rgb color <- #red;
 	float duration;
 	int init_date;
@@ -81,6 +82,9 @@ species mobileData {
 		}else{
 			//visible <-false;
 		}
+		if(cycle>100){
+			do wander;
+		}
 	}
 	
 	aspect base {
@@ -89,7 +93,7 @@ species mobileData {
 	
 	
 	aspect circle {
-		draw circle(10) color:#white;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
+		draw circle(8) color:#white;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
 	}
 	
 	aspect timelapse{
@@ -122,7 +126,7 @@ experiment CityScopeDev type: gui {
 			
 		}
 		
-		display CityScopeTimeLapse  type:opengl background:#black {
+		/*display CityScopeTimeLapse  type:opengl background:#black {
 			species road aspect: base refresh:false;
 			species mobileData aspect:timelapse;
 			
@@ -132,8 +136,8 @@ experiment CityScopeDev type: gui {
 			species road aspect: base refresh:false;
 			species mobileData aspect:timespace;
 			
-		}
-		display CityScopeDBScan  type:opengl background:#black autosave:true{
+		}*/
+		/*display CityScopeDBScan  type:opengl background:#black autosave:true{
 			species road aspect: base refresh:false;
 			species mobileData aspect:dbscan_aspect;
 			
@@ -142,7 +146,7 @@ experiment CityScopeDev type: gui {
 			species road aspect: base refresh:false;
 			species mobileData aspect:kmeans_aspect;
 			
-		}
+		}*/
 	}
 }
 
