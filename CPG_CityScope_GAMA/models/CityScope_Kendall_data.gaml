@@ -126,7 +126,7 @@ experiment CityScopeDev type: gui {
 			
 		}
 		
-		/*display CityScopeTimeLapse  type:opengl background:#black {
+		display CityScopeTimeLapse  type:opengl background:#black {
 			species road aspect: base refresh:false;
 			species mobileData aspect:timelapse;
 			
@@ -136,8 +136,8 @@ experiment CityScopeDev type: gui {
 			species road aspect: base refresh:false;
 			species mobileData aspect:timespace;
 			
-		}*/
-		/*display CityScopeDBScan  type:opengl background:#black autosave:true{
+		}
+		display CityScopeDBScan  type:opengl background:#black autosave:true{
 			species road aspect: base refresh:false;
 			species mobileData aspect:dbscan_aspect;
 			
@@ -146,7 +146,7 @@ experiment CityScopeDev type: gui {
 			species road aspect: base refresh:false;
 			species mobileData aspect:kmeans_aspect;
 			
-		}*/
+		}
 	}
 }
 

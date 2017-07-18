@@ -7,7 +7,12 @@
 
 model fieldofvision
 
+import "CityScope_main.gaml"
+
 global {
+	
+	file obstacle_shapefile <- file("../includes/MIT/Buildings.shp");
+	
 	//number of obstacles
 	int nb_obstacles <- 10 parameter: true;
 	
@@ -15,17 +20,21 @@ global {
 	float perception_distance <- 40.0 parameter: true;
 	
 	//precision used for the masked_by operator (default value: 120): the higher the most accurate the perception will be, but it will require more computation
-	int precision <- 600 parameter: true;
+	int precision <- 120 parameter: true;
+	
+	geometry shape <- envelope(obstacle_shapefile);
 	
 	//space where the agent can move.
 	geometry free_space <- copy(shape);
 	init {
-		create obstacle number:nb_obstacles {
-			shape <- rectangle(2+rnd(20), 2+rnd(20));
+		create obstacle from: obstacle_shapefile{//number:10{//
+			//shape <- rectangle(2+rnd(20), 2+rnd(20));
+			//free_space <- free_space - (shape);
+			//shape<- rectangle(100, 100);
 			free_space <- free_space - (shape + 2);
 		}
 		
-		create people  number:10 {
+		create pev  number:10 {
 			location <- any_location_in(free_space);
 		}
 	}
@@ -33,10 +42,12 @@ global {
 
 species obstacle {
 	aspect default {
-		draw shape color: #gray border: #black depth:10;
+		draw shape color: #gray border: #gray depth:50;
+		draw shape*0.9 color: #gray border: #gray depth:50 at:{location.x,location.y,-10};
+		draw shape*0.9 color: #gray border: #gray depth:50 at:{location.x,location.y,10};
 	}
 }
-species people skills: [moving]{
+species pev skills: [moving]{
 	//zone of perception
 	geometry perceived_area;
 	
@@ -74,7 +85,7 @@ species people skills: [moving]{
 	}
 	
 	aspect body {
-		draw triangle(2) rotate:90 + heading color: #black;
+		draw triangle(10) rotate:90 + heading color: #black;
 	}
 	aspect perception {
 		if (perceived_area != nil) {
@@ -86,11 +97,12 @@ species people skills: [moving]{
 
 experiment fieldofvision type: gui {
 	float minimum_cycle_duration <- 0.05;
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"kendall" among:["kendall", "Andorra"];	
 	output {
 		display view type:opengl{
 			species obstacle;
-			species people aspect: perception transparency: 0.5;
-			species people aspect: body;
+			species pev aspect: perception transparency: 0.5;
+			species pev aspect: body;
 		}
 	}
 }

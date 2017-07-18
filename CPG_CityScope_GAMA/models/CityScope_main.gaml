@@ -33,6 +33,7 @@ global {
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
+	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
@@ -66,7 +67,7 @@ global {
 			angle <- -9.74;
 			center <-{3305,2075};
 			brickSize <- 70.0;
-			if(localHost=false){
+			if(localHost=false and cityMatrix = true){
 				cityIOUrl <-"https://cityio.media.mit.edu/api/table/citymatrix_volpe";
 			}
 			else{
@@ -78,7 +79,7 @@ global {
 			center <-{2525,830};
 			brickSize <- 37.5;
 
-			if(localHost=false){
+			if(localHost=false and cityMatrix = true){
 				cityIOUrl <-"https://cityio.media.mit.edu/api/table/citymatrix_andorra";
 			}
 			else{
@@ -96,8 +97,10 @@ global {
 		    size<-10+rnd(20);
 		  }		
         }
-	    	
-		do initGrid;
+	    if(cityMatrix = true){
+	    	do initGrid;
+	    }	
+		
 
 		ask building where  (each.usage="R"){
 			create people number: (cityScopeCity = "kendall") ? shape.area/2000 : (flip(0.1) ? 1 : 0){//shape.area/2000 {
@@ -115,9 +118,6 @@ global {
 				eating_place <- one_of(amenity where (each.scale=scale )) ;
 				dining_place <- one_of(amenity where (each.scale=scale )) ;
 				objective <- "resting"; 
-				/*if (flip(0.1)){
-					moveOnRoad <-false;
-				}*/
 			}				
 		}		
 	}
@@ -158,7 +158,7 @@ global {
 			
 	}
 	
-	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true){	
+	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){	
 		do initGrid;
 	}
 	
@@ -214,7 +214,7 @@ species people skills:[moving]{
 		speed <-initialSpeed;	
 	}
 	
-    reflex updateTarget {
+    reflex updateTargetAndObjective {
 		
 		if(current_hour > time_to_work and current_hour < time_to_lunch  and objective = "resting"){
 			objective <- "working" ;
@@ -248,7 +248,7 @@ species people skills:[moving]{
 	} 
 	 
 	reflex move {
-	    if(moveOnRoad = true){
+	    if(moveOnRoad = true and the_target !=nil){
 	      do goto target: the_target on: road_graph ; 
 	    }else{
 	      do goto target: the_target;
