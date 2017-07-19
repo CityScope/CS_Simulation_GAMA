@@ -63,28 +63,22 @@ global {
 		write "cityScopeCity" + cityScopeCity + " w:" + world.shape.width + " h:" + world.shape.height;
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))];
 		create road from: roads_shapefile ;
-		if(cityScopeCity= "kendall"){
+		if(cityScopeCity= "volpe"){
 			angle <- -9.74;
 			center <-{3305,2075};
 			brickSize <- 70.0;
-			if(localHost=false and cityMatrix = true){
-				cityIOUrl <-"https://cityio.media.mit.edu/api/table/citymatrix_volpe";
-			}
-			else{
-				cityIOUrl <-"http://localhost:8080/table/citymatrix_volpe";
-			}
 		}
-		if(cityScopeCity= "Andorra"){
+		if(cityScopeCity= "andorra"){
 			angle <-3.0;
 			center <-{2525,830};
 			brickSize <- 37.5;
-
-			if(localHost=false and cityMatrix = true){
-				cityIOUrl <-"https://cityio.media.mit.edu/api/table/citymatrix_andorra";
-			}
-			else{
-				cityIOUrl <-"http://localhost:8080/table/citymatrix_andorra";
-			}
+		}
+		
+		if(localHost=false and cityMatrix = true){
+			cityIOUrl <-"https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity;
+		}
+		else{
+			cityIOUrl <-"http://localhost:8080/table/citymatrix_"+cityScopeCity;
 		}
 		
 	    road_graph <- as_edge_graph(road);
@@ -101,9 +95,8 @@ global {
 	    	do initGrid;
 	    }	
 		
-
 		ask building where  (each.usage="R"){
-			create people number: (cityScopeCity = "kendall") ? shape.area/2000 : (flip(0.1) ? 1 : 0){//shape.area/2000 {
+			create people number: (cityScopeCity = "volpe") ? shape.area/2000 : (flip(0.1) ? 1 : 0){//shape.area/2000 {
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -315,7 +308,7 @@ species table{
 }
 
 experiment CityScopeVolpe type: gui {
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"kendall" among:["kendall", "Andorra"];
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScope  type:opengl background:#black {
@@ -333,7 +326,7 @@ experiment CityScopeVolpe type: gui {
 }
 
 experiment CityScopeAndorra type: gui {
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"Andorra" among:["kendall", "Andorra"];
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"andorra" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScope  type:opengl background:#black {
@@ -353,6 +346,7 @@ experiment CityScopeAndorra type: gui {
 
 experiment CityScopeSF type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"San_Francisco";
+	parameter 'CityMatrix:' var: cityMatrix category: 'GIS' <-false;
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScope  type:opengl background:#black {
@@ -373,11 +367,11 @@ experiment CityScopeSF type: gui {
 experiment CityScopeMulti type: gui {
 	init {
 	  //we create a second simulation (the first simulation is always created by default) with the given parameters
-	  create simulation with: [cityScopeCity:: "kendall", minimum_cycle_duration::0.02];
-	  //create simulation with: [cityScopeCity:: "Andorra", minimum_cycle_duration::0.02];
+	  create simulation with: [cityScopeCity:: "volpe", minimum_cycle_duration::0.02];
+	  //create simulation with: [cityScopeCity:: "andorra", minimum_cycle_duration::0.02];
 		
 	}
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"Andorra" among:["kendall", "Andorra"];
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"andorra" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScope  type:opengl background:#black {

@@ -13,7 +13,7 @@ global {
 }
 
 experiment CityScopeAndorraDemo type: gui {
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"Andorra" among:["kendall", "Andorra"];	
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"andorra" among:["kendall", "andorra"];	
 	float minimum_cycle_duration <- 0.02;
 	output {				
 		display CityScope  type:opengl background:#black {
