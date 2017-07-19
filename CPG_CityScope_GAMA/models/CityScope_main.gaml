@@ -354,6 +354,26 @@ experiment CityScopeAndorra type: gui {
 	}
 }
 
+
+experiment CityScopeSF type: gui {
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"San_Francisco";
+	float minimum_cycle_duration <- 0.02;
+	output {	
+		display CityScope  type:opengl background:#black {
+			species building aspect:usage;
+			species table aspect:base refresh:false;
+			species road aspect: base refresh:false;
+			species amenity aspect: onScreen ;
+			species people aspect: scale;
+			graphics "text" 
+			{
+               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
+               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
+            }
+		}			
+	}
+}
+
 experiment CityScopeMulti type: gui {
 	init {
 	  //we create a second simulation (the first simulation is always created by default) with the given parameters
