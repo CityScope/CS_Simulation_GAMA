@@ -268,7 +268,11 @@ species people skills:[moving]{
 	}
 	
 	aspect scaleTable{
-      draw circle(4) color: color_map[scale];
+		if(toggle1 >4)
+		{
+		  draw circle(4) color: color_map[scale];	
+		}
+      
 	}
 }
 
