@@ -264,19 +264,11 @@ species people skills:[moving]{
 	}
 		
 	aspect scale{
-      
-      if(current_path = nil and objective = "working"){
-      	draw square(14) color: color_map[scale];
-      }
-      else{
-      	draw circle(14) color: color_map[scale];
-      }
+      draw circle(14) color: color_map[scale];
 	}
 	
 	aspect scaleTable{
-		if(toggle1 > 4  ){
-			draw circle(4) color: color_map[scale];
-		}   
+      draw circle(4) color: color_map[scale];
 	}
 }
 
