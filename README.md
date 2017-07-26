@@ -7,6 +7,7 @@ running on the physical table at the lab and synchronized with CityIOServer.
 
 ## Software used
 http://gama-platform.org/
-Developped by [Arnaud Grignard](https://github.com/agrignard))
+
+Developped by [Arnaud Grignard](https://github.com/agrignard)
 
 
