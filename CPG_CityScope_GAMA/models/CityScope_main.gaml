@@ -17,7 +17,7 @@ global {
 	file imageRaster <- file('../includes/images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	graph road_graph;
-	graph interaction_graph;
+	graph<people, people> interaction_graph;
 	
 	//////////// CITYMATRIX   //////////////
 	map<string, unknown> cityMatrixData;
@@ -94,9 +94,14 @@ global {
 	    if(cityMatrix = true){
 	    	do initGrid;
 	    }	
-		
-		ask building where  (each.usage="R"){
-			create people number: (cityScopeCity = "kendall") ? shape.area/2000 : (flip(0.8) ? 1 : 0){//shape.area/2000 {
+	    do initPop;		
+	}
+	
+		action initPop{
+		  write "initPop"; 
+		  ask people {do die;}
+		  ask building where  (each.usage="R"){
+		    create people number: (cityScopeCity = "volpe") ? shape.area/2000 : (flip(0.1) ? 1 : 0){//shape.area/2000 {
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -112,8 +117,8 @@ global {
 				dining_place <- one_of(amenity where (each.scale=scale )) ;
 				objective <- "resting"; 
 			}				
-		}		
-	}
+		  }
+		}
 	
 	action initGrid{
   		ask amenity where (each.fromGrid=true){
@@ -146,23 +151,28 @@ global {
           if ((x = 0 and y = 0) and fromGrid = true){
             do die;
           }
-        }	
-				
-			
+        }		
 	}
+	
+
 	
 	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){	
 		do initGrid;
 	}
 	
 	reflex updateGraph when:(drawInteraction = true or toggle1 = 7){
-		interaction_graph <- people as_distance_graph(distance);
+		interaction_graph <- graph<people, people>(people as_distance_graph(distance));
+	}
+	
+	reflex updatePop when: ((cycle mod 8640) = 0){
+		do initPop;
 	}
 }
 
 species building schedules: []{
 	string usage;
-	string scale;	
+	string scale;
+	int depth;	
 	aspect base {	
      	draw shape color: rgb(50,50,50,125);
 	}
@@ -171,6 +181,14 @@ species building schedules: []{
 	}
 	aspect scale{
 		draw shape color: color_map[scale];
+	}
+	aspect demo{
+		if(toggle1=2){
+			draw shape color: color_map[usage];
+		}
+		if(toggle1=3){
+			draw shape color: color_map[scale];
+		}
 	}
 }
 
@@ -194,7 +212,7 @@ species people skills:[moving]{
 	int time_to_dinner;
 	int time_to_sleep;
 	string objective ;
-	string curMovingMode<-"travelling";	
+	string curMovingMode<-"wandering";	
 	string scale;
 	string usage; 
 	point the_target <- nil ;
@@ -307,120 +325,62 @@ species table{
 	}	
 }
 
+
+
 experiment CityScopeVolpe type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScope  type:opengl background:#black {
 			species table aspect:base refresh:false;
-			species road aspect: base refresh:false;
+			species road aspect: base;
+			//species building aspect:demo;
 			species amenity aspect: onScreen ;
-			species people aspect: scale;
+			
 			graphics "text" 
 			{
                draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
                draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
+               draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};
             }
-		}			
-	}
-}
-
-experiment CityScopeSF type: gui {
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"San_Francisco";
-	float minimum_cycle_duration <- 0.02;
-	output {	
-		display CityScope  type:opengl background:#black {
-			species table aspect:base refresh:false;
-			species road aspect: base refresh:false;
-			species amenity aspect: onScreen ;
-			species people aspect: scale;
-			graphics "text" 
-			{
-               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
-               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
+             graphics "density"{
+             	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
+             	int barW<-60;
+             	int factor<-20;
+             	loop i from: 0 to: length(density_array) -1{
+             		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamablue : ((i=1 or i=4) ? #gamaorange: #gamared) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
+             	}
             }
-		}			
-	}
-}
-
-experiment CityScopeTongji type: gui {
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"Shanghai";
-	float minimum_cycle_duration <- 0.02;
-	output {	
-		display CityScope  type:opengl background:#black {
-			species table aspect:base refresh:false;
-			species road aspect: base refresh:false;
-			species amenity aspect: onScreen ;
-			species people aspect: scale;
-			graphics "text" 
-			{
-               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
-               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
+            graphics "time"{
+             	point hpos<-{world.shape.width*0.85,world.shape.height*0.7};
+             	int barW<-20;
+             	int factor<-20;
+            	draw rectangle(barW*current_hour+1,50) color:#gamablue at: {hpos.x+barW*current_hour*0.5,hpos.y};//{hpos.x+current_hour*barW/2,hpos.y-density_array[0]*factor/2};
+            	
             }
+            graphics "interaction_graph" {
+				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
+					loop eg over: interaction_graph.edges {
+                        people src <- interaction_graph source_of eg;
+                        people target <- interaction_graph target_of eg;
+						geometry edge_geom <- geometry(eg);
+						draw line(edge_geom.points)  color:(src.scale = target.scale) ? color_map[src.scale] : #green;
+					}
+				} 	
+			}
+			species people aspect:scale;
+			
 		}			
-	}
-}
-
-experiment CityScopeTaipeiMain type: gui {
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"Taipei_MainStation";
-	float minimum_cycle_duration <- 0.02;
-	output {	
-		display CityScope  type:opengl background:#black {
-			species table aspect:base refresh:false;
-			species road aspect: base refresh:false;
-			species amenity aspect: onScreen ;
-			species people aspect: scale;
-			graphics "text" 
-			{
-               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
-               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
-            }
-		}			
-	}
-}
-
-experiment CityScopeAndorra type: gui {
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"andorra" among:["volpe", "andorra"];
-	float minimum_cycle_duration <- 0.02;
-	output {	
-		display CityScope  type:opengl background:#black {
-			species table aspect:base refresh:false;
-			species road aspect: base refresh:false;
-			species amenity aspect: onScreen ;
-			species people aspect: scale;
-			graphics "text" 
-			{
-               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
-               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
-            }
-		}			
-	}
-}
-
-experiment CityScopeMulti type: gui {
-	init {
-	  //we create a second simulation (the first simulation is always created by default) with the given parameters
-	  create simulation with: [cityScopeCity:: "volpe", minimum_cycle_duration::0.02];
-	  //create simulation with: [cityScopeCity:: "andorra", minimum_cycle_duration::0.02];
 		
 	}
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"andorra" among:["volpe", "andorra"];
-	float minimum_cycle_duration <- 0.02;
-	output {	
-		display CityScope  type:opengl background:#black {
-			species building aspect:usage;
-			species table aspect:base refresh:false;
-			species road aspect: base refresh:false;
-			species amenity aspect: onScreen ;
-			species people aspect: scale;
-			graphics "text" 
-			{
-               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
-               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
-            }
-		}			
-	}
 }
+
+
+
+
+
+
+
 
 
 
