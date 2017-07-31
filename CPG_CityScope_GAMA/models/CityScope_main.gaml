@@ -33,7 +33,7 @@ global {
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
+	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
@@ -358,7 +358,7 @@ experiment CityScopeVolpe type: gui {
             	draw rectangle(barW*current_hour+1,50) color:#gamablue at: {hpos.x+barW*current_hour*0.5,hpos.y};//{hpos.x+current_hour*barW/2,hpos.y-density_array[0]*factor/2};
             	
             }
-            graphics "interaction_graph" {
+            /*graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
 					loop eg over: interaction_graph.edges {
                         people src <- interaction_graph source_of eg;
@@ -367,7 +367,7 @@ experiment CityScopeVolpe type: gui {
 						draw line(edge_geom.points)  color:(src.scale = target.scale) ? color_map[src.scale] : #green;
 					}
 				} 	
-			}
+			}*/
 			species people aspect:scale;
 			
 		}			
