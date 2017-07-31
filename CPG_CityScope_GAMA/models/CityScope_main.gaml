@@ -33,7 +33,7 @@ global {
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
+	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
@@ -103,7 +103,7 @@ global {
 		
 
 		ask building where  (each.usage="R"){
-			create people number: (cityScopeCity = "kendall") ? shape.area/2000 : (flip(0.1) ? 1 : 0){//shape.area/2000 {
+			create people number: (cityScopeCity = "kendall") ? shape.area/2000 : (flip(0.8) ? 1 : 0){//shape.area/2000 {
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -320,6 +320,60 @@ species table{
 
 experiment CityScopeVolpe type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"kendall" among:["kendall", "Andorra"];
+	float minimum_cycle_duration <- 0.02;
+	output {	
+		display CityScope  type:opengl background:#black {
+			species table aspect:base refresh:false;
+			species road aspect: base refresh:false;
+			species amenity aspect: onScreen ;
+			species people aspect: scale;
+			graphics "text" 
+			{
+               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
+               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
+            }
+		}			
+	}
+}
+
+experiment CityScopeSF type: gui {
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"San_Francisco";
+	float minimum_cycle_duration <- 0.02;
+	output {	
+		display CityScope  type:opengl background:#black {
+			species table aspect:base refresh:false;
+			species road aspect: base refresh:false;
+			species amenity aspect: onScreen ;
+			species people aspect: scale;
+			graphics "text" 
+			{
+               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
+               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
+            }
+		}			
+	}
+}
+
+experiment CityScopeTongji type: gui {
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"Shanghai";
+	float minimum_cycle_duration <- 0.02;
+	output {	
+		display CityScope  type:opengl background:#black {
+			species table aspect:base refresh:false;
+			species road aspect: base refresh:false;
+			species amenity aspect: onScreen ;
+			species people aspect: scale;
+			graphics "text" 
+			{
+               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
+               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
+            }
+		}			
+	}
+}
+
+experiment CityScopeTaipeiMain type: gui {
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"Taipei_MainStation";
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScope  type:opengl background:#black {
