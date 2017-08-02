@@ -89,8 +89,6 @@ experiment CityScopeTongji type: gui {
 
 experiment CityScopeMulti type: gui {
 	init {
-	  //we create a second simulation (the first simulation is always created by default) with the given parameters
-	  create simulation with: [cityScopeCity:: "andorra", minimum_cycle_duration::0.02];
 	  create simulation with: [cityScopeCity:: "san_Francisco", minimum_cycle_duration::0.02];
 	  create simulation with: [cityScopeCity:: "Taipei_MainStation", minimum_cycle_duration::0.02];
 	  create simulation with: [cityScopeCity:: "Shanghai", minimum_cycle_duration::0.02];
