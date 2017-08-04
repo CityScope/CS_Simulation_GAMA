@@ -33,7 +33,7 @@ global {
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
+	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
