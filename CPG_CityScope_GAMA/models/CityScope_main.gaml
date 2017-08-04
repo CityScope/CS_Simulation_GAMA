@@ -182,7 +182,15 @@ species building schedules: []{
 	aspect scale{
 		draw shape color: color_map[scale];
 	}
-	aspect demo{
+	aspect demoScreen{
+		if(toggle1=2){
+			draw shape color: color_map[usage];
+		}
+		if(toggle1=3){
+			draw shape color: color_map[scale];
+		}
+	}
+	aspect demoTable{
 		if(toggle1=2){
 			draw shape color: color_map[usage];
 		}
