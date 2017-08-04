@@ -58,7 +58,7 @@ experiment CityScopeVolpeDemo type: gui {
                         people src <- interaction_graph source_of eg;
                         people target <- interaction_graph target_of eg;
 						geometry edge_geom <- geometry(eg);
-						draw line(edge_geom.points)  color:#green;//(src.scale = target.scale) ? color_map[src.scale] : #green;
+						draw line(edge_geom.points)  color:rgb(0,125,0,75);//(src.scale = target.scale) ? color_map[src.scale] : #green;
 					}
 				} 
 				draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};	
