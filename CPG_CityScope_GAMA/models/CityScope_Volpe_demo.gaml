@@ -51,7 +51,6 @@ experiment CityScopeVolpeDemo type: gui {
 			
 		display CityScopeTable  type:opengl background:#black fullscreen:1 rotate:180
 		camera_pos: {4463.6173,3032.9552,4033.5415} camera_look_pos: {4464.7186,3026.0023,0.1795} camera_up_vector: {0.1564,0.9877,0.0017} draw_env:false{
-			species building aspect:demoTable;
 			species amenity aspect: onTable ;
 			species people aspect: scaleTable;
 			graphics "interaction_graph" {
