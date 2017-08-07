@@ -16,12 +16,12 @@ experiment CityScopeVolpeDemo type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "Andorra"];	
 	float minimum_cycle_duration <- 0.02;
 	output {				
-		display CityScope  type:opengl background:#black {
+		display CityScope  type:opengl background:#black toolbar:false draw_env:false{
 			species building aspect:demoScreen;
 			species table aspect:base;
-			species road aspect: base refresh:false;
-			species amenity aspect: onScreen ;
-			species people aspect: scale;
+			species road aspect:base refresh:false;
+			species amenity aspect:onScreen ;
+			species people aspect:scale;
 			
 			graphics "text" 
 			{
@@ -46,15 +46,14 @@ experiment CityScopeVolpeDemo type: gui {
 					}
 				} 	
 			}
-			species people aspect:scale;
+			
 		}
 			
 		display CityScopeTable  type:opengl background:#black fullscreen:1 rotate:180
-		camera_pos: {4463.6173,3032.9552,4033.5415} camera_look_pos: {4464.7186,3026.0023,0.1795} camera_up_vector: {0.1564,0.9877,0.0017}{
+		camera_pos: {4463.6173,3032.9552,4033.5415} camera_look_pos: {4464.7186,3026.0023,0.1795} camera_up_vector: {0.1564,0.9877,0.0017} draw_env:false{
 			species building aspect:demoTable;
 			species amenity aspect: onTable ;
 			species people aspect: scaleTable;
-			species people aspect:scaleTable;
 			graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
 					loop eg over: interaction_graph.edges {
@@ -64,7 +63,7 @@ experiment CityScopeVolpeDemo type: gui {
 						draw line(edge_geom.points)  color:rgb(0,125,0,75);//(src.scale = target.scale) ? color_map[src.scale] : #green;
 					}
 				} 
-				draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};	
+				draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150,10};	
 			}
 				
 		}

@@ -339,7 +339,7 @@ experiment CityScopeVolpe type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
-		display CityScope  type:opengl background:#black {
+		display CityScope  type:opengl background:#black toolbar:true{
 			species table aspect:base refresh:false;
 			species road aspect: base;
 			species building aspect:usage;
