@@ -186,8 +186,16 @@ species building schedules: []{
 		if(toggle1=1){
 			draw shape color: color_map[usage];
 		}
-		if(toggle1=2 or toggle1=3){
-			draw shape color: color_map[scale];
+		if(toggle1=2){
+			if(usage="O"){
+			  draw shape color: color_map[scale];
+			}
+			
+		}
+		if(toggle1=3){
+			if(usage="R"){
+			  draw shape color: color_map[scale];
+			}
 		}
 	}
 	aspect demoTable{
@@ -379,7 +387,6 @@ experiment CityScopeVolpe type: gui {
 			species people aspect:scale;
 			
 		}			
-		
 	}
 }
 
