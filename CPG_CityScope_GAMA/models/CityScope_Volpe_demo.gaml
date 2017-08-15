@@ -16,7 +16,7 @@ experiment CityScopeVolpeDemo type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "Andorra"];	
 	float minimum_cycle_duration <- 0.02;
 	output {				
-		display CityScope  type:opengl background:#black {
+		display CityScope  type:opengl background:#black{
 			species building aspect:demoScreen;
 			species table aspect:base;
 			species road aspect: base refresh:false;
@@ -36,7 +36,7 @@ experiment CityScopeVolpeDemo type: gui {
              		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamablue : ((i=1 or i=4) ? #gamaorange: #gamared) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
              	}
             }
-            graphics "interaction_graph" {
+            /*graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
 					loop eg over: interaction_graph.edges {
                         people src <- interaction_graph source_of eg;
@@ -45,16 +45,16 @@ experiment CityScopeVolpeDemo type: gui {
 						draw line(edge_geom.points)  color:(src.scale = target.scale) ? color_map[src.scale] : #green;
 					}
 				} 	
-			}
+			}*/
 			species people aspect:scale;
+			
 		}
 			
-		display CityScopeTable  type:opengl background:#black fullscreen:1 rotate:180
+		/*display CityScopeTable  type:opengl background:#black fullscreen:1 rotate:180
 		camera_pos: {4463.6173,3032.9552,4033.5415} camera_look_pos: {4464.7186,3026.0023,0.1795} camera_up_vector: {0.1564,0.9877,0.0017}{
 			//species building aspect:demoTable;
 			species amenity aspect: onTable ;
 			species people aspect: scaleTable;
-			species people aspect:scaleTable;
 			graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
 					loop eg over: interaction_graph.edges {
@@ -64,9 +64,8 @@ experiment CityScopeVolpeDemo type: gui {
 						draw line(edge_geom.points)  color:rgb(0,125,0,75);//(src.scale = target.scale) ? color_map[src.scale] : #green;
 					}
 				} 
-				draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};	
-			}
-				
-		}
+				draw rectangle(900,700) rotated_by 9.74 color:#black at: {2500, 2150};	
+			}	
+		}*/
 	}
 }
