@@ -58,9 +58,10 @@ global {
 	point center;
 	float brickSize;
 	string cityIOUrl;
+	float meanBuildingArea;
+	int nbBuilding;
 	
 	init {
-		write "cityScopeCity" + cityScopeCity + " w:" + world.shape.width + " h:" + world.shape.height;
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))];
 		create road from: roads_shapefile ;
 		if(cityScopeCity= "volpe"){
@@ -94,14 +95,25 @@ global {
 	    if(cityMatrix = true){
 	    	do initGrid;
 	    }	
-	    do initPop;		
+	    meanBuildingArea <- mean(building collect each.shape.area);
+		nbBuilding <- length(building); 
+	    write "cityScopeCity: " + cityScopeCity + " width: " + world.shape.width + " height: " + world.shape.height;
+	    write "nb building: " + nbBuilding + " mean building area: " + meanBuildingArea;
+	    do initPop;	
 	}
 	
 		action initPop{
-		  write "initPop"; 
 		  ask people {do die;}
+		  int nbPeopleToCreatePerBuilding;
 		  ask building where  (each.usage="R"){
-		    create people number: (cityScopeCity = "volpe") ? shape.area/2000 : (flip(0.1) ? 1 : 0){//shape.area/2000 {
+		  	if(!empty(density_array)){
+		  		nbPeopleToCreatePerBuilding <- int((self.scale="S") ? density_array[2]: ((self.scale="M") ? density_array[1]:density_array[0]));
+		  	}
+		  	else{
+		  		nbPeopleToCreatePerBuilding<-10;// Default value if no data is in density_array
+		  	}
+		  // create people number: (cityScopeCity = "volpe") ? shape.area/2000 : (flip(0.1) ? 1 : 0){//shape.area/2000 {
+		  	create people number: (shape.area/(meanBuildingArea*0.5)) {
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -118,6 +130,7 @@ global {
 				objective <- "resting"; 
 			}				
 		  }
+		   if(!empty(density_array)){ write "initPop from density array" + density_array + " nb people: " + length(people);}else{write "initPop without density array" + density_array + " nb people: " + length(people);} 
 		}
 	
 	action initGrid{
@@ -291,7 +304,7 @@ species people skills:[moving]{
 	}
 		
 	aspect scale{
-      draw circle(14) color: color_map[scale];
+      draw circle(world.shape.width*0.002) color: color_map[scale];
 	}
 	
 	aspect scaleTable{
@@ -359,7 +372,7 @@ experiment CityScopeVolpe type: gui {
                draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
                draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};
             }
-             graphics "density"{
+            graphics "density"{
              	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
              	int barW<-60;
              	int factor<-20;

@@ -26,6 +26,14 @@ experiment CityScopeAndorraDemo type: gui {
                draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
                draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
             }
+            graphics "density"{
+             	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
+             	int barW<-60;
+             	int factor<-20;
+             	loop i from: 0 to: length(density_array) -1{
+             		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamablue : ((i=1 or i=4) ? #gamaorange: #gamared) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
+             	}
+            }
 		}
 			
 		display CityScopeTable  type:opengl background:#black fullscreen:0 rotate:180
