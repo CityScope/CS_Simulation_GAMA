@@ -28,13 +28,14 @@ global {
 	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#brown, "Road"::#gray]; 
 	list scale_string<- ["S", "M", "L"];
 	list usage_string<- ["R", "O"]; 
+	list density_map<- [89,55,15,30,18,5]; //Use for Volpe Site (Could be change for each city)
 	
 	//PARAMETERS
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
 	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
-	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
+	bool onlineGrid <-false parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
@@ -62,7 +63,10 @@ global {
 	int nbBuilding;
 	
 	init {
-		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))];
+		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),floors::float(read ("Floors"))]{
+			area <-shape.area;
+			perimeter<-shape.perimeter;
+		}
 		create road from: roads_shapefile ;
 		if(cityScopeCity= "volpe"){
 			angle <- -9.74;
@@ -106,14 +110,8 @@ global {
 		  ask people {do die;}
 		  int nbPeopleToCreatePerBuilding;
 		  ask building where  (each.usage="R"){
-		  	if(!empty(density_array)){
-		  		nbPeopleToCreatePerBuilding <- int((self.scale="S") ? density_array[2]: ((self.scale="M") ? density_array[1]:density_array[0]));
-		  	}
-		  	else{
-		  		nbPeopleToCreatePerBuilding<-10;// Default value if no data is in density_array
-		  	}
-		  // create people number: (cityScopeCity = "volpe") ? shape.area/2000 : (flip(0.1) ? 1 : 0){//shape.area/2000 {
-		  	create people number: (shape.area/(meanBuildingArea*0.5)) {
+		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2]): ((self.scale="M") ? (area/density_map[1]):(area/density_map[0])));
+		  	create people number: nbPeopleToCreatePerBuilding/10 {
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -130,8 +128,9 @@ global {
 				objective <- "resting"; 
 			}				
 		  }
-		   if(!empty(density_array)){ write "initPop from density array" + density_array + " nb people: " + length(people);}else{write "initPop without density array" + density_array + " nb people: " + length(people);} 
-		}
+		  if(!empty(density_array)){ write "initPop from density array" + density_array + " nb people: " + length(people);}else{write "initPop without density array" + density_array + " nb people: " + length(people);} 
+		
+		 }
 	
 	action initGrid{
   		ask amenity where (each.fromGrid=true){
@@ -166,9 +165,7 @@ global {
           }
         }		
 	}
-	
-
-	
+		
 	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){	
 		do initGrid;
 	}
@@ -185,7 +182,10 @@ global {
 species building schedules: []{
 	string usage;
 	string scale;
+	float floors;
 	int depth;	
+	float area;
+	float perimeter;
 	aspect base {	
      	draw shape color: rgb(50,50,50,125);
 	}
@@ -304,7 +304,7 @@ species people skills:[moving]{
 	}
 		
 	aspect scale{
-      draw circle(world.shape.width*0.002) color: color_map[scale];
+      draw circle(world.shape.width*0.001) color: color_map[scale];
 	}
 	
 	aspect scaleTable{
@@ -363,7 +363,7 @@ experiment CityScopeVolpe type: gui {
 		display CityScope  type:opengl background:#black toolbar:true{
 			species table aspect:base refresh:false;
 			species road aspect: base;
-			species building aspect:usage;
+			species building aspect:usage position:{0,0,-0.001};
 			species amenity aspect: onScreen ;
 			
 			graphics "text" 
