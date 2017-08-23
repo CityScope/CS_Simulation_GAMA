@@ -33,8 +33,8 @@ global {
 	//PARAMETERS
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
-	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
+	bool drawInteraction <- true parameter: "Draw Interaction:" category: "Visualization";
+	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-false parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
@@ -59,11 +59,11 @@ global {
 	point center;
 	float brickSize;
 	string cityIOUrl;
-	float meanBuildingArea;
-	int nbBuilding;
+	//Global indicator
+	list<point> nbInteraction;
 	
 	init {
-		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),floors::float(read ("Floors"))]{
+		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),nbFloors::1+float(read ("Floors"))]{
 			area <-shape.area;
 			perimeter<-shape.perimeter;
 		}
@@ -99,10 +99,7 @@ global {
 	    if(cityMatrix = true){
 	    	do initGrid;
 	    }	
-	    meanBuildingArea <- mean(building collect each.shape.area);
-		nbBuilding <- length(building); 
-	    write "cityScopeCity: " + cityScopeCity + " width: " + world.shape.width + " height: " + world.shape.height;
-	    write "nb building: " + nbBuilding + " mean building area: " + meanBuildingArea;
+	    write cityScopeCity + " width: " + world.shape.width + " height: " + world.shape.height;
 	    do initPop;	
 	}
 	
@@ -110,8 +107,9 @@ global {
 		  ask people {do die;}
 		  int nbPeopleToCreatePerBuilding;
 		  ask building where  (each.usage="R"){
-		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2]): ((self.scale="M") ? (area/density_map[1]):(area/density_map[0])));
-		  	create people number: nbPeopleToCreatePerBuilding/10 {
+		
+		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
+		  	create people number: nbPeopleToCreatePerBuilding/100 {
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -128,7 +126,7 @@ global {
 				objective <- "resting"; 
 			}				
 		  }
-		  if(!empty(density_array)){ write "initPop from density array" + density_array + " nb people: " + length(people);}else{write "initPop without density array" + density_array + " nb people: " + length(people);} 
+		  write "initPop from density array" + density_array + " nb people: " + length(people); 
 		
 		 }
 	
@@ -174,20 +172,24 @@ global {
 		interaction_graph <- graph<people, people>(people as_distance_graph(distance));
 	}
 	
-	reflex updatePop when: ((cycle mod 8640) = 0){
+	reflex initSim when: ((cycle mod 8640) = 0){
 		do initPop;
+		nbInteraction<-[];
 	}
 }
 
 species building schedules: []{
 	string usage;
 	string scale;
-	float floors;
+	float nbFloors<-1.0;//1 by default if no value is set.
 	int depth;	
 	float area;
 	float perimeter;
 	aspect base {	
      	draw shape color: rgb(50,50,50,125);
+	}
+	aspect realistic {	
+     	draw shape color: rgb(50,50,50,125) depth:nbFloors;
 	}
 	aspect usage{
 		draw shape color: color_map[usage];
@@ -360,7 +362,7 @@ experiment CityScopeVolpe type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
-		display CityScope  type:opengl background:#black toolbar:true{
+		display CityScope  type:opengl background:#black{
 			species table aspect:base refresh:false;
 			species road aspect: base;
 			species building aspect:usage position:{0,0,-0.001};
@@ -380,6 +382,19 @@ experiment CityScopeVolpe type: gui {
              		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamablue : ((i=1 or i=4) ? #gamaorange: #gamared) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
              	}
             }
+            graphics "plot"{
+            	if(drawInteraction){
+	            	point ppos<-{world.shape.width*1.1,world.shape.height*0.2};
+	             	point proi<-{2500,1000};
+	             	draw "interactions" color: # white font: font("Helvetica", 25, #plain) at: {ppos.x+proi.x*0.35,ppos.y+150};
+	             	draw string(length(interaction_graph.edges)) color: # white font: font("Helvetica", 20, #plain) at: {ppos.x-proi.x*0.1,ppos.y-proi.y/2};
+	             	draw line([ppos,{ppos.x,ppos.y-proi.y}]) color:#white width:1 end_arrow:50;
+	             	draw line([ppos,{ppos.x+proi.x,ppos.y}]) color:#white width:1 end_arrow:50;
+	             	nbInteraction<+{ppos.x+(cycle/8640)*proi.x,ppos.y-(length(interaction_graph.edges))/5};
+	             	draw line(nbInteraction) color:#white width:2;	
+            	}
+             	
+            }
             graphics "time"{
              	point hpos<-{world.shape.width*0.85,world.shape.height*0.7};
              	int barW<-20;
@@ -397,8 +412,7 @@ experiment CityScopeVolpe type: gui {
 					}
 				} 	
 			}
-			species people aspect:scale;
-			
+			species people aspect:scale;	
 		}			
 	}
 }
