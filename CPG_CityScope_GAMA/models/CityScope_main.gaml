@@ -43,6 +43,7 @@ global {
 	
 	float step <- 10 #sec;
 	int current_hour update: (time / #hour) mod 24 ;
+	int current_day<-0;
 	int min_work_start <-4 ;
 	int max_work_start <- 10;
 	int min_lunch_start <- 11;
@@ -60,7 +61,7 @@ global {
 	float brickSize;
 	string cityIOUrl;
 	//Global indicator
-	list<point> nbInteraction;
+	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
 	
 	init {
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),nbFloors::1+float(read ("Floors"))]{
@@ -100,7 +101,7 @@ global {
 	    	do initGrid;
 	    }	
 	    write cityScopeCity + " width: " + world.shape.width + " height: " + world.shape.height;
-	    do initPop;	
+	    //do initPop;	
 	}
 	
 		action initPop{
@@ -174,7 +175,10 @@ global {
 	
 	reflex initSim when: ((cycle mod 8640) = 0){
 		do initPop;
-		nbInteraction<-[];
+		write "current_day " + current_day;
+		current_day<-current_day+1 mod 7;
+		nbInteraction[current_day-1]<-[];
+		
 	}
 }
 
@@ -370,7 +374,7 @@ experiment CityScopeVolpe type: gui {
 			
 			graphics "text" 
 			{
-               draw string(current_hour) + "h" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.85,world.shape.height*0.975};
+               draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
                draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
                draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};
             }
@@ -387,21 +391,19 @@ experiment CityScopeVolpe type: gui {
 	            	point ppos<-{world.shape.width*1.1,world.shape.height*0.2};
 	             	point proi<-{2500,1000};
 	             	draw "interactions" color: # white font: font("Helvetica", 25, #plain) at: {ppos.x+proi.x*0.35,ppos.y+150};
-	             	draw string(length(interaction_graph.edges)) color: # white font: font("Helvetica", 20, #plain) at: {ppos.x-proi.x*0.1,ppos.y-proi.y/2};
+	             	draw string(length(interaction_graph.edges)) color: # white font: font("Helvetica", 20, #plain) at: {ppos.x-proi.x*0.125,ppos.y-proi.y/2};
 	             	draw line([ppos,{ppos.x,ppos.y-proi.y}]) color:#white width:1 end_arrow:50;
 	             	draw line([ppos,{ppos.x+proi.x,ppos.y}]) color:#white width:1 end_arrow:50;
-	             	nbInteraction<+{ppos.x+(cycle/8640)*proi.x,ppos.y-(length(interaction_graph.edges))/5};
-	             	draw line(nbInteraction) color:#white width:2;	
+	             	nbInteraction[current_day-1]<+{ppos.x+(cycle mod 8640/8640)*proi.x,ppos.y-(length(interaction_graph.edges))/5};
+	             	draw line(nbInteraction[current_day-1]) color:rgb(255,255,255) width:2;
+	             	loop i from:1 to:current_day-1{
+	             	 draw line(nbInteraction[current_day-1-i]) color:rgb(255-50*i,255-50*i,255-50*i) width:1;	
+	             	}
+	             		
             	}
              	
             }
-            graphics "time"{
-             	point hpos<-{world.shape.width*0.85,world.shape.height*0.7};
-             	int barW<-20;
-             	int factor<-20;
-            	draw rectangle(barW*current_hour+1,50) color:#gamablue at: {hpos.x+barW*current_hour*0.5,hpos.y};//{hpos.x+current_hour*barW/2,hpos.y-density_array[0]*factor/2};
-            	
-            }
+
             graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
 					loop eg over: interaction_graph.edges {
