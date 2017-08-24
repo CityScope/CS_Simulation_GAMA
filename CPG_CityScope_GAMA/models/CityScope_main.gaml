@@ -34,7 +34,7 @@ global {
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- true parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
+	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-false parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
@@ -369,7 +369,7 @@ experiment CityScopeVolpe type: gui {
 		display CityScope  type:opengl background:#black{
 			species table aspect:base refresh:false;
 			species road aspect: base;
-			species building aspect:usage position:{0,0,-0.001};
+			species building aspect:base position:{0,0,-0.001};
 			species amenity aspect: onScreen ;
 			
 			graphics "text" 
