@@ -392,16 +392,17 @@ experiment CityScopeVolpe type: gui {
 	             	point proi<-{2500,1000};
 	             	draw "interactions" color: # white font: font("Helvetica", 25, #plain) at: {ppos.x+proi.x*0.35,ppos.y+150};
 	             	draw string(length(interaction_graph.edges)) color: # white font: font("Helvetica", 20, #plain) at: {ppos.x-proi.x*0.125,ppos.y-proi.y/2};
-	             	draw line([ppos,{ppos.x,ppos.y-proi.y}]) color:#white width:1 end_arrow:50;
-	             	draw line([ppos,{ppos.x+proi.x,ppos.y}]) color:#white width:1 end_arrow:50;
+	             	draw line([ppos,{ppos.x,ppos.y-proi.y}]) color:#white width:2 end_arrow:50;
+	             	draw line([ppos,{ppos.x+proi.x,ppos.y}]) color:#white width:2 end_arrow:50;
 	             	nbInteraction[current_day-1]<+{ppos.x+(cycle mod 8640/8640)*proi.x,ppos.y-(length(interaction_graph.edges))/5};
 	             	draw line(nbInteraction[current_day-1]) color:rgb(255,255,255) width:2;
 	             	loop i from:1 to:current_day-1{
 	             	 draw line(nbInteraction[current_day-1-i]) color:rgb(255-50*i,255-50*i,255-50*i) width:1;	
 	             	}
-	             		
+	             	//draw rectangle(length(building where (each.usage="R"))/length(building)*proi.x,50) at:{ppos.x,ppos.y+200} color:color_map["R"];	
+	             	//draw rectangle(length(building where (each.usage="O"))/length(building)*proi.x,50) at:{ppos.x,ppos.y+250} color:color_map["O"];		
             	}
-             	
+            	
             }
 
             graphics "interaction_graph" {
