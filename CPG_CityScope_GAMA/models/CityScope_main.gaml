@@ -34,7 +34,7 @@ global {
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- true parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
+	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-false parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
@@ -67,6 +67,7 @@ global {
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),nbFloors::1+float(read ("Floors"))]{
 			area <-shape.area;
 			perimeter<-shape.perimeter;
+			depth<-100+rnd(500);
 		}
 		create road from: roads_shapefile ;
 		if(cityScopeCity= "volpe"){
@@ -110,7 +111,7 @@ global {
 		  ask building where  (each.usage="R"){
 		
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
-		  	create people number: nbPeopleToCreatePerBuilding/100 {
+		  	create people number: nbPeopleToCreatePerBuilding/60 { 
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -193,7 +194,7 @@ species building schedules: []{
      	draw shape color: rgb(50,50,50,125);
 	}
 	aspect realistic {	
-     	draw shape color: rgb(50,50,50,125) depth:nbFloors;
+     	draw shape color: rgb(75,75,75) depth:depth;
 	}
 	aspect usage{
 		draw shape color: color_map[usage];
@@ -231,6 +232,10 @@ species road  schedules: []{
 	rgb color <- #red ;
 	aspect base {
 		draw shape color: rgb(125,125,125,75) ;
+	}
+	
+	aspect white {
+		draw shape color: #white ;
 	}
 }
 
@@ -331,6 +336,16 @@ species amenity schedules:[]{
 	int x;
 	int y;
 	int size;
+	
+	aspect base{
+		if(fromGrid){
+			draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue,75);
+		}
+		else{
+			  draw circle(size) empty:true border:#white color: #white;
+		      draw circle(size) color: rgb(255,255,255,125);	
+		}	
+	}
 
 	aspect onScreen {
 		if(fromGrid){
@@ -369,14 +384,14 @@ experiment CityScopeVolpe type: gui {
 		display CityScope  type:opengl background:#black{
 			species table aspect:base refresh:false;
 			species road aspect: base;
-			species building aspect:base position:{0,0,-0.001};
+			species building aspect:usage position:{0,0,-0.001};
 			species amenity aspect: onScreen ;
 			
 			graphics "text" 
 			{
-               draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
-               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
-               draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};
+               //draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
+               draw imageRaster size:75#px at:{world.shape.width*0.95, world.shape.height*0.95};
+               //draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};
             }
             graphics "density"{
              	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
@@ -386,7 +401,7 @@ experiment CityScopeVolpe type: gui {
              		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamablue : ((i=1 or i=4) ? #gamaorange: #gamared) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
              	}
             }
-            graphics "plot"{
+            /*graphics "plot"{
             	if(drawInteraction){
 	            	point ppos<-{world.shape.width*1.1,world.shape.height*0.2};
 	             	point proi<-{2500,1000};
@@ -403,7 +418,7 @@ experiment CityScopeVolpe type: gui {
 	             	//draw rectangle(length(building where (each.usage="O"))/length(building)*proi.x,50) at:{ppos.x,ppos.y+250} color:color_map["O"];		
             	}
             	
-            }
+            }*/
 
             graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
