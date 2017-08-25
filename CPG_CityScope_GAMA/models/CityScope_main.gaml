@@ -34,8 +34,8 @@ global {
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
 	bool drawInteraction <- true parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
-	bool onlineGrid <-false parameter: "Online Grid:" category: "Environment";
+	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
+	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
@@ -111,7 +111,7 @@ global {
 		  ask building where  (each.usage="R"){
 		
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
-		  	create people number: nbPeopleToCreatePerBuilding/60 { 
+		  	create people number: nbPeopleToCreatePerBuilding/100 { 
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -177,7 +177,7 @@ global {
 	reflex initSim when: ((cycle mod 8640) = 0){
 		do initPop;
 		write "current_day " + current_day;
-		current_day<-current_day+1 mod 7;
+		current_day<-current_day+1 mod 6;
 		nbInteraction[current_day-1]<-[];
 		
 	}
@@ -384,12 +384,12 @@ experiment CityScopeVolpe type: gui {
 		display CityScope  type:opengl background:#black{
 			species table aspect:base refresh:false;
 			species road aspect: base;
-			species building aspect:usage position:{0,0,-0.001};
+			species building aspect:base position:{0,0,-0.001};
 			species amenity aspect: onScreen ;
 			
 			graphics "text" 
 			{
-               //draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
+               draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
                draw imageRaster size:75#px at:{world.shape.width*0.95, world.shape.height*0.95};
                //draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};
             }
@@ -401,14 +401,14 @@ experiment CityScopeVolpe type: gui {
              		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamablue : ((i=1 or i=4) ? #gamaorange: #gamared) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
              	}
             }
-            /*graphics "plot"{
+            graphics "plot"{
             	if(drawInteraction){
 	            	point ppos<-{world.shape.width*1.1,world.shape.height*0.2};
 	             	point proi<-{2500,1000};
 	             	draw "interactions" color: # white font: font("Helvetica", 25, #plain) at: {ppos.x+proi.x*0.35,ppos.y+150};
 	             	draw string(length(interaction_graph.edges)) color: # white font: font("Helvetica", 20, #plain) at: {ppos.x-proi.x*0.125,ppos.y-proi.y/2};
-	             	draw line([ppos,{ppos.x,ppos.y-proi.y}]) color:#white width:2 end_arrow:50;
-	             	draw line([ppos,{ppos.x+proi.x,ppos.y}]) color:#white width:2 end_arrow:50;
+	             	draw line([ppos,{ppos.x,ppos.y-proi.y}]) color:#white width:1 end_arrow:50;
+	             	draw line([ppos,{ppos.x+proi.x,ppos.y}]) color:#white width:1 end_arrow:50;
 	             	nbInteraction[current_day-1]<+{ppos.x+(cycle mod 8640/8640)*proi.x,ppos.y-(length(interaction_graph.edges))/5};
 	             	draw line(nbInteraction[current_day-1]) color:rgb(255,255,255) width:2;
 	             	loop i from:1 to:current_day-1{
@@ -418,7 +418,7 @@ experiment CityScopeVolpe type: gui {
 	             	//draw rectangle(length(building where (each.usage="O"))/length(building)*proi.x,50) at:{ppos.x,ppos.y+250} color:color_map["O"];		
             	}
             	
-            }*/
+            }
 
             graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
