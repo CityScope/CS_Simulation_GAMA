@@ -377,7 +377,7 @@ species table{
 
 
 
-experiment CityScopeVolpe type: gui {
+experiment CityScopeMain type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
@@ -402,7 +402,17 @@ experiment CityScopeVolpe type: gui {
              		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamablue : ((i=1 or i=4) ? #gamaorange: #gamared) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
              	}
             }
-            graphics "plot"{
+            graphics "interaction_graph" {
+				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
+					loop eg over: interaction_graph.edges {
+                        people src <- interaction_graph source_of eg;
+                        people target <- interaction_graph target_of eg;
+						geometry edge_geom <- geometry(eg);
+						draw line(edge_geom.points)  color:(src.scale = target.scale) ? color_map[src.scale] : #green;
+					}
+				} 	
+			}
+			graphics "interaction plot"{
             	if(drawInteraction){
 	            	point ppos<-{world.shape.width*1.1,world.shape.height*0.2};
 	             	point proi<-{2500,1000};
@@ -414,22 +424,9 @@ experiment CityScopeVolpe type: gui {
 	             	draw line(nbInteraction[current_day-1]) color:rgb(255,255,255) width:2;
 	             	loop i from:1 to:current_day-1{
 	             	 draw line(nbInteraction[current_day-1-i]) color:rgb(255-50*i,255-50*i,255-50*i) width:1;	
-	             	}
-	             	//draw rectangle(length(building where (each.usage="R"))/length(building)*proi.x,50) at:{ppos.x,ppos.y+200} color:color_map["R"];	
-	             	//draw rectangle(length(building where (each.usage="O"))/length(building)*proi.x,50) at:{ppos.x,ppos.y+250} color:color_map["O"];		
-            	}
-            	
+	             	}	
+            	}      	
             }
-            graphics "interaction_graph" {
-				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
-					loop eg over: interaction_graph.edges {
-                        people src <- interaction_graph source_of eg;
-                        people target <- interaction_graph target_of eg;
-						geometry edge_geom <- geometry(eg);
-						draw line(edge_geom.points)  color:(src.scale = target.scale) ? color_map[src.scale] : #green;
-					}
-				} 	
-			}
 				
 		}			
 	}
