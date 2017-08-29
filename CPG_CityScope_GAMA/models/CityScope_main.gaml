@@ -315,7 +315,7 @@ species people skills:[moving]{
 	}
 		
 	aspect scale{
-      draw circle(world.shape.width*0.005) color: color_map[scale];
+      draw circle(world.shape.width*0.001) color: color_map[scale];
 	}
 	
 	aspect scaleTable{
@@ -381,7 +381,7 @@ experiment CityScopeVolpe type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
-		display CityScope  type:opengl background:#white{
+		display CityScope  type:opengl background:#black{
 			species table aspect:base refresh:false;
 			species building aspect:usage position:{0,0,-0.001};
 			species road aspect: base;
