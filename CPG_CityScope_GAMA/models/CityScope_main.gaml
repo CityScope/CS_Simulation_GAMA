@@ -32,7 +32,7 @@ global {
 	
 	//PARAMETERS
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
-	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
+	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100;	
 	bool drawInteraction <- true parameter: "Draw Interaction:" category: "Visualization";
 	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
@@ -59,6 +59,7 @@ global {
 	float angle;
 	point center;
 	float brickSize;
+	float coeffPop;
 	string cityIOUrl;
 	//Global indicator
 	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
@@ -74,11 +75,13 @@ global {
 			angle <- -9.74;
 			center <-{3305,2075};
 			brickSize <- 70.0;
+			coeffPop<-1.0;
 		}
 		if(cityScopeCity= "andorra"){
 			angle <-3.0;
 			center <-{2525,830};
 			brickSize <- 37.5;
+			coeffPop<-1.0;
 		}
 		
 		if(localHost=false and cityMatrix = true){
@@ -111,7 +114,7 @@ global {
 		  ask building where  (each.usage="R"){
 		
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
-		  	create people number: nbPeopleToCreatePerBuilding/100 { 
+		  	create people number: (nbPeopleToCreatePerBuilding/100)*coeffPop { 
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
