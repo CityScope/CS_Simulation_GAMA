@@ -231,7 +231,7 @@ species building schedules: []{
 species road  schedules: []{
 	rgb color <- #red ;
 	aspect base {
-		draw shape color: rgb(125,125,125,75) ;
+		draw shape color: rgb(125,125,125,75);
 	}
 	
 	aspect white {
@@ -315,7 +315,7 @@ species people skills:[moving]{
 	}
 		
 	aspect scale{
-      draw circle(world.shape.width*0.001) color: color_map[scale];
+      draw circle(world.shape.width*0.005) color: color_map[scale];
 	}
 	
 	aspect scaleTable{
@@ -381,10 +381,11 @@ experiment CityScopeVolpe type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
-		display CityScope  type:opengl background:#black{
+		display CityScope  type:opengl background:#white{
 			species table aspect:base refresh:false;
+			species building aspect:usage position:{0,0,-0.001};
 			species road aspect: base;
-			species building aspect:base position:{0,0,-0.001};
+			species people aspect:scale;
 			species amenity aspect: onScreen ;
 			
 			graphics "text" 
@@ -419,7 +420,6 @@ experiment CityScopeVolpe type: gui {
             	}
             	
             }
-
             graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
 					loop eg over: interaction_graph.edges {
@@ -430,7 +430,7 @@ experiment CityScopeVolpe type: gui {
 					}
 				} 	
 			}
-			species people aspect:scale;	
+				
 		}			
 	}
 }
