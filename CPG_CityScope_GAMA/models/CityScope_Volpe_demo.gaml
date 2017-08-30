@@ -64,9 +64,12 @@ experiment CityScopeVolpeDemo type: gui {
 		}
 			
 		display CityScopeTable  type:opengl background:#black fullscreen:1 rotate:180
-		camera_pos: {4463.6173,3032.9552,4033.5415} camera_look_pos: {4464.7186,3026.0023,0.1795} camera_up_vector: {0.1564,0.9877,0.0017}{
+		//camera_pos: {4463.6173,3032.9552,4033.5415} camera_look_pos: {4464.7186,3026.0023,0.1795} camera_up_vector: {0.1564,0.9877,0.0017}{
+		
+		
+		camera_pos: {4440.366,3088.467,4853.809} camera_look_pos: {4441.693,3080.1,0.075} camera_up_vector: {0.157,0.988,0.002}{
 			//species building aspect:demoTable;
-			species amenity aspect: onTable ;
+			species amenity aspect: onTable;
 			species people aspect: scaleTable;
 			graphics "interaction_graph" {
 				if (interaction_graph != nil  and ( toggle1=7) ) {	
@@ -77,7 +80,7 @@ experiment CityScopeVolpeDemo type: gui {
 						draw line(edge_geom.points)  color:rgb(0,125,0,75);//(src.scale = target.scale) ? color_map[src.scale] : #green;
 					}
 				} 
-				draw rectangle(900,700) rotated_by 9.74 color:#black at: {2500, 2150};	
+				draw rectangle(900,700) rotated_by 9.74 color:#black at: {2500, 2150,10} ;	
 			}	
 		}
 	}
