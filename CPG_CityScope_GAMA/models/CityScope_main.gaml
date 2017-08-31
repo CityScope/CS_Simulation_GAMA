@@ -60,6 +60,7 @@ global {
 	point center;
 	float brickSize;
 	float coeffPop;
+	int coeffSize;
 	string cityIOUrl;
 	//Global indicator
 	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
@@ -76,12 +77,14 @@ global {
 			center <-{3305,2075};
 			brickSize <- 70.0;
 			coeffPop<-1.0;
+			coeffSize<-1;
 		}
 		if(cityScopeCity= "andorra"){
 			angle <-3.0;
-			center <-{2550,8750};
+			center <-{2550,850};
 			brickSize <- 37.5;
 			coeffPop<-2.0;
+			coeffSize<-2;
 		}
 		
 		if(localHost=false and cityMatrix = true){
@@ -314,12 +317,12 @@ species people skills:[moving]{
 			curMovingMode <- "wandering";
 		}
 		if(curMovingMode = "wandering"){
-			do wander speed:0.5 #km / #h;
+			do wander speed:(0.5/coeffSize) #km / #h;
 		}
 	}
 		
 	aspect scale{
-      draw circle(world.shape.width*0.001) color: color_map[scale];
+      draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale];
 	}
 	
 	aspect scaleTable{
@@ -340,15 +343,15 @@ species amenity schedules:[]{
 	rgb color;
 	int x;
 	int y;
-	int size;
+	float size;
 	
 	aspect base{
 		if(fromGrid){
 			draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue,75);
 		}
 		else{
-			  draw circle(size) empty:true border:#white color: #white;
-		      draw circle(size) color: rgb(255,255,255,125);	
+			  draw circle(size/coeffSize) empty:true border:#white color: #white;
+		      draw circle(size/coeffSize) color: rgb(255,255,255,125);	
 		}	
 	}
 
