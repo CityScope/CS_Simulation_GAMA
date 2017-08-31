@@ -358,6 +358,7 @@ species people skills:[moving]{
 	}
 	
 	aspect dynamic{
+	if(toggle1 !=1){
       if(!fromTheGrid){		
 		  if(objective = "resting"){
 		  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue)) empty:true;
@@ -373,6 +374,7 @@ species people skills:[moving]{
 		  	draw square(world.shape.width*(0.001/coeffSize)*2) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;
 		  }  
 	  }
+	 } 
 	}
 	
 	aspect scaleTable{
