@@ -25,7 +25,7 @@ global {
 	list<float> density_array;
 	int toggle1;
 	map<int,list> citymatrix_map_settings<- [-1::["Green","Green"],0::["R","L"],1::["R","M"],2::["R","S"],3::["O","L"],4::["O","M"],5::["O","S"],6::["A","Road"],7::["A","Plaza"],8::["Pa","Park"],9::["P","Parking"]];	
-	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#brown, "Road"::#black,"Park"::#green,"Parking"::#darkgray]; 
+	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#white, "Road"::#black,"Park"::#green,"Parking"::rgb(50,50,50)]; 
 	list scale_string<- ["S", "M", "L"];
 	list usage_string<- ["R", "O"]; 
 	list density_map<- [89,55,15,30,18,5]; //Use for Volpe Site (Could be change for each city)
@@ -38,7 +38,7 @@ global {
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
-	bool realAmenity <-false parameter: "Real Amenities:" category: "Environment";
+	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
 	
 	float step <- 10 #sec;
@@ -114,11 +114,11 @@ global {
 		action initPop{
 		  ask people {do die;}
 		  int nbPeopleToCreatePerBuilding;
+		  //EXisting people
 		  ask building where  (each.usage="R"){
-		
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
 		  	create people number: (nbPeopleToCreatePerBuilding/100)*coeffPop { 
-				living_place <- myself;
+		  		living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
 				speed <- min_speed + rnd (max_speed - min_speed) ;
@@ -133,6 +133,26 @@ global {
 				dining_place <- one_of(amenity where (each.scale=scale )) ;
 				objective <- "resting"; 
 			}				
+		  }
+		  ask amenity where  (each.usage="R"){
+		  	create people number: 1 { 
+				living_place <- myself;
+				location <- any_location_in (living_place);
+				scale <- myself.scale;	
+				speed <- min_speed + rnd (max_speed - min_speed) ;
+				initialSpeed <-speed;
+				time_to_work <- min_work_start + rnd (max_work_start - min_work_start) ;
+				time_to_lunch <- min_lunch_start + rnd (max_lunch_start - min_lunch_start) ;
+				time_to_rework <- min_rework_start + rnd (max_rework_start - min_rework_start) ;
+				time_to_dinner <- min_dinner_start + rnd (max_dinner_start - min_dinner_start) ;
+				time_to_sleep <- min_work_end + rnd (max_work_end - min_work_end) ;
+				working_place <- one_of(building  where (each.usage="O" and each.scale=scale)) ;
+				eating_place <- one_of(amenity where (each.scale=scale )) ;
+				dining_place <- one_of(amenity where (each.scale=scale )) ;
+				objective <- "resting";
+				fromTheGrid<-true; 
+			}
+		  	
 		  }
 		  write "initPop from density array" + density_array + " nb people: " + length(people); 
 		
@@ -170,11 +190,11 @@ global {
           if ((x = 0 and y = 0) and fromGrid = true){
             do die;
           }
-          if(cityScopeCity= "andorra"){
+          /*if(cityScopeCity= "andorra"){
           	if((y<3 or y>11) or x>14){
           		do die;
           	}
-          }
+          }*/
         }		
 	}
 		
@@ -271,6 +291,7 @@ species people skills:[moving]{
 	int degree;
 	float radius;
 	bool moveOnRoad<-true;
+	bool fromTheGrid<-false;
 	
 	action travellingMode{
 		curMovingMode <- "travelling";
@@ -327,15 +348,30 @@ species people skills:[moving]{
 	}
 		
 	aspect scale{
-      draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale];
+		if(!fromTheGrid){
+			draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale];
+		}else{
+			draw square(world.shape.width*(0.001/coeffSize)*2) color: color_map[scale];
+		}
+      
+      //draw shape color: color_map[scale];
 	}
 	
 	aspect dynamic{
-	  if(objective = "resting"){
-	  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue)) empty:true;
-	  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue),100);
-	  }	else{
-	  	draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;
+      if(!fromTheGrid){		
+		  if(objective = "resting"){
+		  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue)) empty:true;
+		  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue),100);
+		  }	else{
+		  	draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;
+		  }  
+	  }else{
+	  	if(objective = "resting"){
+		  	draw square(world.shape.width*(0.001/coeffSize)*2) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue)) empty:true;
+		  	draw square(world.shape.width*(0.001/coeffSize)*2) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue),100);
+		  }	else{
+		  	draw square(world.shape.width*(0.001/coeffSize)*2) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;
+		  }  
 	  }
 	}
 	
@@ -348,10 +384,8 @@ species people skills:[moving]{
 	}
 }
 
-species amenity schedules:[]{
+species amenity parent:building schedules:[]{
 	int id;
-	string usage;
-	string scale;
 	bool fromGrid;
 	float density <-0.0;
 	rgb color;
