@@ -354,6 +354,16 @@ species amenity schedules:[]{
 		      draw circle(size/coeffSize) color: rgb(255,255,255,125);	
 		}	
 	}
+	
+	aspect realistic {	
+     	if(fromGrid){
+			draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue,75) depth:density;
+		}
+		else{
+			  draw circle(size/coeffSize) empty:true border:#white color: #white;
+		      draw circle(size/coeffSize) color: rgb(255,255,255,125);	
+		}
+	}
 
 	aspect onScreen {
 		if(fromGrid){
@@ -385,22 +395,21 @@ species table{
 
 
 
-experiment CityScopeMain type: gui {
+experiment CityScopeMainVirtual type: gui{
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
-		display CityScope  type:opengl background:#black{
+		display CityScopeVirtual  type:opengl background:#black virtual:true{
 			species table aspect:base refresh:false;
-			species building aspect:usage position:{0,0,-0.001};
-			species road aspect: base;
+			species building aspect:demoScreen position:{0,0,-0.001};
+			species road aspect: base refresh:false;
 			species people aspect:scale;
 			species amenity aspect: onScreen ;
 			
 			graphics "text" 
 			{
                draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
-               //draw imageRaster size:75#px at:{world.shape.width*0.95, world.shape.height*0.95};
-               //draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};
+               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
             }
             graphics "density"{
              	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
