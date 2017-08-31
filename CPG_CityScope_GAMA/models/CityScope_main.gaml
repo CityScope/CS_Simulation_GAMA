@@ -184,7 +184,7 @@ global {
 	reflex initSim when: ((cycle mod 8640) = 0){
 		do initPop;
 		write "current_day " + current_day;
-		current_day<-current_day+1 mod 6;
+		current_day<-current_day mod 6 +1;
 		nbInteraction[current_day-1]<-[];
 		
 	}
