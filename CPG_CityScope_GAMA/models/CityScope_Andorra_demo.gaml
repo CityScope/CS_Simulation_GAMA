@@ -17,10 +17,10 @@ experiment CityScopeAndorraDemo type: gui {
 	float minimum_cycle_duration <- 0.02;
 	output {				
 		display CityScope  type:opengl background:#black {
-			species building aspect:base position:{0,0,-0.001};
+			species building aspect:base position:{0,0,-0.002};
 			species table aspect:base;
 			species road aspect: base refresh:false;
-			species amenity aspect: onScreen ;
+			species amenity aspect: base position:{0,0,-0.001};
 			species people aspect: scale;
 			
 			graphics "text" 

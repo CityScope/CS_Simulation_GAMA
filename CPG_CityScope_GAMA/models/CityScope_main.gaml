@@ -24,8 +24,8 @@ global {
 	list<map<string, int>> cityMatrixCell;
 	list<float> density_array;
 	int toggle1;
-	map<int,list> citymatrix_map_settings<- [-1::["Green","Green"],0::["R","L"],1::["R","M"],2::["R","S"],3::["O","L"],4::["O","M"],5::["O","S"],6::["A","Road"],7::["A","Plaza"]];	
-	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#brown, "Road"::#gray]; 
+	map<int,list> citymatrix_map_settings<- [-1::["Green","Green"],0::["R","L"],1::["R","M"],2::["R","S"],3::["O","L"],4::["O","M"],5::["O","S"],6::["A","Road"],7::["A","Plaza"],8::["Pa","Park"],9::["P","Parking"]];	
+	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#brown, "Road"::#black,"Park"::#green,"Parking"::#darkgray]; 
 	list scale_string<- ["S", "M", "L"];
 	list usage_string<- ["R", "O"]; 
 	list density_map<- [89,55,15,30,18,5]; //Use for Volpe Site (Could be change for each city)
@@ -68,7 +68,7 @@ global {
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),nbFloors::1+float(read ("Floors"))]{
 			area <-shape.area;
 			perimeter<-shape.perimeter;
-			depth<-100+rnd(500);
+			depth<-50+rnd(50);
 		}
 		create road from: roads_shapefile ;
 		if(cityScopeCity= "volpe"){
@@ -79,9 +79,9 @@ global {
 		}
 		if(cityScopeCity= "andorra"){
 			angle <-3.0;
-			center <-{2525,830};
+			center <-{2550,8750};
 			brickSize <- 37.5;
-			coeffPop<-1.0;
+			coeffPop<-2.0;
 		}
 		
 		if(localHost=false and cityMatrix = true){
@@ -159,6 +159,7 @@ global {
 				  size<-10+rnd(10);
 				  fromGrid<-true;  
 				  scale <- citymatrix_map_settings[id][1];
+				  usage<-citymatrix_map_settings[id][0];
 				  color<-color_map[scale];
               }	        
         }
@@ -332,6 +333,7 @@ species people skills:[moving]{
 
 species amenity schedules:[]{
 	int id;
+	string usage;
 	string scale;
 	bool fromGrid;
 	float density <-0.0;
@@ -394,7 +396,7 @@ experiment CityScopeMain type: gui {
 			graphics "text" 
 			{
                draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
-               draw imageRaster size:75#px at:{world.shape.width*0.95, world.shape.height*0.95};
+               //draw imageRaster size:75#px at:{world.shape.width*0.95, world.shape.height*0.95};
                //draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};
             }
             graphics "density"{
