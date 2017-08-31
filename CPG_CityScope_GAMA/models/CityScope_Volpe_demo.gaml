@@ -21,7 +21,7 @@ experiment CityScopeVolpeDemo type: gui parent:CityScopeMainVirtual{
 		display CityScopeTable  type:opengl background:#black fullscreen:1 rotate:180
 		camera_pos: {4440.366,3088.467,4853.809} camera_look_pos: {4441.693,3080.1,0.075} camera_up_vector: {0.157,0.988,0.002}{
 			species amenity aspect: onTable;
-			species people aspect: scaleTable;
+			species people aspect: dynamic;
 			graphics "interaction_graph" {
 				if (interaction_graph != nil  and ( toggle1=7) ) {	
 					loop eg over: interaction_graph.edges {

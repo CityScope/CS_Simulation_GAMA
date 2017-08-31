@@ -42,7 +42,7 @@ global {
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
 	
 	float step <- 10 #sec;
-	int current_hour update: (time / #hour) mod 24 ;
+	int current_hour update: (time / #hour) mod 24  ;
 	int current_day<-0;
 	int min_work_start <-4 ;
 	int max_work_start <- 10;
@@ -325,6 +325,16 @@ species people skills:[moving]{
       draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale];
 	}
 	
+	aspect dynamic{
+	  
+	  if(objective = "resting"){
+	  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue)) empty:true;
+	  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue),125);
+	  }	else{
+	  	draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;
+	  }
+	}
+	
 	aspect scaleTable{
 		if(toggle1 >4)
 		{
@@ -403,7 +413,7 @@ experiment CityScopeMainVirtual type: gui{
 			species table aspect:base refresh:false;
 			species building aspect:demoScreen position:{0,0,-0.001};
 			species road aspect: base refresh:false;
-			species people aspect:scale;
+			species people aspect:dynamic;
 			species amenity aspect: onScreen ;
 			
 			graphics "text" 
