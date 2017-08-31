@@ -326,7 +326,6 @@ species people skills:[moving]{
 	}
 	
 	aspect dynamic{
-	  
 	  if(objective = "resting"){
 	  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue)) empty:true;
 	  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue),125);
