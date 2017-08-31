@@ -38,7 +38,7 @@ global {
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
-	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
+	bool realAmenity <-false parameter: "Real Amenities:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
 	
 	float step <- 10 #sec;
@@ -169,6 +169,11 @@ global {
         ask amenity{
           if ((x = 0 and y = 0) and fromGrid = true){
             do die;
+          }
+          if(cityScopeCity= "andorra"){
+          	if((y<3 or y>11) or x>14){
+          		do die;
+          	}
           }
         }		
 	}
