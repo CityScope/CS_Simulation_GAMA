@@ -328,7 +328,7 @@ species people skills:[moving]{
 	aspect dynamic{
 	  if(objective = "resting"){
 	  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue)) empty:true;
-	  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue),125);
+	  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue),100);
 	  }	else{
 	  	draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;
 	  }
@@ -408,7 +408,7 @@ experiment CityScopeMainVirtual type: gui{
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
-		display CityScopeVirtual  type:opengl background:#black virtual:true{
+		display CityScopeVirtual  type:opengl background:#black virtual:true toolbar:false{
 			species table aspect:base refresh:false;
 			species building aspect:demoScreen position:{0,0,-0.001};
 			species road aspect: base refresh:false;
