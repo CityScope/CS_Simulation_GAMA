@@ -135,7 +135,8 @@ global {
 			}				
 		  }
 		  ask amenity where  (each.usage="R"){
-		  	create people number: 1 { 
+		  	float nb <- (self.scale ="L") ? density_array[0] : ((self.scale ="M") ? density_array[1] :density_array[2]);
+		  	create people number: 1 + nb { 
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
