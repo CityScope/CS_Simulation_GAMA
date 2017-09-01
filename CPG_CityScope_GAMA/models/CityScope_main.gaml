@@ -131,7 +131,8 @@ global {
 				working_place <- one_of(building  where (each.usage="O" and each.scale=scale)) ;
 				eating_place <- one_of(amenity where (each.scale=scale )) ;
 				dining_place <- one_of(amenity where (each.scale=scale )) ;
-				objective <- "resting"; 
+				objective <- "resting";
+				fromTheGrid<-false;  
 			}				
 		  }
 		  ask amenity where  (each.usage="R"){
@@ -360,20 +361,13 @@ species people skills:[moving]{
 	
 	aspect dynamic{
 	if(toggle1 !=1){
-      if(!fromTheGrid){		
-		  if(objective = "resting"){
-		  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue)) empty:true;
-		  	draw circle(world.shape.width*(0.001/coeffSize)) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue),100);
-		  }	else{
-		  	draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;
-		  }  
+      if(!fromTheGrid){	
+		  //draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;
+		  draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale];
+		   
 	  }else{
-	  	if(objective = "resting"){
-		  	draw square(world.shape.width*(0.001/coeffSize)*2) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue)) empty:true;
-		  	draw square(world.shape.width*(0.001/coeffSize)*2) color: rgb(int(color_map[scale].red),int(color_map[scale].green),int(color_map[scale].blue),100);
-		  }	else{
-		  	draw square(world.shape.width*(0.001/coeffSize)*2) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;
-		  }  
+		  //draw square(world.shape.width*(0.001/coeffSize)*2) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;  
+		  draw square(world.shape.width*(0.001/coeffSize)*2) color: color_map[scale];  
 	  }
 	 } 
 	}
