@@ -19,17 +19,6 @@ global {
 	graph road_graph;
 	graph<people, people> interaction_graph;
 	
-	//////////// CITYMATRIX   //////////////
-	map<string, unknown> cityMatrixData;
-	list<map<string, int>> cityMatrixCell;
-	list<float> density_array;
-	int toggle1;
-	map<int,list> citymatrix_map_settings<- [-1::["Green","Green"],0::["R","L"],1::["R","M"],2::["R","S"],3::["O","L"],4::["O","M"],5::["O","S"],6::["A","Road"],7::["A","Plaza"],8::["Pa","Park"],9::["P","Parking"]];	
-	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#white, "Road"::#black,"Park"::#green,"Parking"::rgb(50,50,50)]; 
-	list scale_string<- ["S", "M", "L"];
-	list usage_string<- ["R", "O"]; 
-	list density_map<- [89,55,15,30,18,5]; //Use for Volpe Site (Could be change for each city)
-	
 	//PARAMETERS
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100;	
@@ -40,6 +29,17 @@ global {
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
+	
+	/////////// CITYMATRIX   //////////////
+	map<string, unknown> cityMatrixData;
+	list<map<string, int>> cityMatrixCell;
+	list<float> density_array;
+	int toggle1;
+	map<int,list> citymatrix_map_settings<- [-1::["Green","Green"],0::["R","L"],1::["R","M"],2::["R","S"],3::["O","L"],4::["O","M"],5::["O","S"],6::["A","Road"],7::["A","Plaza"],8::["Pa","Park"],9::["P","Parking"]];	
+	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#white, "Road"::#black,"Park"::#green,"Parking"::rgb(50,50,50)]; 
+	list scale_string<- ["S", "M", "L"];
+	list usage_string<- ["R", "O"]; 
+	list density_map<- [89,55,15,30,18,5]; //Use for Volpe Site (Could be change for each city)
 	
 	float step <- 10 #sec;
 	int current_hour update: (time / #hour) mod 24  ;
@@ -66,12 +66,22 @@ global {
 	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
 	
 	init {
+		create table from: table_bound_shapefile;
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),nbFloors::1+float(read ("Floors"))]{
 			area <-shape.area;
 			perimeter<-shape.perimeter;
 			depth<-50+rnd(50);
 		}
 		create road from: roads_shapefile ;
+		road_graph <- as_edge_graph(road);
+		
+		if(realAmenity = true){
+          create amenity from: amenities_shapefile{
+		    scale <- scale_string[rnd(2)];	
+		    fromGrid<-false;
+		    size<-10+rnd(20);
+		  }		
+        }
 		if(cityScopeCity= "volpe"){
 			angle <- -9.74;
 			center <-{3305,2075};
@@ -86,29 +96,13 @@ global {
 			coeffPop<-2.0;
 			coeffSize<-2;
 		}
-		
-		if(localHost=false and cityMatrix = true){
-			cityIOUrl <-"https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity;
-		}
-		else{
-			cityIOUrl <-"http://localhost:8080/table/citymatrix_"+cityScopeCity;
-		}
-		
-	    road_graph <- as_edge_graph(road);
-		create table from: table_bound_shapefile;
-        
-        if(realAmenity = true){
-          create amenity from: amenities_shapefile{
-		    scale <- scale_string[rnd(2)];	
-		    fromGrid<-false;
-		    size<-10+rnd(20);
-		  }		
-        }
+		      
+        cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
+
 	    if(cityMatrix = true){
 	    	do initGrid;
 	    }	
 	    write cityScopeCity + " width: " + world.shape.width + " height: " + world.shape.height;
-	    //do initPop;	
 	}
 	
 		action initPop{
@@ -137,7 +131,7 @@ global {
 		  }
 		  ask amenity where  (each.usage="R"){
 		  	float nb <- (self.scale ="L") ? density_array[0] : ((self.scale ="M") ? density_array[1] :density_array[2]);
-		  	create people number: 1 + nb { 
+		  	create people number: nb/2 { 
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -157,7 +151,6 @@ global {
 		  	
 		  }
 		  write "initPop from density array" + density_array + " nb people: " + length(people); 
-		
 		 }
 	
 	action initGrid{
@@ -349,24 +342,13 @@ species people skills:[moving]{
 		}
 	}
 		
-	aspect scale{
-		if(!fromTheGrid){
-			draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale];
-		}else{
-			draw square(world.shape.width*(0.001/coeffSize)*2) color: color_map[scale];
-		}
-      
-      //draw shape color: color_map[scale];
-	}
 	
-	aspect dynamic{
+	aspect scale{
 	if(toggle1 !=1){
       if(!fromTheGrid){	
-		  //draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;
 		  draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale];
 		   
 	  }else{
-		  //draw square(world.shape.width*(0.001/coeffSize)*2) color: color_map[scale] empty:(curMovingMode = "wandering") ? false:true;  
 		  draw square(world.shape.width*(0.001/coeffSize)*2) color: color_map[scale];  
 	  }
 	 } 
@@ -448,7 +430,7 @@ experiment CityScopeMainVirtual type: gui{
 			species table aspect:base refresh:false;
 			species building aspect:demoScreen position:{0,0,-0.001};
 			species road aspect: base refresh:false;
-			species people aspect:dynamic;
+			species people aspect:scale;
 			species amenity aspect: onScreen ;
 			
 			graphics "text" 
