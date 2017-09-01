@@ -467,7 +467,7 @@ experiment CityScopeMainVirtual type: gui{
              	int barW<-60;
              	int factor<-20;
              	loop i from: 0 to: length(density_array) -1{
-             		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamablue : ((i=1 or i=4) ? #gamaorange: #gamared) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
+             		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamared : ((i=1 or i=4) ? #gamaorange: #gamablue) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
              	}
             }
             graphics "interaction_graph" {
