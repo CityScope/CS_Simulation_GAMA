@@ -97,7 +97,7 @@ species pev skills: [moving]{
 
 experiment fieldofvision type: gui {
 	float minimum_cycle_duration <- 0.05;
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"kendall" among:["kendall", "Andorra"];	
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "Andorra"];	
 	output {
 		display view type:opengl{
 			species obstacle;
