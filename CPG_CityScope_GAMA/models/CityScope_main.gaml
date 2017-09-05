@@ -144,7 +144,6 @@ global {
 		  ask building where  (each.usage="R"){
 		  	
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
-		  	write "create" + nbPeopleToCreatePerBuilding;
 		  	create people number: (nbPeopleToCreatePerBuilding/100)*coeffPop { 
 		  		living_place <- myself;
 				location <- any_location_in (living_place);
