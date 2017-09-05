@@ -21,10 +21,10 @@ global {
 	
 	//PARAMETERS
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
-	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100;	
-	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
-	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
+	int distance parameter: 'distance ' category: "Visualization" min: 1 max:200 <- 100;	
+	bool drawInteraction <- true parameter: "Draw Interaction:" category: "Visualization";
+	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
+	bool onlineGrid <-false parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
@@ -59,8 +59,8 @@ global {
 	float angle;
 	point center;
 	float brickSize;
-	float coeffPop;
-	int coeffSize;
+	float coeffPop<-1.0;
+	int coeffSize<-1;
 	string cityIOUrl;
 	//Global indicator
 	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
@@ -91,10 +91,42 @@ global {
 		}
 		if(cityScopeCity= "andorra"){
 			angle <-3.0;
-			center <-{2550,850};
+			center <-{2550,895};
 			brickSize <- 37.5;
 			coeffPop<-2.0;
 			coeffSize<-2;
+		}
+		
+		if(cityScopeCity= "Lyon"){
+			angle <-3.0;
+			center <-{2550,895};
+			brickSize <- 37.5;
+			coeffPop<-2.0;
+			coeffSize<-1;
+		}
+		
+		if(cityScopeCity= "San_Francisco"){
+			angle <-3.0;
+			center <-{2550,895};
+			brickSize <- 37.5;
+			coeffPop<-10.0;
+			coeffSize<-1;
+		}
+		
+		if(cityScopeCity= "Taipei_MainStation"){
+			angle <-3.0;
+			center <-{2550,895};
+			brickSize <- 37.5;
+			coeffPop<-20.0;
+			coeffSize<-1;
+		}
+		
+		if(cityScopeCity= "Shanghai"){
+			angle <-3.0;
+			center <-{2550,895};
+			brickSize <- 37.5;
+			coeffPop<-10.0;
+			coeffSize<-1;
 		}
 		      
         cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
@@ -110,7 +142,9 @@ global {
 		  int nbPeopleToCreatePerBuilding;
 		  //EXisting people
 		  ask building where  (each.usage="R"){
+		  	
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
+		  	write "create" + nbPeopleToCreatePerBuilding;
 		  	create people number: (nbPeopleToCreatePerBuilding/100)*coeffPop { 
 		  		living_place <- myself;
 				location <- any_location_in (living_place);
@@ -131,7 +165,7 @@ global {
 		  }
 		  ask amenity where  (each.usage="R"){
 		  	float nb <- (self.scale ="L") ? density_array[0] : ((self.scale ="M") ? density_array[1] :density_array[2]);
-		  	create people number: nb/2 { 
+		  	create people number: 1+nb/2 { 
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -185,11 +219,11 @@ global {
           if ((x = 0 and y = 0) and fromGrid = true){
             do die;
           }
-          /*if(cityScopeCity= "andorra"){
+          if(cityScopeCity= "andorra"){
           	if((y<3 or y>11) or x>14){
           		do die;
           	}
-          }*/
+          }
         }		
 	}
 		
@@ -423,7 +457,7 @@ species table{
 
 
 experiment CityScopeMainVirtual type: gui{
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra"];
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","Lyon"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScopeVirtual  type:opengl background:#black virtual:true toolbar:false{
@@ -442,9 +476,9 @@ experiment CityScopeMainVirtual type: gui{
              	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
              	int barW<-60;
              	int factor<-20;
-             	loop i from: 0 to: length(density_array) -1{
+             	/*loop i from: 0 to: length(density_array) -1{
              		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamared : ((i=1 or i=4) ? #gamaorange: #gamablue) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
-             	}
+             	}*/
             }
             graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
