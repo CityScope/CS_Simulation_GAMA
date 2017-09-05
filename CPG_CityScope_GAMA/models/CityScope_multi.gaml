@@ -16,13 +16,14 @@ experiment CityScopeMulti type: gui parent: CityScopeMainVirtual
 {
 	init
 	{
-		create simulation with: [cityScopeCity::"andorra", minimum_cycle_duration::0.02];
-		//create simulation with: [cityScopeCity:: "san_Francisco", minimum_cycle_duration::0.02];
-		//create simulation with: [cityScopeCity:: "Taipei_MainStation", minimum_cycle_duration::0.02];
-		//create simulation with: [cityScopeCity:: "Shanghai", minimum_cycle_duration::0.02];	
+        create simulation with: [cityScopeCity::"andorra", minimum_cycle_duration::0.02];
+		//create simulation with: [cityScopeCity::"Lyon", minimum_cycle_duration::0.02];
+		create simulation with: [cityScopeCity:: "San_Francisco", minimum_cycle_duration::0.02];
+		create simulation with: [cityScopeCity:: "Taipei_MainStation", minimum_cycle_duration::0.02];
+		create simulation with: [cityScopeCity:: "Shanghai", minimum_cycle_duration::0.02];	
 	}
 
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <- "volpe" among: ["volpe", "andorra"];
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <- "volpe" among: ["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];
 	float minimum_cycle_duration <- 0.02;
 	output
 	{
