@@ -231,20 +231,45 @@ global {
           	}
           }
         }
+		cityMatrixData <- json_file(cityIOUrl).contents;
+		density_array <- cityMatrixData["objects"]["density"];
+		
+		if(cycle>10 and dynamicPop =true){
+		if(current_density_array[0] < density_array[0]){
+			float tmp<-length(people where each.fromTheGrid) * (density_array[0]/current_density_array[0] -1);
+			do generateSquarePop(tmp,"L");			
+		}
+		if(current_density_array[0] > density_array[0]){
+			float tmp<-length(people where (each.fromTheGrid))*(1-density_array[0]/current_density_array[0]);
+			ask tmp  among (people where (each.fromTheGrid and each.scale="L")){
+				do die;
+			}
+		}
+		if(current_density_array[1] < density_array[1]){
+			float tmp<-length(people where each.fromTheGrid) * (density_array[1]/current_density_array[1] -1);
+			do generateSquarePop(tmp,"M");	
+		}
+		if(current_density_array[1] > density_array[1]){
+			float tmp<-length(people where (each.fromTheGrid))*(1-density_array[1]/current_density_array[1]);
+			ask tmp  among (people where (each.fromTheGrid and each.scale="M")){
+				do die;
+			}
+		}
+		if(current_density_array[2] < density_array[2]){
+			float tmp<-length(people where each.fromTheGrid) * (density_array[2]/current_density_array[2] -1);
+			do generateSquarePop(tmp,"S");
+		}
+		if(current_density_array[2] > density_array[2]){
+			float tmp<-length(people where (each.fromTheGrid))*(1-density_array[2]/current_density_array[2]);
+			ask tmp  among (people where (each.fromTheGrid and each.scale="S")){
+				do die;
+			}
+		}
+		}
         current_density_array<-density_array;		
 	}
 	
-	reflex regulatePop when: ((cycle mod (refreshPop+1)) = 0) and (dynamicPop = true){
-		 write "current density " + current_density_array;
-		 cityMatrixData <- json_file(cityIOUrl).contents;
-		 density_array <- cityMatrixData["objects"]["density"];
-		 write "desired density  " + density_array;
-		 
-		 int S <-length(people where (each.scale="S"));
-		 int M <-length(people where (each.scale="M"));
-		 int L <-length(people where (each.scale="L"));
-		 
-	}
+
 		
 	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){	
 		do initGrid;
@@ -270,14 +295,35 @@ global {
 		}
 		
 		averageEntropy <- averageEntropy / length(people);
-		write "Average Entropy: "+averageEntropy;	
+		//write "Average Entropy: "+averageEntropy;	
 	}
 	
 	reflex initSim when: ((cycle mod 8640) = 0){
 		do initPop;
 		current_day<-current_day mod 6 +1;
 		nbInteraction[current_day-1]<-[];
+		entropySeries[current_day-1]<-[];
 		
+	}
+	
+	action generateSquarePop(int nb, string _scale){
+		create people number:nb	{
+				living_place <- one_of(amenity where (each.scale=_scale));
+				location <- any_location_in (living_place);
+				scale <- _scale;	
+				speed <- min_speed + rnd (max_speed - min_speed) ;
+				initialSpeed <-speed;
+				time_to_work <- min_work_start + rnd (max_work_start - min_work_start) ;
+				time_to_lunch <- min_lunch_start + rnd (max_lunch_start - min_lunch_start) ;
+				time_to_rework <- min_rework_start + rnd (max_rework_start - min_rework_start) ;
+				time_to_dinner <- min_dinner_start + rnd (max_dinner_start - min_dinner_start) ;
+				time_to_sleep <- min_work_end + rnd (max_work_end - min_work_end) ;
+				working_place <- one_of(building  where (each.usage="O" and each.scale=scale)) ;
+				eating_place <- one_of(amenity where (each.scale=scale )) ;
+				dining_place <- one_of(amenity where (each.scale=scale )) ;
+				objective <- "resting";
+				fromTheGrid<-true; 
+			}
 	}
 }
 
@@ -530,7 +576,7 @@ experiment CityScopeMainVirtual type: gui{
 			
 			graphics "Entropy plot"{
             	if(drawInteraction){
-	            	point ppos<-{world.shape.width*1.1,world.shape.height*0.2};
+	            	point ppos<-{world.shape.width*1.1,world.shape.height*0.5};
 	             	point proi<-{2500,1000};
 	             	draw "Average Entropy" color: # white font: font("Helvetica", 25, #plain) at: {ppos.x+proi.x*0.35,ppos.y+150};
 	             	draw string(averageEntropy/log(3)) color: # white font: font("Helvetica", 20, #plain) at: {ppos.x-proi.x*0.125,ppos.y-proi.y/2};
