@@ -13,12 +13,19 @@ global {
 }
 
 experiment CityScopeAndorraDemo type: gui parent:CityScopeMainVirtual{
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"andorra" among:["kendall", "andorra"];	
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"andorra";	
 	float minimum_cycle_duration <- 0.02;
+	init{
+		angle <-3.0;
+		center <-{2550,895};
+		brickSize <- 37.5;
+		coeffPop<-2.0;
+		coeffSize<-2;
+	}
 	output {				
 		display CityScope type:opengl parent:CityScopeVirtual{}	
 			
-		/*display CityScopeTable  type:opengl background:#black fullscreen:0 rotate:180
+		display CityScopeTable  type:opengl background:#black fullscreen:0 rotate:180
 		camera_pos: {4463.6173,3032.9552,4033.5415} camera_look_pos: {4464.7186,3026.0023,0.1795} camera_up_vector: {0.1564,0.9877,0.0017}{
 			species amenity aspect: onTable ;
 			species people aspect: scaleTable;
@@ -32,6 +39,6 @@ experiment CityScopeAndorraDemo type: gui parent:CityScopeMainVirtual{
 				}
 				 draw rectangle(900,700) rotated_by 9.74 color:#black at: { 2500, 2150};	
 			}		
-		}*/
+		}
 	}
 }

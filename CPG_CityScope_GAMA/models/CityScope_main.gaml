@@ -82,52 +82,6 @@ global {
 		    size<-10+rnd(20);
 		  }		
         }
-		if(cityScopeCity= "volpe"){
-			angle <- -9.74;
-			center <-{3305,2075};
-			brickSize <- 70.0;
-			coeffPop<-1.0;
-			coeffSize<-1;
-		}
-		if(cityScopeCity= "andorra"){
-			angle <-3.0;
-			center <-{2550,895};
-			brickSize <- 37.5;
-			coeffPop<-2.0;
-			coeffSize<-2;
-		}
-		
-		if(cityScopeCity= "Lyon"){
-			angle <-3.0;
-			center <-{2550,895};
-			brickSize <- 37.5;
-			coeffPop<-2.0;
-			coeffSize<-1;
-		}
-		
-		if(cityScopeCity= "San_Francisco"){
-			angle <-3.0;
-			center <-{2550,895};
-			brickSize <- 37.5;
-			coeffPop<-10.0;
-			coeffSize<-1;
-		}
-		
-		if(cityScopeCity= "Taipei_MainStation"){
-			angle <-3.0;
-			center <-{2550,895};
-			brickSize <- 37.5;
-			coeffPop<-20.0;
-			coeffSize<-1;
-		}
-		
-		if(cityScopeCity= "Shanghai"){
-			angle <-3.0;
-			center <-{2550,895};
-			brickSize <- 37.5;
-			coeffPop<-10.0;
-			coeffSize<-1;
-		}
 		      
         cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
 
@@ -456,7 +410,7 @@ species table{
 
 
 experiment CityScopeMainVirtual type: gui{
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","Lyon"];
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScopeVirtual  type:opengl background:#black virtual:true toolbar:false{
