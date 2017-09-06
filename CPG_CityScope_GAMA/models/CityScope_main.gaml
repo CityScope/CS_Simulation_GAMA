@@ -30,12 +30,13 @@ global {
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
 	bool dynamicPop <-true parameter: "Dynamic Population:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
-	int refreshPop <- 500 min: 1 max:1000 parameter: "Pop Refresh rate (cycle):" category: "Environment";
+	int refreshPop <- 100 min: 1 max:1000 parameter: "Pop Refresh rate (cycle):" category: "Environment";
 	
 	/////////// CITYMATRIX   //////////////
 	map<string, unknown> cityMatrixData;
 	list<map<string, int>> cityMatrixCell;
 	list<float> density_array;
+	list<float> current_density_array;
 	int toggle1;
 	map<int,list> citymatrix_map_settings<- [-1::["Green","Green"],0::["R","L"],1::["R","M"],2::["R","S"],3::["O","L"],4::["O","M"],5::["O","S"],6::["A","Road"],7::["A","Plaza"],8::["Pa","Park"],9::["P","Parking"]];	
 	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#white, "Road"::#black,"Park"::#green,"Parking"::rgb(50,50,50)]; 
@@ -143,9 +144,7 @@ global {
 		action initPop{
 		  ask people {do die;}
 		  int nbPeopleToCreatePerBuilding;
-		  //EXisting people
-		  ask building where  (each.usage="R"){
-		  	
+		  ask building where  (each.usage="R"){  	
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
 		  	create people number: (nbPeopleToCreatePerBuilding/100)*coeffPop { 
 		  		living_place <- myself;
@@ -207,7 +206,6 @@ global {
 		      	  id <-int(l["type"]);
 		      	  x<-l["x"];
 		      	  y<-l["y"];
-		      	  write "center" + center;
 				  location <- {	center.x + (13-l["x"])*brickSize,	center.y+ l["y"]*brickSize};  
 				  location<- {(location.x * cos(angle) + location.y * sin(angle)),-location.x * sin(angle) + location.y * cos(angle)};
 				  shape <- square(brickSize*0.9) at_location location;	
@@ -227,14 +225,20 @@ global {
           		do die;
           	}
           }
-        }		
+        }
+        current_density_array<-density_array;		
 	}
 	
-	reflex regulatePop when: ((cycle mod refreshPop) = 0) and (dynamicPop = true){
-		 write "la il faut reguler les gars";
+	reflex regulatePop when: ((cycle mod (refreshPop+1)) = 0) and (dynamicPop = true){
+		 write "current density " + current_density_array;
+		 cityMatrixData <- json_file(cityIOUrl).contents;
+		 density_array <- cityMatrixData["objects"]["density"];
+		 write "desired density  " + density_array;
+		 
 		 int S <-length(people where (each.scale="S"));
 		 int M <-length(people where (each.scale="M"));
 		 int L <-length(people where (each.scale="L"));
+		 
 	}
 		
 	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){	
