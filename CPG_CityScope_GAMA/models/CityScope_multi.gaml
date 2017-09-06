@@ -16,10 +16,10 @@ experiment CityScopeMulti type: gui parent: CityScopeMainVirtual
 {
 	init
 	{
-        create simulation with: [cityScopeCity::"andorra", minimum_cycle_duration::0.02, angle::3.0, center::{2550,895},brickSize::37.5,coeffPop::2.0,coeffSize::2];
-		create simulation with: [cityScopeCity:: "San_Francisco", minimum_cycle_duration::0.02,angle::3.0, center::{2550,895},brickSize::37.5,coeffPop::15,coeffSize::1];
-		create simulation with: [cityScopeCity:: "Taipei_MainStation", minimum_cycle_duration::0.02,angle::3.0, center::{2550,895},brickSize::37.5,coeffPop::40.0,coeffSize::1];
-		create simulation with: [cityScopeCity:: "Shanghai", minimum_cycle_duration::0.02,angle::3.0, center::{2550,895},brickSize::37.5,coeffPop::10.0,coeffSize::1];	
+        create simulation with: [cityScopeCity::"andorra", minimum_cycle_duration::0.02];
+		create simulation with: [cityScopeCity:: "San_Francisco", minimum_cycle_duration::0.02];
+		create simulation with: [cityScopeCity:: "Taipei_MainStation", minimum_cycle_duration::0.02];
+		create simulation with: [cityScopeCity:: "Shanghai", minimum_cycle_duration::0.02];	
 	}
 
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <- "volpe" among: ["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];

@@ -22,13 +22,15 @@ global {
 	//PARAMETERS
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 max:200 <- 100;	
-	bool drawInteraction <- true parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
-	bool onlineGrid <-false parameter: "Online Grid:" category: "Environment";
+	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
+	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
+	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
+	bool dynamicPop <-true parameter: "Dynamic Population:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
+	int refreshPop <- 500 min: 1 max:1000 parameter: "Pop Refresh rate (cycle):" category: "Environment";
 	
 	/////////// CITYMATRIX   //////////////
 	map<string, unknown> cityMatrixData;
@@ -82,6 +84,53 @@ global {
 		    size<-10+rnd(20);
 		  }		
         }
+        
+        if(cityScopeCity= "volpe"){
+			angle <- -9.74;
+			center <-{3305,2075};
+			brickSize <- 70.0;
+			coeffPop<-1.0;
+			coeffSize<-1;
+		}
+		if(cityScopeCity= "andorra"){
+			angle <-3.0;
+			center <-{2550,895};
+			brickSize <- 37.5;
+			coeffPop<-2.0;
+			coeffSize<-2;
+		}
+		
+		if(cityScopeCity= "Lyon"){
+			angle <-3.0;
+			center <-{2550,895};
+			brickSize <- 37.5;
+			coeffPop<-2.0;
+			coeffSize<-1;
+		}
+		
+		if(cityScopeCity= "San_Francisco"){
+			angle <-3.0;
+			center <-{2550,895};
+			brickSize <- 37.5;
+			coeffPop<-10.0;
+			coeffSize<-1;
+		}
+		
+		if(cityScopeCity= "Taipei_MainStation"){
+			angle <-3.0;
+			center <-{2550,895};
+			brickSize <- 37.5;
+			coeffPop<-20.0;
+			coeffSize<-1;
+		}
+		
+		if(cityScopeCity= "Shanghai"){
+			angle <-3.0;
+			center <-{2550,895};
+			brickSize <- 37.5;
+			coeffPop<-10.0;
+			coeffSize<-1;
+		}
 		      
         cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
 
@@ -158,6 +207,7 @@ global {
 		      	  id <-int(l["type"]);
 		      	  x<-l["x"];
 		      	  y<-l["y"];
+		      	  write "center" + center;
 				  location <- {	center.x + (13-l["x"])*brickSize,	center.y+ l["y"]*brickSize};  
 				  location<- {(location.x * cos(angle) + location.y * sin(angle)),-location.x * sin(angle) + location.y * cos(angle)};
 				  shape <- square(brickSize*0.9) at_location location;	
@@ -179,6 +229,13 @@ global {
           }
         }		
 	}
+	
+	reflex regulatePop when: ((cycle mod refreshPop) = 0) and (dynamicPop = true){
+		 write "la il faut reguler les gars";
+		 int S <-length(people where (each.scale="S"));
+		 int M <-length(people where (each.scale="M"));
+		 int L <-length(people where (each.scale="L"));
+	}
 		
 	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){	
 		do initGrid;
@@ -190,7 +247,6 @@ global {
 	
 	reflex initSim when: ((cycle mod 8640) = 0){
 		do initPop;
-		write "current_day " + current_day;
 		current_day<-current_day mod 6 +1;
 		nbInteraction[current_day-1]<-[];
 		
@@ -429,9 +485,9 @@ experiment CityScopeMainVirtual type: gui{
              	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
              	int barW<-60;
              	int factor<-20;
-             	/*loop i from: 0 to: length(density_array) -1{
+             	loop i from: 0 to: length(density_array) -1{
              		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamared : ((i=1 or i=4) ? #gamaorange: #gamablue) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
-             	}*/
+             	}
             }
             graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	

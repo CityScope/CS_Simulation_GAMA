@@ -15,13 +15,6 @@ global {
 experiment CityScopeAndorraDemo type: gui parent:CityScopeMainVirtual{
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"andorra";	
 	float minimum_cycle_duration <- 0.02;
-	init{
-		angle <-3.0;
-		center <-{2550,895};
-		brickSize <- 37.5;
-		coeffPop<-2.0;
-		coeffSize<-2;
-	}
 	output {				
 		display CityScope type:opengl parent:CityScopeVirtual{}	
 			
