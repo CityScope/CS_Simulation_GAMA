@@ -67,6 +67,8 @@ global {
 	string cityIOUrl;
 	//Global indicator
 	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
+	list<list<point>> entropySeries <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
+	float averageEntropy;
 	float averageClusterSize <-1;
 	list<list<people>> clusters <- [];
 	
