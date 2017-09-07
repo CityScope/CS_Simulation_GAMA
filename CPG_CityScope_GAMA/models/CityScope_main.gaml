@@ -23,12 +23,12 @@ global {
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 max:200 <- 100;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
+	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
-	bool dynamicPop <-true parameter: "Dynamic Population:" category: "Environment";
+	bool dynamicPop <-false parameter: "Dynamic Population:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
 	int refreshPop <- 100 min: 1 max:1000 parameter: "Pop Refresh rate (cycle):" category: "Environment";
 	
