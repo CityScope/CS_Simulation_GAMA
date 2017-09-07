@@ -23,7 +23,7 @@ global {
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
 	int distance parameter: 'distance ' category: "Visualization" min: 1 max:200 <- 100;	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
+	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
@@ -96,7 +96,7 @@ global {
 			center <-{3305,2075};
 			brickSize <- 70.0;
 			coeffPop<-1.0;
-			coeffSize<-1;
+			coeffSize<-1.75;
 		}
 		if(cityScopeCity= "andorra"){
 			angle <-3.0;
