@@ -137,7 +137,7 @@ experiment CityScopeDev type: gui {
 			species mobileData aspect:timespace;
 			
 		}
-		display CityScopeDBScan  type:opengl background:#black autosave:true{
+		display CityScopeDBScan  type:opengl background:#black{
 			species road aspect: base refresh:false;
 			species mobileData aspect:dbscan_aspect;
 			
