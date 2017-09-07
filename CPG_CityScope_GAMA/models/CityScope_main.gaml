@@ -308,7 +308,7 @@ global {
 	
 	action generateSquarePop(int nb, string _scale){
 		create people number:nb	{
-				living_place <- one_of(amenity where (each.scale=_scale));
+				living_place <- one_of(amenity where (each.scale=_scale and each.fromGrid));
 				location <- any_location_in (living_place);
 				scale <- _scale;	
 				speed <- min_speed + rnd (max_speed - min_speed) ;
@@ -550,7 +550,7 @@ experiment CityScopeMainVirtual type: gui{
 			species people aspect:scale;
 			species amenity aspect: onScreen ;
 			
-			graphics "text" 
+		    graphics "text" 
 			{
                draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
                draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
