@@ -96,7 +96,7 @@ global {
 			center <-{3305,2075};
 			brickSize <- 70.0;
 			coeffPop<-1.0;
-			coeffSize<-1.75;
+			coeffSize<-1;
 		}
 		if(cityScopeCity= "andorra"){
 			angle <-3.0;
@@ -171,7 +171,7 @@ global {
 		  }
 		  ask amenity where  (each.usage="R"){
 		  	float nb <- (self.scale ="L") ? density_array[0] : ((self.scale ="M") ? density_array[1] :density_array[2]);
-		  	create people number: 1+nb/2 { 
+		  	create people number: 1+nb/3 { 
 				living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
@@ -463,10 +463,10 @@ species people skills:[moving]{
 	aspect scale{
 	if(toggle1 !=1){
       if(!fromTheGrid){	
-		  draw circle(world.shape.width*(0.001/coeffSize)) color: color_map[scale];
+		  draw circle(world.shape.width*(0.00075/coeffSize)) color: color_map[scale];
 		   
 	  }else{
-		  draw square(world.shape.width*(0.001/coeffSize)*2) color: color_map[scale];  
+		  draw square(world.shape.width*(0.00075/coeffSize)*2) color: color_map[scale];  
 	  }
 	 } 
 	}
