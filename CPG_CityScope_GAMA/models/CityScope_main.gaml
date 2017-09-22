@@ -12,7 +12,7 @@ global {
 	file bound_shapefile <- file("../includes/"+cityScopeCity+"/Bounds.shp");
 	file buildings_shapefile <- file("../includes/"+cityScopeCity+"/Buildings.shp");
 	file roads_shapefile <- file("../includes/"+cityScopeCity+"/Roads.shp");
-	file amenities_shapefile <- file("../includes/"+cityScopeCity+"/Amenities.shp");
+	file amenities_shapefile <- file("../includes/"+cityScopeCity+"/amenities.shp");
 	file table_bound_shapefile <- file("../includes/"+cityScopeCity+"/table_bounds.shp");
 	file imageRaster <- file('../includes/images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
