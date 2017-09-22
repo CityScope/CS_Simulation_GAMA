@@ -30,7 +30,7 @@ global {
 	
 	//PARAMETERS
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
-	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
+	int distance parameter: 'distance ' category: "Visualization" min: 1 <- int(100#m);	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool dynamicGrid <-false parameter: "Update Grid:" category: "Environment";
@@ -40,7 +40,7 @@ global {
 	float step <- 10 #sec;
 	int current_hour update: (time / #hour) mod 24;
 	int min_work_start <-4 ;
-	int max_work_start <- 10;
+	int max_work_start <- 10; 
 	int min_lunch_start <- 11;
 	int max_lunch_start <- 13;
 	int min_rework_start <- 14;

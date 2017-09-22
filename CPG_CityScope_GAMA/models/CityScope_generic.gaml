@@ -27,7 +27,7 @@ global {
 	
 	//PARAMETERS
 	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
-	int distance parameter: 'distance ' category: "Visualization" min: 1 <- 100#m;	
+	int distance parameter: 'distance ' category: "Visualization" min: 1 <- int(100#m);	
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
 	bool cityMatrix <-false parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-false parameter: "Online Grid:" category: "Environment";
@@ -67,7 +67,7 @@ global {
 			location<-any_location_in(world.shape);
 			area <-shape.area;
 			perimeter<-shape.perimeter;
-			totalSqm<-totalSqm+area;
+			totalSqm<-int(totalSqm+area);
 		}
 		create road number:100{
 			shape<-line([any_location_in(world.shape), any_location_in(world.shape),any_location_in(world.shape)]);

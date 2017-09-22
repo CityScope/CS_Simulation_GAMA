@@ -42,7 +42,7 @@ global {
 	   global_end_date<-max(mobileData collect int(each["init_date"]));	
 	}
 	reflex cluster_building when:(cycle=0 and clustering=true){
-		eps <-cycle*10;
+		eps <-cycle*10.0;
 		list<list> instances <- mobileData collect ([each.location.x, each.location.y]);
 		//DBSCAN
 		list<list<int>> clusters_dbscan <- list<list<int>>(dbscan(instances, eps,minPoints));
