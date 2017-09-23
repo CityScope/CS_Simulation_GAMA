@@ -12,7 +12,11 @@ global {
 
 }
 experiment CityScopeVolpeDemo type: gui parent:CityScopeMainVirtual{
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "Andorra"];	
+	action _init_ {
+		create CityScope_Kendall_Volpe_Demo_model with: [cityScopeCity::"volpe",angle :: -9.74,center ::{3305,2075}, brickSize :: 70.0, coeffPop::1.0, coeffSize::1];	
+	}
+	
+	//parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "Andorra"];	
 	float minimum_cycle_duration <- 0.02;
 	output {		
 		

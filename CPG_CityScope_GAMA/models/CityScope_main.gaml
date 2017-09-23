@@ -42,7 +42,7 @@ global {
 	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#white, "Road"::#black,"Park"::#green,"Parking"::rgb(50,50,50)]; 
 	list scale_string<- ["S", "M", "L"];
 	list usage_string<- ["R", "O"]; 
-	list density_map<- [89,55,15,30,18,5]; //Use for Volpe Site (Could be change for each city)
+	list density_map<- [89,55,15,30,18,5]; //Use for Volpe Site (Could be change for each city)  
 	
 	float step <- 10 #sec;
 	int current_hour update: (time / #hour) mod 24  ;
@@ -90,21 +90,9 @@ global {
 		    size<-rnd(10.0,20.0);
 		  }		
         }
-        
-        if(cityScopeCity= "volpe"){
-			angle <- -9.74;
-			center <-{3305,2075};
-			brickSize <- 70.0;
-			coeffPop<-1.0;
-			coeffSize<-1;
-		}
-		if(cityScopeCity= "andorra"){
-			angle <-3.0; 
-			center <-{2550,895};
-			brickSize <- 37.5;
-			coeffPop<-2.0;
-			coeffSize<-2;
-		}
+ 	/* remove and directly replace the value in the corresponding esperiments
+ 	 *  TO ADD IN AN EXPERIMENTS:
+ 	 * action _init_ {create CityScope_Kendall_Volpe_Demo_model with: [cityScopeCity::"volpe", angle :: -9.74,center ::{3305,2075}, brickSize :: 70.0, coeffPop::1.0, coeffSize::1];}
 		
 		if(cityScopeCity= "Lyon"){
 			angle <-3.0;
@@ -136,7 +124,7 @@ global {
 			brickSize <- 37.5;
 			coeffPop<-10.0;
 			coeffSize<-1;
-		}
+		} */
 		      
         cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
 
@@ -540,7 +528,7 @@ species table{
 
 
 experiment CityScopeMainVirtual type: gui{
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];
+	//parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
 		display CityScopeVirtual  type:opengl background:#black virtual:true toolbar:false{
@@ -609,13 +597,3 @@ experiment CityScopeMainVirtual type: gui{
 		}			
 	}
 }
-
-
-
-
-
-
-
-
-
-
