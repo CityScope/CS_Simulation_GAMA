@@ -84,11 +84,11 @@ global {
 		road_graph <- as_edge_graph(road);
 		
 		if(realAmenity = true){
-          create amenity from: amenities_shapefile{
-		    scale <- scale_string[rnd(2)];	
-		    fromGrid<-false;
-		    size<-rnd(10.0,20.0);
-		  }		
+			create amenity from: amenities_shapefile {
+			    scale <- ("Scale" in shape.attributes.keys) ? shape get("Scale") : scale_string[rnd(2)];	
+			    fromGrid<-false;
+			    size<-rnd(10.0,20.0);
+			}		
         }
  	/* remove and directly replace the value in the corresponding esperiments
  	 *  TO ADD IN AN EXPERIMENTS:
