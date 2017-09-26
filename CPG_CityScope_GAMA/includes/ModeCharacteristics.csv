@@ -7,5 +7,5 @@ Shared Vehicles (Taxi/Carpooling/...),0,0.7,5,,0.5,0.4
 car,0,0.32,2.5,,1,0.2
 Motorcycles/scooters,0,0.18,2,,0.3,0.1
 Track based vehicles (subway; train; ...),2.5,0,5,2,0.2,
-Bus,2.5,0,10,,0.15,
+bus,0,0,10,3,0.15,0.5
 Delivery (Trucks; Vans; ...),0,0.2,3,,1,1
