@@ -31,7 +31,7 @@ global {
 	map<string, rgb> color_per_type <- ["High School Student"::#lightblue, "College student"::#blue, "Young professional"::#darkblue,"Home maker"::#orange, "Mid-career workers"::#yellow, "Executives"::#red, "Retirees"::#darkorange];
 	map<string,rgb> color_per_mobility <- ["walking"::#green, "bike"::#orange,"car"::#red];
 	map<string,float> width_per_mobility <- ["walking"::2.0, "bike"::3.0, "car"::4.0];
-	map<string,float> speed_per_mobility <- ["walking"::3#km/#h, "bike"::5#km/#h,"car"::130#km/#h];
+	map<string,float> speed_per_mobility <- ["walking"::3#km/#h, "bike"::5#km/#h,"car"::20#km/#h];
 	map<string,graph> graph_per_mobility;
 	
 	map<road,float> congestion_map;  
@@ -42,7 +42,7 @@ global {
 			mobility_allowed << "walking";
 			mobility_allowed << "bike";
 			mobility_allowed << "car";
-			capacity <- shape.perimeter / 5.0 * 2;
+			capacity <- shape.perimeter / 10.0;
 			congestion_map [self] <- shape.perimeter;
 		}
 		
@@ -187,7 +187,7 @@ species people skills: [moving]{
 	
 	action choose_mobility_mode{
 		if (has_car) {
-			mobility_mode <- flip(0.0) ? "car" : "walking";
+			mobility_mode <- flip(0.5) ? "car" : "walking";
 		} else {
 			mobility_mode <-"walking";
 		}
@@ -315,7 +315,7 @@ experiment gamit type: gui {
                    
             }
 		}
-		display map2{
+		display map_simple{
 			species building refresh: false;
 			species road ;
 			species people;
