@@ -25,15 +25,21 @@ global {
 	map<string,map<string,int>> activity_data;
 	float step <- 1 #mn;
 	date starting_date <- date([2017,9,25,0,0]);
-	graph road_network;
+	
 	list<building> residential_buildings;
 	list<building> office_buildings;
 	map<string, rgb> color_per_type <- ["High School Student"::#lightblue, "College student"::#blue, "Young professional"::#darkblue,"Home maker"::#orange, "Mid-career workers"::#yellow, "Executives"::#red, "Retirees"::#darkorange];
-			
+	map<string,rgb> color_per_mobility <- ["walking"::#green, "car"::#red];
+	map<string,float> width_per_mobility <- ["walking"::2.0, "car"::4.0];
+	map<string,float> speed_per_mobility <- ["walking"::3#km/#h, "car"::15#km/#h];
+	map<string,graph> graph_per_mobility;
 	init {
 		do activity_data_import;
-		create road from: roads_shapefile;
-		road_network <- as_edge_graph(road) with_optimizer_type "Floyd Warshall";
+		create road from: roads_shapefile {
+			mobility_allowed << "walking";
+			mobility_allowed << "car";
+		}
+		
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))] ;
 		loop am over: amenities_shapefile {
 			ask (building closest_to am) {
@@ -42,29 +48,10 @@ global {
 				name <- am get "name";
 			} 
 		}
+		do compute_graph;
 		office_buildings <- building where (each.usage = "O");
 		residential_buildings <- building where (each.usage = "R");
-		ask one_of (office_buildings) {
-			usage <- "Uni";
-		}
-		ask one_of (office_buildings) {
-			usage <- "Shopping";
-		}
-		ask one_of (office_buildings) {
-			usage <- "Restaurant";
-		}
-		ask one_of (office_buildings) {
-			usage <- "Night";
-		}
-		ask one_of (office_buildings) {
-			usage <- "Park";
-		}
-		ask one_of (office_buildings) {
-			usage <- "HS";
-		}
-		ask one_of (office_buildings) {
-			usage <- "Cultural";
-		}
+		do random_init;
 		ask building {
 			color <- color_per_usage[usage]; 
 		}
@@ -75,6 +62,44 @@ global {
 			type <- one_of(color_per_type.keys);
 			color <- color_per_type[type];
 			do create_trip_objectives;
+		}
+	}
+	
+	action random_init {
+		ask one_of (office_buildings) {
+			usage <- "Uni";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "Shopping";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "Restaurant";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "Night";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "Park";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "HS";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "Cultural";
+			office_buildings >> self;
+		}
+		
+	}
+	
+	action compute_graph {
+		loop mobility_mode over: color_per_mobility.keys {
+			graph_per_mobility[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) with_optimizer_type "Floyd Warshall" use_cache false;	
 		}
 	}
 	
@@ -108,8 +133,9 @@ species people skills: [moving]{
 	building living_place;
 	list<trip_objective> objectives;
 	trip_objective my_current_objective;
-	float speed <- 3 #km/#h;
 	building current_place;
+	string mobility_mode;
+	bool has_car <- flip(0.5);
 	
 	action create_trip_objectives {
 		map<string,int> activities <- activity_data[type];
@@ -143,29 +169,56 @@ species people skills: [moving]{
 			myself.objectives << self;
 		}
 	}
+	
+	action choose_mobility_mode{
+		if (has_car) {
+			mobility_mode <- flip(0.8) ? "car" : "walking";
+		} else {
+			mobility_mode <-"walking";
+		}
+		speed <- speed_per_mobility[mobility_mode];
+	}
 	reflex choose_objective when: my_current_objective = nil {
 		my_current_objective <- objectives first_with (each.starting_time = current_date.hour);
 		location <- any_location_in(current_place);
 		if (my_current_objective != nil) {
 			current_place <- nil;
+			do choose_mobility_mode;
 		}
 	}
 	reflex move when: my_current_objective != nil{
-		do goto target: my_current_objective.place.location on: road_network;
+		do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode];
 		if (location = my_current_objective.place.location) {
 			current_place <- my_current_objective.place;
 			location <- any_location_in(current_place);
 			my_current_objective <- nil;	
+			mobility_mode <- nil;
 		}
 	}
 	aspect default {
-		draw sphere(8) at: (current_place = nil ? location: (location + {0,0,current_place.height + 4}))  color: color ;
+		if (mobility_mode = nil) {
+			draw sphere(8) at: location + {0,0,current_place.height + 4}  color: color ;
+		} else {
+			if (mobility_mode = "walking") {
+				draw triangle(10) rotate: heading +90  color: color depth: 8 ;
+			} else if (mobility_mode = "car") {
+				draw cube(10)  color: color ;
+			}
+		}
 	}
 }
 
 species road {
+	list<string> mobility_allowed;
 	aspect default {
-		draw shape width: 3 color: #red;
+		string max_mobility <- mobility_allowed with_max_of (width_per_mobility[each]);
+		
+		draw shape width: width_per_mobility[max_mobility] color:color_per_mobility[max_mobility] ;
+	}
+	
+	user_command to_pedestrian_road {
+		mobility_allowed <- ["walking"];
+		ask world {do compute_graph;}
 	}
 }
 
@@ -182,7 +235,7 @@ experiment gamit type: gui {
 	output {
 		display map type: opengl draw_env: false background: rgb(255 *luminosity,255*luminosity, 255*luminosity ){
 			species building refresh: false;
-			species road refresh: false;
+			species road ;
 			species people;
 			
 			graphics "time" {
