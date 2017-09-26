@@ -197,9 +197,11 @@ species people skills: [moving]{
 	}
 	aspect default {
 		if (mobility_mode = nil) {
-			draw sphere(8) at: location + {0,0,current_place.height + 4}  color: color ;
+			draw sphere(8) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 		} else {
 			if (mobility_mode = "walking") {
+				draw sphere(8) color: color  ;
+			}else if (mobility_mode = "bike") {
 				draw triangle(10) rotate: heading +90  color: color depth: 8 ;
 			} else if (mobility_mode = "car") {
 				draw cube(10)  color: color ;
@@ -245,7 +247,7 @@ experiment gamit type: gui {
 				draw clock_small_hand rotate: current_date.hour*(360/12)  + 90  size: {240,240/10} at:loc + {0,0,0.1}; 
 			}
 			
-			 overlay position: { 5, 5 } size: { 240 #px, 550 #px } background: # black transparency: 0.5 border: #black rounded: true
+			 overlay position: { 5, 5 } size: { 240 #px, 680 #px } background: # black transparency: 0.5 border: #black rounded: true
             {
             	//for each possible type, we draw a square with the corresponding color and we write the name of the type
  
@@ -267,7 +269,18 @@ experiment gamit type: gui {
                     draw type at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
                     y <- y + 25#px;
                 }
-
+				 y <- y + 30 #px;
+                draw "Mobility Mode" at: { 40#px, y } color: # white font: font("SansSerif", 20, #bold);
+                y <- y + 30 #px;
+                draw circle(10#px) at: { 20#px, y } color:#white border: #black;
+                draw "Walking" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+                 y <- y + 25#px;
+                draw triangle(15#px) at: { 20#px, y } color:#white  border: #black;
+                draw "Bike" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+                y <- y + 25#px;
+                 draw square(20#px) at: { 20#px, y } color:#white border: #black;
+                draw "Car" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+                   
             }
 		}
 	}
