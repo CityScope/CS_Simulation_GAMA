@@ -29,14 +29,15 @@ global {
 	list<building> residential_buildings;
 	list<building> office_buildings;
 	map<string, rgb> color_per_type <- ["High School Student"::#lightblue, "College student"::#blue, "Young professional"::#darkblue,"Home maker"::#orange, "Mid-career workers"::#yellow, "Executives"::#red, "Retirees"::#darkorange];
-	map<string,rgb> color_per_mobility <- ["walking"::#green, "car"::#red];
-	map<string,float> width_per_mobility <- ["walking"::2.0, "car"::4.0];
-	map<string,float> speed_per_mobility <- ["walking"::3#km/#h, "car"::15#km/#h];
+	map<string,rgb> color_per_mobility <- ["walking"::#green, "bike"::#orange,"car"::#red];
+	map<string,float> width_per_mobility <- ["walking"::2.0, "bike"::3.0, "car"::4.0];
+	map<string,float> speed_per_mobility <- ["walking"::3#km/#h, "bike"::5#km/#h,"car"::10#km/#h];
 	map<string,graph> graph_per_mobility;
 	init {
 		do activity_data_import;
 		create road from: roads_shapefile {
 			mobility_allowed << "walking";
+			mobility_allowed << "bike";
 			mobility_allowed << "car";
 		}
 		
@@ -135,7 +136,8 @@ species people skills: [moving]{
 	trip_objective my_current_objective;
 	building current_place;
 	string mobility_mode;
-	bool has_car <- flip(0.5);
+	bool has_car <- flip(1.0);
+	bool has_bike <- flip(1.0);
 	
 	action create_trip_objectives {
 		map<string,int> activities <- activity_data[type];
@@ -172,7 +174,7 @@ species people skills: [moving]{
 	
 	action choose_mobility_mode{
 		if (has_car) {
-			mobility_mode <- flip(0.8) ? "car" : "walking";
+			mobility_mode <- flip(1.0) ? "car" : "walking";
 		} else {
 			mobility_mode <-"walking";
 		}
@@ -219,7 +221,7 @@ species road {
 	}
 	
 	user_command to_pedestrian_road {
-		mobility_allowed <- ["walking"];
+		mobility_allowed <- ["walking", "bike"];
 		ask world {do compute_graph;}
 	}
 }
@@ -282,6 +284,11 @@ experiment gamit type: gui {
                 draw "Car" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
                    
             }
+		}
+		display map2{
+			species building refresh: false;
+			species road ;
+			species people;
 		}
 	}
 }
