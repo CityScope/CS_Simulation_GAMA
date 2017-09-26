@@ -41,6 +41,9 @@ global {
 	
 	map<string,map<string,list<float>>> weights_map <- map([]);
 	
+	// outputs
+	map<string,int> transport_type_cumulative_usage <- ["walking"::0, "bike"::0,"car"::0];
+	
 	
 	init {
 		do activity_data_import;
@@ -261,6 +264,7 @@ species people skills: [moving]{
 		} else {
 			mobility_mode <- one_of(possible_mobility_modes);
 		}
+		transport_type_cumulative_usage[mobility_mode] <- transport_type_cumulative_usage[mobility_mode] + 1;
 		speed <- speed_per_mobility[mobility_mode];
 	}
 	
@@ -414,5 +418,17 @@ experiment gamit type: gui {
 			species road ;
 			species people;
 		}
+		display histogram type:java2D {
+			chart "Transport type" type:histogram 
+			series_label_position: onchart
+			{
+				datalist legend: transport_type_cumulative_usage.keys 
+					style: bar
+					value: transport_type_cumulative_usage.values
+					color:[#green,#blue,#red];
+			}
+		}
+		
+		
 	}
 }
