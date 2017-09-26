@@ -31,15 +31,21 @@ global {
 	map<string, rgb> color_per_type <- ["High School Student"::#lightblue, "College student"::#blue, "Young professional"::#darkblue,"Home maker"::#orange, "Mid-career workers"::#yellow, "Executives"::#red, "Retirees"::#darkorange];
 	map<string,rgb> color_per_mobility <- ["walking"::#green, "bike"::#orange,"car"::#red];
 	map<string,float> width_per_mobility <- ["walking"::2.0, "bike"::3.0, "car"::4.0];
-	map<string,float> speed_per_mobility <- ["walking"::3#km/#h, "bike"::5#km/#h,"car"::10#km/#h];
+	map<string,float> speed_per_mobility <- ["walking"::3#km/#h, "bike"::5#km/#h,"car"::130#km/#h];
 	map<string,graph> graph_per_mobility;
+	
+	map<road,float> congestion_map;  
+	
 	init {
 		do activity_data_import;
 		create road from: roads_shapefile {
 			mobility_allowed << "walking";
 			mobility_allowed << "bike";
 			mobility_allowed << "car";
+			capacity <- shape.perimeter / 5.0 * 2;
+			congestion_map [self] <- shape.perimeter;
 		}
+		
 		
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))] ;
 		loop am over: amenities_shapefile {
@@ -120,6 +126,13 @@ global {
 			activity_data[people_type] <- activities;
 		}
 	}
+	
+	reflex update_road_weights {
+		ask road {
+			do update_speed_coeff;	
+			congestion_map [self] <- speed_coeff;
+		}
+	}
 }
 
 species trip_objective {
@@ -174,7 +187,7 @@ species people skills: [moving]{
 	
 	action choose_mobility_mode{
 		if (has_car) {
-			mobility_mode <- flip(1.0) ? "car" : "walking";
+			mobility_mode <- flip(0.0) ? "car" : "walking";
 		} else {
 			mobility_mode <-"walking";
 		}
@@ -186,15 +199,24 @@ species people skills: [moving]{
 		if (my_current_objective != nil) {
 			current_place <- nil;
 			do choose_mobility_mode;
+			
 		}
 	}
 	reflex move when: my_current_objective != nil{
-		do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode];
+		if ((current_edge != nil) and (mobility_mode in ["car"])) {road(current_edge).current_concentration <- max([0,road(current_edge).current_concentration - 1]); }
+		if (mobility_mode in ["car"]) {
+			do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode] move_weights: congestion_map ;
+		}else {
+			do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode]  ;
+		}
+		
 		if (location = my_current_objective.place.location) {
 			current_place <- my_current_objective.place;
 			location <- any_location_in(current_place);
 			my_current_objective <- nil;	
 			mobility_mode <- nil;
+		} else {
+			if ((current_edge != nil) and (mobility_mode in ["car"])) {road(current_edge).current_concentration <- road(current_edge).current_concentration + 1; }
 		}
 	}
 	aspect default {
@@ -212,8 +234,16 @@ species people skills: [moving]{
 	}
 }
 
-species road {
+species road  {
 	list<string> mobility_allowed;
+	float capacity;
+	float max_speed <- 30 #km/#h;
+	float current_concentration;
+	float speed_coeff <- 1.0;
+	
+	action update_speed_coeff {
+		speed_coeff <- shape.perimeter / max([0.01,exp(-current_concentration/capacity)]);
+	}
 	aspect default {
 		string max_mobility <- mobility_allowed with_max_of (width_per_mobility[each]);
 		
