@@ -12,6 +12,8 @@ global {
 	file amenities_shapefile <- file("../includes/volpe/amenities.shp");
 	file roads_shapefile <- file("../includes/volpe/Roads.shp");
 	file activity_file <- file("../includes/Activity Table.csv");
+	file criteria_file <- file("../includes/CriteriaFile.csv");
+	file modeCharacteristics_file <- file("../includes/ModeCharacteristics.csv");
 	
 	file clock_normal     const: true <- image_file("../images/clock.png");
 	file clock_big_hand   const: true <- image_file("../images/big_hand.png");
@@ -33,11 +35,17 @@ global {
 	map<string,float> width_per_mobility <- ["walking"::2.0, "bike"::3.0, "car"::4.0];
 	map<string,float> speed_per_mobility <- ["walking"::3#km/#h, "bike"::5#km/#h,"car"::20#km/#h];
 	map<string,graph> graph_per_mobility;
+	map<string,list<float>> charact_per_mobility;
 	
 	map<road,float> congestion_map;  
 	
+	map<string,map<string,list<float>>> weights_map <- map([]);
+	
+	
 	init {
 		do activity_data_import;
+		do criteria_file_import;
+		do characteristic_file_import;
 		create road from: roads_shapefile {
 			mobility_allowed << "walking";
 			mobility_allowed << "bike";
@@ -71,6 +79,50 @@ global {
 			do create_trip_objectives;
 		}
 	}
+	
+	action characteristic_file_import {
+		matrix criteria_matrix <- matrix (modeCharacteristics_file);
+		loop i from: 0 to:  criteria_matrix.rows - 1 {
+			string mobility_type <- criteria_matrix[0,i];
+			if(mobility_type != "") {
+				list<float> vals <- [];
+				loop j from: 1 to:  criteria_matrix.columns - 1 {
+					vals << float(criteria_matrix[j,i]);	
+				}
+				charact_per_mobility[mobility_type] <- vals;
+			}
+		}
+	}
+	action criteria_file_import {
+		matrix criteria_matrix <- matrix (criteria_file);
+		int nbCriteria <- criteria_matrix[1,0] as int;
+		int nbTO <- criteria_matrix[1,1] as int ;
+		int lignCategory <- 2;
+		int lignCriteria <- 3;
+		
+		loop i from: 5 to:  criteria_matrix.rows - 1 {
+			string people_type <- criteria_matrix[0,i];
+			int index <- 1;
+			map<string, list<float>> m_temp <- map([]);
+			if(people_type != "") {
+				list<float> l <- [];
+				loop times: nbTO {
+					list<float> l2 <- [];
+					loop times: nbCriteria {
+						add float(criteria_matrix[index,i]) to: l2;
+						index <- index + 1;
+					}
+					string cat_name <-  criteria_matrix[index-nbTO,lignCategory];
+					loop cat over: cat_name split_with "|" {
+						add l2 at: cat to: m_temp;
+					}
+				}
+				add m_temp at: people_type to: weights_map;
+			}
+		}
+	}
+
+	 
 	
 	action random_init {
 		ask one_of (office_buildings) {
@@ -127,6 +179,7 @@ global {
 		}
 	}
 	
+	
 	reflex update_road_weights {
 		ask road {
 			do update_speed_coeff;	
@@ -149,6 +202,7 @@ species people skills: [moving]{
 	trip_objective my_current_objective;
 	building current_place;
 	string mobility_mode;
+	list<string> possible_mobility_modes;
 	bool has_car <- flip(1.0);
 	bool has_bike <- flip(1.0);
 	
@@ -171,7 +225,7 @@ species people skills: [moving]{
 				}
 				building act_build <- one_of(possible_bds);
 				if (act_build= nil) {write "problem with act_real: " + act_real;}
-				do create_activity(act,act_build,activities[act]);
+				do create_activity(act_real,act_build,activities[act]);
 			}
 		}
 	}
@@ -183,23 +237,63 @@ species people skills: [moving]{
 			starting_time <- act_time;
 			myself.objectives << self;
 		}
-	}
+	} 
 	
-	action choose_mobility_mode{
-		if (has_car) {
-			mobility_mode <- flip(0.5) ? "car" : "walking";
+	action choose_mobility_mode {
+		list<list> cands <- mobility_mode_eval();
+		map<string,list<float>> crits <-  weights_map[type];
+		list<float> vals ;
+		loop obj over:crits.keys {
+			if (obj = my_current_objective.name) or
+			 ((my_current_objective.name in ["RS", "RM", "RL"]) and (obj = "R"))or
+			 ((my_current_objective.name in ["OS", "OM", "OL"]) and (obj = "O")){
+				vals <- crits[obj];
+				break;
+			} 
+		}
+		list<map> criteria_WM;
+		loop i from: 0 to: length(vals) - 1 {
+			criteria_WM << ["name"::"crit"+i, "weight" :: vals[i]];
+		}
+		int choice <- weighted_means_DM(cands, criteria_WM);
+		if (choice >= 0) {
+			mobility_mode <- possible_mobility_modes [choice];
 		} else {
-			mobility_mode <-"walking";
+			mobility_mode <- one_of(possible_mobility_modes);
 		}
 		speed <- speed_per_mobility[mobility_mode];
 	}
+	
+	list<list> mobility_mode_eval {
+		list<list> candidates;
+		loop mode over: possible_mobility_modes {
+			list<float> characteristic <- charact_per_mobility[mode];
+			list<float> cand;
+			float distance <-  0.0;
+			using topology(graph_per_mobility[mode]){
+				distance <-  distance_to (location,my_current_objective.place.location);
+			}
+			cand << characteristic[0] + characteristic[1]*distance;
+			cand << characteristic[2] * distance / speed_per_mobility[mode];
+			cand << characteristic[3];
+			cand << characteristic[4];
+			add cand to: candidates;
+		}
+		return candidates;
+	}
+	
+	
 	reflex choose_objective when: my_current_objective = nil {
-		my_current_objective <- objectives first_with (each.starting_time = current_date.hour);
 		location <- any_location_in(current_place);
-		if (my_current_objective != nil) {
-			current_place <- nil;
-			do choose_mobility_mode;
-			
+		if (current_date.minute = 0) {
+			my_current_objective <- objectives first_with (each.starting_time = current_date.hour);
+			if (my_current_objective != nil) {
+				current_place <- nil;
+				possible_mobility_modes <- ["walking"];
+				if (has_car) {possible_mobility_modes << "car";}
+				if (has_bike) {possible_mobility_modes << "bike";}
+				do choose_mobility_mode;
+			}
 		}
 	}
 	reflex move when: my_current_objective != nil{
