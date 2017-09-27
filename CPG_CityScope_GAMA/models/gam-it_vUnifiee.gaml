@@ -415,9 +415,20 @@ species people skills: [moving]{
 			}
 			cand << characteristic[0] + characteristic[1]*distance;
 			cand << characteristic[2] #mn +  distance / speed_per_mobility[mode];
-			cand << characteristic[3];
 			cand << characteristic[4];
+			cand << characteristic[5];
 			add cand to: candidates;
+		}
+		
+		//normalisation
+		list<float> max_values;
+		loop i from: 0 to: length(candidates[0]) - 1 {
+			max_values << max(candidates collect abs(float(each[i])));
+		}
+		loop cand over: candidates {
+			loop i from: 0 to: length(cand) - 1 {
+				cand[i] <- float(cand[i]) / max_values[i];
+			}
 		}
 		return candidates;
 	}
