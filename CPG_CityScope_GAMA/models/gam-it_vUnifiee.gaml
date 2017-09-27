@@ -423,7 +423,6 @@ species people skills: [moving]{
 	}
 	
 	action updatePollutionMap {
-		write "current_path " + cycle + " -- "+ current_path;
 		ask plot_pollution overlapping(current_path.shape) {
 			pollution_level <- pollution_level + 1;
 		}
