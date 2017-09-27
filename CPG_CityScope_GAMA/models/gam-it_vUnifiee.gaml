@@ -290,7 +290,8 @@ global {
 
 species trip_objective {
 	building place; 
-	int starting_time;
+	int starting_hour;
+	int starting_minute;
 }
 
 species bus_stop {
@@ -323,7 +324,6 @@ species bus skills: [moving] {
 				bus_status <- 2;
 			}
 			stop_passengers[my_target] <- [];
-			
 			
 			/////////     get some people
 			loop p over: my_target.waiting_people {
@@ -389,7 +389,8 @@ species people skills: [moving]{
 		create trip_objective {
 			name <- act_name;
 			place <- act_place;
-			starting_time <- act_time;
+			starting_hour <- act_time;
+			starting_minute <- rnd(60);
 			myself.objectives << self;
 		}
 	} 
@@ -441,16 +442,14 @@ species people skills: [moving]{
 	
 	reflex choose_objective when: my_current_objective = nil {
 		location <- any_location_in(current_place);
-		if (current_date.minute = 0) {
-			my_current_objective <- objectives first_with (each.starting_time = current_date.hour);
-			if (my_current_objective != nil) {
-				current_place <- nil;
-				possible_mobility_modes <- ["walking"];
-				if (has_car) {possible_mobility_modes << "car";}
-				if (has_bike) {possible_mobility_modes << "bike";}
-				possible_mobility_modes << "bus";				
-				do choose_mobility_mode;
-			}
+		my_current_objective <- objectives first_with ((each.starting_hour = current_date.hour) and (current_date.minute >= each.starting_minute) and (current_place != each.place) );
+		if (my_current_objective != nil) {
+			current_place <- nil;
+			possible_mobility_modes <- ["walking"];
+			if (has_car) {possible_mobility_modes << "car";}
+			if (has_bike) {possible_mobility_modes << "bike";}
+			possible_mobility_modes << "bus";				
+			do choose_mobility_mode;
 		}
 	}
 	reflex move when: (my_current_objective != nil) and (mobility_mode != "bus") {
