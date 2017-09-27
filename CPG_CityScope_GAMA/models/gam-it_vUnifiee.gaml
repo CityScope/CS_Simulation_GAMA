@@ -16,6 +16,9 @@ global {
 	file activity_file <- file("../includes/Activity Table.csv");
 	file criteria_file <- file("../includes/CriteriaFile.csv");
 	file modeCharacteristics_file <- file("../includes/ModeCharacteristics.csv");
+	file dataOnProfils_file <- file("../includes/DataOnTypes.csv");
+	file dataOnMobilityMode_file <- file("../includes/DataOnModes.csv");
+	
 	
 	file clock_normal     const: true <- image_file("../images/clock.png");
 	file clock_big_hand   const: true <- image_file("../images/big_hand.png");
@@ -32,10 +35,15 @@ global {
 	
 	list<building> residential_buildings;
 	list<building> office_buildings;
-	map<string, rgb> color_per_type <- ["High School Student"::#lightblue, "College student"::#blue, "Young professional"::#darkblue,"Home maker"::#orange, "Mid-career workers"::#yellow, "Executives"::#red, "Retirees"::#darkorange];
-	map<string,rgb> color_per_mobility <- ["walking"::#green, "bike"::#orange,"car"::#red,"car"::#blue];
-	map<string,float> width_per_mobility <- ["walking"::2.0, "bike"::3.0, "car"::4.0,"bus"::4.0];
-	map<string,float> speed_per_mobility <- ["walking"::3#km/#h, "bike"::5#km/#h,"car"::20#km/#h,"bus"::20#km/#h];
+	
+	map<string, rgb> color_per_type;
+	map<string, float> proportion_per_type;
+	map<string, float> proba_bike_per_type;
+	map<string, float> proba_car_per_type;
+	
+	map<string,rgb> color_per_mobility;
+	map<string,float> width_per_mobility ;
+	map<string,float> speed_per_mobility;
 	map<string,graph> graph_per_mobility;
 	map<string,list<float>> charact_per_mobility;
 	
@@ -49,6 +57,8 @@ global {
 	
 	init {
 		gama.pref_display_flat_charts <- true;
+		do profils_data_import;
+		do modes_data_import;
 		do activity_data_import;
 		do criteria_file_import;
 		do characteristic_file_import;
@@ -70,13 +80,40 @@ global {
 		}		
 		
 		create people number: nb_people {
+			type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
+			has_car <- flip(proba_car_per_type[type]);
+			has_bike <- flip(proba_bike_per_type[type]);
 			living_place <- one_of(residential_buildings);
 			current_place <- living_place;
 			location <- any_location_in(living_place);
-			type <- one_of(color_per_type.keys);
 			color <- color_per_type[type];
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 			do create_trip_objectives;
+		}
+	}
+	action modes_data_import {
+		matrix mode_matrix <- matrix(dataOnMobilityMode_file);
+		loop i from: 0 to:  mode_matrix.rows - 1 {
+			string type <- mode_matrix[0,i];
+			write type;
+			if(type != "") {
+				color_per_mobility[type] <- rgb(mode_matrix[1,i]);
+				width_per_mobility[type] <- float(mode_matrix[2,i]);
+				speed_per_mobility[type] <- float(mode_matrix[3,i]);
+			}
+		}
+	}
+	
+	action profils_data_import {
+		matrix profil_matrix <- matrix(dataOnProfils_file);
+		loop i from: 0 to:  profil_matrix.rows - 1 {
+			string profil_type <- profil_matrix[0,i];
+			if(profil_type != "") {
+				color_per_type[profil_type] <- rgb(profil_matrix[1,i]);
+				proportion_per_type[profil_type] <- float(profil_matrix[4,i]);
+				proba_bike_per_type[profil_type] <- float(profil_matrix[3,i]);
+				proba_car_per_type[profil_type] <- float(profil_matrix[2,i]);
+			}
 		}
 	}
 	
@@ -292,8 +329,8 @@ species people skills: [moving]{
 	building current_place;
 	string mobility_mode;
 	list<string> possible_mobility_modes;
-	bool has_car <- flip(1.0);
-	bool has_bike <- flip(1.0);
+	bool has_car ;
+	bool has_bike;
 
 	//
 	bus_stop closest_bus_stop;	
