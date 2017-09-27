@@ -427,7 +427,8 @@ species people skills: [moving]{
 		}
 		loop cand over: candidates {
 			loop i from: 0 to: length(cand) - 1 {
-				cand[i] <- float(cand[i]) / max_values[i];
+				if ( max_values[i] != 0.0) {cand[i] <- float(cand[i]) / max_values[i];}
+				
 			}
 		}
 		return candidates;
