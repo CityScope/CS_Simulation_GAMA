@@ -8,8 +8,8 @@
 model gamit
 
 global {
-	string case_study <- "volpe" among: ["Rouen", "volpe"];
-	bool is_osm_data <- case_study = "Rouen";
+	string case_study <- "volpe" ;
+	int nb_people <- 1000;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/"+case_study+"/Buildings.shp");
 	file<geometry> amenities_shapefile <- file_exists("../includes/"+case_study+"/amenities.shp") ? file<geometry>("../includes/"+case_study+"/amenities.shp") : nil;
 	file<geometry> roads_shapefile <- file<geometry>("../includes/"+case_study+"/Roads.shp");
@@ -52,11 +52,7 @@ global {
 		do activity_data_import;
 		do criteria_file_import;
 		do characteristic_file_import;
-		if is_osm_data {
-			do import_osm_files;	
-		} else {
-			do import_shapefiles;	
-		}
+		do import_shapefiles;	
 		
 		do compute_graph;
 		ask building {
@@ -73,7 +69,7 @@ global {
 			stop_passengers <- map<bus_stop, list<people>>(stops collect(each::[]));
 		}		
 		
-		create people number: 1000 {
+		create people number: nb_people {
 			living_place <- one_of(residential_buildings);
 			current_place <- living_place;
 			location <- any_location_in(living_place);
@@ -110,61 +106,7 @@ global {
 		do random_init;	
 	}
 	
-	action import_osm_files {
-		create road from: roads_shapefile {
-			string type <- shape get "type";
-			switch type {
-				match "cycleway" {
-					mobility_allowed << "bike";
-				}
-				match "footway" {
-					mobility_allowed << "walking";
-					mobility_allowed << "bike";
-				}
-				match "pedestrian" {
-					mobility_allowed << "walking";
-					mobility_allowed << "bike";
-				}
-				match "trunk" {
-					mobility_allowed << "car";
-				}
-				default {
-					mobility_allowed << "walking";
-					mobility_allowed << "bike";
-					mobility_allowed << "car";
-				}
-			} 
-			
-			capacity <- shape.perimeter / 10.0;
-			congestion_map [self] <- shape.perimeter;
-		}
-		
-		create building from: buildings_shapefile {
-			string type <- shape get "type";
-			switch type {
-				match "public_building" {
-					usage <- "O";
-					scale <- one_of (["L", "M","S"]);
-				}
-				match "college" {
-					if (not empty(building where (each.usage = "Uni"))) {
-						usage <- "Uni";
-					}else {
-						usage <- "HS";
-					}
-				} match "church" {
-					
-				}
-				
-				default {
-					usage <- "R";
-					scale <- one_of (["L", "M","S"]);
-				}
-			} 
-		}
-		office_buildings <- building where (each.usage = "O");
-		residential_buildings <- building where (each.usage = "R");	
-	}
+	
 	
 	user_command "add bus_stop" {
 		create bus_stop returns: new_bus_stop {
