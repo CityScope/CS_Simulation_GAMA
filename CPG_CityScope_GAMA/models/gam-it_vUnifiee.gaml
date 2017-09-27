@@ -95,7 +95,6 @@ global {
 		matrix mode_matrix <- matrix(dataOnMobilityMode_file);
 		loop i from: 0 to:  mode_matrix.rows - 1 {
 			string type <- mode_matrix[0,i];
-			write type;
 			if(type != "") {
 				color_per_mobility[type] <- rgb(mode_matrix[1,i]);
 				width_per_mobility[type] <- float(mode_matrix[2,i]);
@@ -320,6 +319,15 @@ species bus skills: [moving] {
 	
 }
 
+grid plot_pollution height: 20 width: 20 {
+	int pollution_level <- 0 ;
+	rgb color <- hsb(pollution_level,1.0,1.0) update: hsb(pollution_level,1.0,1.0);
+	
+	reflex raz when: every(1#day) {
+		pollution_level <- 0;
+	}
+}
+
 species people skills: [moving]{
 	string type;
 	rgb color ;
@@ -414,6 +422,12 @@ species people skills: [moving]{
 		return candidates;
 	}
 	
+	action updatePollutionMap {
+		write "current_path " + cycle + " -- "+ current_path;
+		ask plot_pollution overlapping(current_path.shape) {
+			pollution_level <- pollution_level + 1;
+		}
+	}	
 	
 	reflex choose_objective when: my_current_objective = nil {
 		location <- any_location_in(current_place);
@@ -436,6 +450,7 @@ species people skills: [moving]{
 		}
 		
 		if (location = my_current_objective.place.location) {
+			if(mobility_mode = "car") {do updatePollutionMap;}						
 			current_place <- my_current_objective.place;
 			location <- any_location_in(current_place);
 			my_current_objective <- nil;	
@@ -582,6 +597,11 @@ experiment gamit type: gui {
 			}
 		}
 		
+		display pollution type: opengl {
+			species building refresh: false;
+			species road ;
+			grid plot_pollution lines:#red elevation: pollution_level triangulation: true;			
+		}		
 		
 	}
 }
