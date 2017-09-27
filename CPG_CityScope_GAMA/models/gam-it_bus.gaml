@@ -169,7 +169,6 @@ species bus_stop {
 species bus skills: [moving] {
 	list<bus_stop> stops; 
 	map<bus_stop,list<people>> stop_passengers ;
-	list<people> passengers;
 	bus_stop my_target;
 	
 	reflex new_target when: my_target = nil{
@@ -196,16 +195,13 @@ species bus skills: [moving] {
 				add p to: stop_passengers[b] ;
 			}
 			my_target.waiting_people <- [];
-						
-			add my_target.waiting_people to: passengers all: true;
-			my_target.waiting_people <- [];
 			my_target <- nil;			
 		}
 		
 	}
 	
 	aspect bu {
-		draw rectangle(40,20) color: empty(passengers)?#yellow:#red border: #black;
+		draw rectangle(40,20) color: empty(stop_passengers.values accumulate(each))?#yellow:#red border: #black;
 	}
 	
 }
