@@ -577,7 +577,7 @@ experiment gamit type: gui {
                 draw "Car" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
                    
             }
-		}
+		} 
 		display map_simple{
 			species building refresh: false;
 			species road ;
