@@ -8,9 +8,11 @@
 model gamit
 
 global {
-	file buildings_shapefile <- file("../includes/volpe/Buildings.shp");
-	file amenities_shapefile <- file("../includes/volpe/amenities.shp");
-	file roads_shapefile <- file("../includes/volpe/Roads.shp");
+	string case_study <- "volpe" among: ["Rouen", "volpe"];
+	bool is_osm_data <- case_study = "Rouen";
+	file<geometry> buildings_shapefile <- file<geometry>("../includes/"+case_study+"/Buildings.shp");
+	file<geometry> amenities_shapefile <- file_exists("../includes/"+case_study+"/amenities.shp") ? file<geometry>("../includes/"+case_study+"/amenities.shp") : nil;
+	file<geometry> roads_shapefile <- file<geometry>("../includes/"+case_study+"/Roads.shp");
 	file activity_file <- file("../includes/Activity Table.csv");
 	file criteria_file <- file("../includes/CriteriaFile.csv");
 	file modeCharacteristics_file <- file("../includes/ModeCharacteristics.csv");
@@ -46,31 +48,17 @@ global {
 	
 	
 	init {
+		gama.pref_display_flat_charts <- true;
 		do activity_data_import;
 		do criteria_file_import;
 		do characteristic_file_import;
-		create road from: roads_shapefile {
-			mobility_allowed << "walking";
-			mobility_allowed << "bike";
-			mobility_allowed << "car";
-			mobility_allowed << "bus";
-			capacity <- shape.perimeter / 10.0;
-			congestion_map [self] <- shape.perimeter;
+		if is_osm_data {
+			do import_osm_files;	
+		} else {
+			do import_shapefiles;	
 		}
 		
-		
-		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))] ;
-		loop am over: amenities_shapefile {
-			ask (building closest_to am) {
-				usage <- "Restaurant";
-				scale <- am get "Scale";
-				name <- am get "name";
-			} 
-		}
 		do compute_graph;
-		office_buildings <- building where (each.usage = "O");
-		residential_buildings <- building where (each.usage = "R");
-		do random_init;
 		ask building {
 			color <- color_per_usage[usage]; 
 		}
@@ -96,6 +84,88 @@ global {
 		}
 	}
 	
+	action import_shapefiles {
+		create road from: roads_shapefile {
+			mobility_allowed << "walking";
+			mobility_allowed << "bike";
+			mobility_allowed << "car";
+			mobility_allowed << "bus";
+			capacity <- shape.perimeter / 10.0;
+			congestion_map [self] <- shape.perimeter;
+		}
+		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))] ;
+		
+		if (amenities_shapefile != nil) {
+			loop am over: amenities_shapefile {
+				ask (building closest_to am) {
+					usage <- "Restaurant";
+					scale <- am get "Scale";
+					name <- am get "name";
+				} 
+			}
+		}
+		office_buildings <- building where (each.usage = "O");
+		residential_buildings <- building where (each.usage = "R");
+		
+		do random_init;	
+	}
+	
+	action import_osm_files {
+		create road from: roads_shapefile {
+			string type <- shape get "type";
+			switch type {
+				match "cycleway" {
+					mobility_allowed << "bike";
+				}
+				match "footway" {
+					mobility_allowed << "walking";
+					mobility_allowed << "bike";
+				}
+				match "pedestrian" {
+					mobility_allowed << "walking";
+					mobility_allowed << "bike";
+				}
+				match "trunk" {
+					mobility_allowed << "car";
+				}
+				default {
+					mobility_allowed << "walking";
+					mobility_allowed << "bike";
+					mobility_allowed << "car";
+				}
+			} 
+			
+			capacity <- shape.perimeter / 10.0;
+			congestion_map [self] <- shape.perimeter;
+		}
+		
+		create building from: buildings_shapefile {
+			string type <- shape get "type";
+			switch type {
+				match "public_building" {
+					usage <- "O";
+					scale <- one_of (["L", "M","S"]);
+				}
+				match "college" {
+					if (not empty(building where (each.usage = "Uni"))) {
+						usage <- "Uni";
+					}else {
+						usage <- "HS";
+					}
+				} match "church" {
+					
+				}
+				
+				default {
+					usage <- "R";
+					scale <- one_of (["L", "M","S"]);
+				}
+			} 
+		}
+		office_buildings <- building where (each.usage = "O");
+		residential_buildings <- building where (each.usage = "R");	
+	}
+	
 	user_command "add bus_stop" {
 		create bus_stop returns: new_bus_stop {
 			location <- #user_location;
@@ -103,14 +173,9 @@ global {
 		// recompute bus line
 		bus_stop closest_bus_stop <- (bus_stop - first(new_bus_stop)) with_min_of(each distance_to(#user_location));
 		ask bus {
-			
-			write closest_bus_stop;
-			write stops;
 			int i <- (stops index_of(closest_bus_stop));
-			write i;
 			bus_stop bb <- first(new_bus_stop);
 			add bb at: i to: stops ;
-			write stops;
 		}
 		
 	}	
@@ -193,7 +258,7 @@ global {
 	
 	action compute_graph {
 		loop mobility_mode over: color_per_mobility.keys {
-			graph_per_mobility[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) with_optimizer_type "Floyd Warshall" use_cache false;	
+			graph_per_mobility[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) use_cache false;	
 		}
 	}
 	
@@ -348,7 +413,6 @@ species people skills: [moving]{
 		int choice <- weighted_means_DM(cands, criteria_WM);
 		if (choice >= 0) {
 			mobility_mode <- possible_mobility_modes [choice];
-			write "mobility_mode " + mobility_mode;
 		} else {
 			mobility_mode <- one_of(possible_mobility_modes);
 		}
@@ -366,7 +430,7 @@ species people skills: [moving]{
 				distance <-  distance_to (location,my_current_objective.place.location);
 			}
 			cand << characteristic[0] + characteristic[1]*distance;
-			cand << characteristic[2] * distance / speed_per_mobility[mode];
+			cand << characteristic[2] #mn +  distance / speed_per_mobility[mode];
 			cand << characteristic[3];
 			cand << characteristic[4];
 			add cand to: candidates;
@@ -407,7 +471,7 @@ species people skills: [moving]{
 		}
 	}
 	
-	reflex move when: (my_current_objective != nil) and (mobility_mode = "bus") {
+	reflex move_bus when: (my_current_objective != nil) and (mobility_mode = "bus") {
 
 		if (bus_status = 0){
 			do goto target: closest_bus_stop.location on: graph_per_mobility["walking"];
