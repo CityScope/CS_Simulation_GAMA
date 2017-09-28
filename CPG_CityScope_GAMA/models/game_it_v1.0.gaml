@@ -591,6 +591,7 @@ experiment gamit type: gui {
             }
 		} 
 		display map_simple{
+
 			species building refresh: false;
 			species road ;
 			species bus_stop aspect: c;
