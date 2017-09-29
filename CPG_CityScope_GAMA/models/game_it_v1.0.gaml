@@ -13,11 +13,11 @@ global {
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/"+case_study+"/Buildings.shp");
 	file<geometry> amenities_shapefile <- file_exists("../includes/"+case_study+"/amenities.shp") ? file<geometry>("../includes/"+case_study+"/amenities.shp") : nil;
 	file<geometry> roads_shapefile <- file<geometry>("../includes/"+case_study+"/Roads.shp");
-	file activity_file <- file("../includes/Activity Table.csv");
-	file criteria_file <- file("../includes/CriteriaFile.csv");
-	file modeCharacteristics_file <- file("../includes/ModeCharacteristics.csv");
-	file dataOnProfils_file <- file("../includes/DataOnTypes.csv");
-	file dataOnMobilityMode_file <- file("../includes/DataOnModes.csv");
+	file activity_file <- file("../includes/game_IT/Activity Table.csv");
+	file criteria_file <- file("../includes/game_IT/CriteriaFile.csv");
+	file modeCharacteristics_file <- file("../includes/game_IT/ModeCharacteristics.csv");
+	file dataOnProfils_file <- file("../includes/game_IT/DataOnTypes.csv");
+	file dataOnMobilityMode_file <- file("../includes/game_IT/DataOnModes.csv");
 	
 	
 	file clock_normal     const: true <- image_file("../images/clock.png");
