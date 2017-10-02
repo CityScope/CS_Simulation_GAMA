@@ -7,6 +7,8 @@
 
 model gamit
 
+import "../includes/data_viz/pie_charts.gaml"
+
 global {
 	string case_study <- "volpe" ;
 	int nb_people <- 1000;
@@ -35,11 +37,13 @@ global {
 	
 	list<building> residential_buildings;
 	list<building> office_buildings;
+	list<string> mobility_list <- ["walking", "bike","car","bus"];
 	
 	map<string, rgb> color_per_type;
 	map<string, float> proportion_per_type;
 	map<string, float> proba_bike_per_type;
 	map<string, float> proba_car_per_type;
+	
 	
 	map<string,rgb> color_per_mobility;
 	map<string,float> width_per_mobility ;
@@ -52,8 +56,8 @@ global {
 	map<string,map<string,list<float>>> weights_map <- map([]);
 	
 	// outputs
-	map<string,int> transport_type_cumulative_usage <- ["walking"::0, "bike"::0,"car"::0,"bus"::0];
-	
+	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
+	map<string, int> buildings_distribution <- map(color_per_usage.keys collect (each::0));
 	
 	init {
 		gama.pref_display_flat_charts <- true;
@@ -90,6 +94,55 @@ global {
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 			do create_trip_objectives;
 		}
+		
+		create pie{
+			id <- "transport";
+			labels <- transport_type_cumulative_usage.keys;
+			labels_h_offset <- [diameter*10,diameter*8,diameter*5,diameter*6];
+			labels_v_offset <- diameter ;
+			values <- transport_type_cumulative_usage.values;
+			colors <- color_per_mobility.values;
+			location <-{world.shape.width*0.9,world.shape.height*0.75};
+			diameter <- world.shape.width*0.10;
+			inner_diameter <- diameter*0.8;
+			type <- "ring";
+			line_width <- diameter / 400;
+			font_size <- diameter/30;
+			do calculate_pies;
+		}
+		
+		create pie{
+			id <- "people";
+			labels <- proportion_per_type.keys;
+			labels_h_offset <- [diameter*10,diameter*10,diameter*10,diameter*10,diameter*23,diameter*13,diameter*10];
+			labels_v_offset <- diameter ;
+			values <- proportion_per_type.values;
+			colors <- color_per_type.values;
+			location <-{world.shape.width*0.9,world.shape.height*0.95};
+			diameter <- world.shape.width*0.10;
+			inner_diameter <- diameter*0.8;
+			type <- "pie";
+			line_width <- diameter / 400;
+			font_size <- diameter/40;
+			do calculate_pies;
+		}
+		
+	create pie{
+			id <- "usage";
+			labels <- buildings_distribution.keys;
+			labels_h_offset <- [diameter*10,diameter*10,diameter*10,diameter*10,diameter*23,diameter*13,diameter*10,diameter*10,diameter*10,diameter*10];
+			labels_v_offset <- diameter ;
+			colors <- color_per_usage.values;
+			location <-{world.shape.width*0.9,world.shape.height*0.55};
+			diameter <- world.shape.width*0.10;
+			inner_diameter <- diameter*0.8;
+			type <- "pie";
+			line_width <- diameter / 400;
+			font_size <- diameter/40;
+			do calculate_pies;
+		}
+		
+		
 	}
 	action modes_data_import {
 		matrix mode_matrix <- matrix(dataOnMobilityMode_file);
@@ -264,6 +317,27 @@ global {
 			congestion_map [self] <- speed_coeff;
 		}
 	}
+	
+	reflex update_buildings_distribution{
+		buildings_distribution <- map(color_per_usage.keys collect (each::0));
+		ask building{
+			buildings_distribution[usage] <- buildings_distribution[usage]+1;
+		}
+	}
+	
+	reflex update_charts{
+		ask pie {
+			switch(self.id)
+			{
+				match "transport" {do update_values(transport_type_cumulative_usage.values);}
+				match "people" {do update_values(proportion_per_type.values);}
+				match "usage" {do update_values(buildings_distribution.values);}
+			}
+			do calculate_pies;
+		}
+
+	}
+	
 }
 
 species trip_objective {
@@ -590,24 +664,16 @@ experiment gamit type: gui {
                    
             }
 		} 
-		display map_simple{
+		display map_simple type: opengl background: #black{
 
 			species building refresh: false;
 			species road ;
 			species bus_stop aspect: c;
 			species bus aspect: bu; 			
 			species people;
+			species pie;
 		}
-		display histogram type:java2D {
-			chart "Transport type" type:histogram 
-			series_label_position: onchart
-			{
-				datalist legend: transport_type_cumulative_usage.keys 
-					style: bar
-					value: transport_type_cumulative_usage.values
-					color:[#green,#blue,#red,#yellow];
-			}
-		}
+
 		
 		display pollution type: opengl {
 			species building refresh: false;
