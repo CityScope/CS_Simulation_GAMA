@@ -570,14 +570,14 @@ species people skills: [moving]{
 	
 	aspect default {
 		if (mobility_mode = nil) {
-			draw sphere(8) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+			draw circle(8) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 		} else {
 			if (mobility_mode = "walking") {
-				draw sphere(8) color: color  ;
+				draw circle(8) color: color  ;
 			}else if (mobility_mode = "bike") {
 				draw triangle(10) rotate: heading +90  color: color depth: 8 ;
 			} else if (mobility_mode = "car") {
-				draw cube(10)  color: color ;
+				draw square(20)  color: color ;
 			}
 		}
 	}
@@ -593,7 +593,12 @@ species road  {
 	action update_speed_coeff {
 		speed_coeff <- shape.perimeter / max([0.01,exp(-current_concentration/capacity)]);
 	}
-	aspect default {
+	
+	aspect default {		
+		draw shape color:#white ;
+	}
+	
+	aspect mobility {
 		string max_mobility <- mobility_allowed with_max_of (width_per_mobility[each]);
 		
 		draw shape width: width_per_mobility[max_mobility] color:color_per_mobility[max_mobility] ;
@@ -611,15 +616,21 @@ species building {
 	rgb color <- #grey;
 	float height <- 10.0 + rnd(10);
 	aspect default {
+		draw shape color: color border: #black;
+	}
+	aspect depth {
 		draw shape color: color border: #black depth: height;
 	}
 }
 experiment gamit type: gui {
 	output {
-		display map type: opengl draw_env: false background: rgb(255 *luminosity,255*luminosity, 255*luminosity ){
+		display map type: opengl draw_env: false background: #black{//rgb(255 *luminosity,255*luminosity, 255*luminosity ){
 			species building refresh: false;
 			species road ;
+			species bus_stop aspect: c;
+			species bus aspect: bu; 			
 			species people;
+			species pie;
 			
 			graphics "time" {
 				point loc <- {-100,-100};
@@ -664,17 +675,7 @@ experiment gamit type: gui {
                    
             }
 		} 
-		display map_simple type: opengl background: #black{
 
-			species building refresh: false;
-			species road ;
-			species bus_stop aspect: c;
-			species bus aspect: bu; 			
-			species people;
-			species pie;
-		}
-
-		
 		display pollution type: opengl {
 			species building refresh: false;
 			species road ;
