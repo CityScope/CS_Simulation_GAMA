@@ -284,7 +284,6 @@ global {
 			usage <- "Cultural";
 			office_buildings >> self;
 		}
-		
 	}
 	
 	action compute_graph {
@@ -671,8 +670,7 @@ experiment gamit type: gui {
                 draw "Bike" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
                 y <- y + 25#px;
                  draw square(20#px) at: { 20#px, y } color:#white border: #black;
-                draw "Car" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
-                   
+                draw "Car" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);       
             }
 		} 
 
