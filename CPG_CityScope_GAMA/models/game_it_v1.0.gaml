@@ -15,10 +15,10 @@ global {
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/"+case_study+"/Buildings.shp");
 	file<geometry> amenities_shapefile <- file_exists("../includes/"+case_study+"/amenities.shp") ? file<geometry>("../includes/"+case_study+"/amenities.shp") : nil;
 	file<geometry> roads_shapefile <- file<geometry>("../includes/"+case_study+"/Roads.shp");
-	file activity_file <- file("../includes/game_IT/Activity Table.csv");
+	file activity_file <- file("../includes/game_IT/ActivityTablePerProfile.csv");
 	file criteria_file <- file("../includes/game_IT/CriteriaFile.csv");
-	file modeCharacteristics_file <- file("../includes/game_IT/ModeCharacteristics.csv");
 	file dataOnProfils_file <- file("../includes/game_IT/DataOnProfiles.csv");
+	file modeCharacteristics_file <- file("../includes/game_IT/ModeCharacteristics.csv");
 	file dataOnMobilityMode_file <- file("../includes/game_IT/DataOnModes.csv");
 	
 	
@@ -162,9 +162,9 @@ global {
 			string profil_type <- profil_matrix[0,i];
 			if(profil_type != "") {
 				color_per_type[profil_type] <- rgb(profil_matrix[1,i]);
-				proportion_per_type[profil_type] <- float(profil_matrix[4,i]);
-				proba_bike_per_type[profil_type] <- float(profil_matrix[3,i]);
 				proba_car_per_type[profil_type] <- float(profil_matrix[2,i]);
+				proba_bike_per_type[profil_type] <- float(profil_matrix[3,i]);
+				proportion_per_type[profil_type] <- float(profil_matrix[4,i]);
 			}
 		}
 	}
