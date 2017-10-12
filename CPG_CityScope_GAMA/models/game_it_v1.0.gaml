@@ -52,12 +52,12 @@ global {
 	map<string,list<float>> charact_per_mobility;
 	
 	map<road,float> congestion_map;  
-	
 	map<string,map<string,list<float>>> weights_map <- map([]);
 	
 	// outputs
 	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 	map<string, int> buildings_distribution <- map(color_per_usage.keys collect (each::0));
+	bool updatePollution <-false;
 	
 	init {
 		gama.pref_display_flat_charts <- true;
@@ -339,7 +339,7 @@ global {
 	
 }
 
-species trip_objective {
+species trip_objective{
 	building place; 
 	int starting_hour;
 	int starting_minute;
@@ -507,7 +507,7 @@ species people skills: [moving]{
 		return candidates;
 	}
 	
-	action updatePollutionMap {
+	action updatePollutionMap{
 		ask plot_pollution overlapping(current_path.shape) {
 			pollution_level <- pollution_level + 1;
 		}
@@ -534,7 +534,7 @@ species people skills: [moving]{
 		}
 		
 		if (location = my_current_objective.place.location) {
-			if(mobility_mode = "car") {do updatePollutionMap;}						
+			if(mobility_mode = "car" and updatePollution = true) {do updatePollutionMap;}						
 			current_place <- my_current_objective.place;
 			location <- any_location_in(current_place);
 			my_current_objective <- nil;	
@@ -674,11 +674,11 @@ experiment gamit type: gui {
             }
 		} 
 
-		display pollution type: opengl {
+		/*display pollution type: opengl {
 			species building refresh: false;
 			species road ;
 			grid plot_pollution lines:#red elevation: pollution_level triangulation: true;			
-		}		
+		}*/		
 		
 	}
 }
