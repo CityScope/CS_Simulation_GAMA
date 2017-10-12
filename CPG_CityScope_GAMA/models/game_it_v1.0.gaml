@@ -18,7 +18,7 @@ global {
 	file activity_file <- file("../includes/game_IT/Activity Table.csv");
 	file criteria_file <- file("../includes/game_IT/CriteriaFile.csv");
 	file modeCharacteristics_file <- file("../includes/game_IT/ModeCharacteristics.csv");
-	file dataOnProfils_file <- file("../includes/game_IT/DataOnTypes.csv");
+	file dataOnProfils_file <- file("../includes/game_IT/DataOnProfiles.csv");
 	file dataOnMobilityMode_file <- file("../includes/game_IT/DataOnModes.csv");
 	
 	
@@ -28,7 +28,7 @@ global {
 	
 	float luminosity update: 1.0 - abs(12 - current_date.hour)/12;
 	
-	map<string,rgb> color_per_usage <- ["R"::#lightgray, "O"::#dimgray, "Shopping"::#violet, "Restaurant"::#cyan, "Night"::#blue,"GP"::#magenta, "Park"::#green, "HS"::#orange, "Uni"::#red, "Cultural"::#brown];
+	map<string,rgb> color_per_usage <- ["R"::#lightgray, "O"::#dimgray, "Shopping"::#EE6808, "Restaurant"::#A8C0D0, "Night"::#6294B0,"GP"::#548099, "Park"::#8CB80F, "HS"::#orange, "Uni"::#yellow, "Cultural"::#brown];
 	geometry shape <- envelope(roads_shapefile);
 	
 	map<string,map<string,int>> activity_data;
@@ -127,7 +127,7 @@ global {
 			do calculate_pies;
 		}
 		
-	create pie{
+	   /*create pie{
 			id <- "usage";
 			labels <- buildings_distribution.keys;
 			labels_h_offset <- [diameter*10,diameter*10,diameter*10,diameter*10,diameter*23,diameter*13,diameter*10,diameter*10,diameter*10,diameter*10];
@@ -140,7 +140,7 @@ global {
 			line_width <- diameter / 400;
 			font_size <- diameter/40;
 			do calculate_pies;
-		}
+		}*/
 		
 		
 	}
@@ -514,7 +514,7 @@ species people skills: [moving]{
 	}	
 	
 	reflex choose_objective when: my_current_objective = nil {
-		location <- any_location_in(current_place);
+	    location <- any_location_in(current_place);
 		my_current_objective <- objectives first_with ((each.starting_hour = current_date.hour) and (current_date.minute >= each.starting_minute) and (current_place != each.place) );
 		if (my_current_objective != nil) {
 			current_place <- nil;
@@ -623,7 +623,7 @@ species building {
 }
 experiment gamit type: gui {
 	output {
-		display map type: opengl draw_env: false background: #black{//rgb(255 *luminosity,255*luminosity, 255*luminosity ){
+		display map type: opengl draw_env: false background: #white{//rgb(255 *luminosity,255*luminosity, 255*luminosity ){
 			species building refresh: false;
 			species road ;
 			species bus_stop aspect: c;
@@ -631,11 +631,12 @@ experiment gamit type: gui {
 			species people;
 			species pie;
 			
+			
 			graphics "time" {
 				point loc <- {-100,-100};
 				draw clock_normal size: 400 at:loc ;
 				draw clock_big_hand rotate: current_date.minute*(360/60)  + 90  size: {400,400/14} at:loc + {0,0,0.1}; 
-				draw clock_small_hand rotate: current_date.hour*(360/12)  + 90  size: {240,240/10} at:loc + {0,0,0.1}; 
+				draw clock_small_hand rotate: current_date.hour*(360/12)  + 90  size: {240,240/10} at:loc + {0,0,0.1};		 
 			}
 			
 			 overlay position: { 5, 5 } size: { 240 #px, 680 #px } background: # black transparency: 0.5 border: #black rounded: true
