@@ -1,0 +1,12 @@
+Nb Criteria,4,,,,,,,,,,,,,,,
+Nb Trip Objective,4,,,,,,,,,,,,,,,
+Purpose,O|Uni|HS,,,,R,,,,Park|Restaurant|Night|Cultural,,,,Shopping,,,
+Characteristics,Price,Time,Social Pattern,Difficulty,Price,Time,Social Pattern,Difficulty,Price,Time,Social Pattern,Difficulty,Price,Time,Social Pattern,Difficulty
+Role,,,,,,,,,,,,,,,,
+High School Student,-1,-0.5,1,-0.5,-1,-0.5,1,-0.5,-1,-0.15,1,-0.25,-1,-0.25,1,-0.75
+College student,-0.9,-0.75,1,-0.65,-0.9,-0.75,1,-0.65,-0.75,-0.5,1,-0.5,-0.75,-0.5,1,-0.85
+Young professional,-0.7,-0.9,0.9,-0.75,-0.7,-0.9,0.9,-0.75,-0.7,-0.9,0.9,-0.75,-0.7,-0.9,0.9,-0.75
+Home maker,0,0,0,0,0,0,0,0,-0.5,-0.85,0.8,-0.9,-0.5,-0.85,0.8,-0.9
+Mid-career workers,0,-1,0.2,-1,0,-1,0.2,-1,0,-1,0.2,-1,0,-1,0.2,-1
+Executives,0,-1,0.2,-1,0,-1,0.2,-1,0,-1,0.2,-1,0,-1,0.2,-1
+Retirees,0,0,0,0,0,0,0,0,-0.5,0,0,-1,-0.5,0,0,-1
