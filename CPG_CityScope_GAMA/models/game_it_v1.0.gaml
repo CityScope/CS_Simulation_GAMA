@@ -349,7 +349,7 @@ species bus_stop {
 	list<people> waiting_people;
 	
 	aspect c {
-		draw circle(30) color: empty(waiting_people)?#pink:#blue border: #black;
+		draw circle(30) color: empty(waiting_people)?#black:#blue border: #black depth:1;
 	}
 }
 
@@ -594,7 +594,7 @@ species road  {
 	}
 	
 	aspect default {		
-		draw shape color:#white ;
+		draw shape color:rgb(125,125,125);
 	}
 	
 	aspect mobility {
@@ -615,10 +615,10 @@ species building {
 	rgb color <- #grey;
 	float height <- 10.0 + rnd(10);
 	aspect default {
-		draw shape color: color border: #black;
+		draw shape color: color ;
 	}
 	aspect depth {
-		draw shape color: color border: #black depth: height;
+		draw shape color: color  depth: height;
 	}
 }
 experiment gamit type: gui {
@@ -633,45 +633,45 @@ experiment gamit type: gui {
 			
 			
 			graphics "time" {
-				point loc <- {-100,-100};
+				point loc <- {-1350,2000};
 				draw clock_normal size: 400 at:loc ;
 				draw clock_big_hand rotate: current_date.minute*(360/60)  + 90  size: {400,400/14} at:loc + {0,0,0.1}; 
 				draw clock_small_hand rotate: current_date.hour*(360/12)  + 90  size: {240,240/10} at:loc + {0,0,0.1};		 
 			}
 			
-			 overlay position: { 5, 5 } size: { 240 #px, 680 #px } background: # black transparency: 0.5 border: #black rounded: true
+			overlay position: { 5, 5 } size: { 240 #px, 680 #px } background: # black transparency: 1.0 border: #black 
             {
             	//for each possible type, we draw a square with the corresponding color and we write the name of the type
- 
+                rgb text_color<-#darkgray;
                 float y <- 30#px;
-  				draw "Building Usage" at: { 40#px, y } color: # white font: font("SansSerif", 20, #bold);
+  				draw "Building Usage" at: { 40#px, y } color: text_color font: font("SansSerif", 20, #bold);
                 y <- y + 30 #px;
                 loop type over: color_per_usage.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_usage[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);
                     y <- y + 25#px;
                 }
                  y <- y + 30 #px;
-                draw "People Type" at: { 40#px, y } color: # white font: font("SansSerif", 20, #bold);
+                draw "People Type" at: { 40#px, y } color: text_color font: font("SansSerif", 20, #bold);
                 y <- y + 30 #px;
                 loop type over: color_per_type.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_type[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);
                     y <- y + 25#px;
                 }
 				 y <- y + 30 #px;
-                draw "Mobility Mode" at: { 40#px, y } color: # white font: font("SansSerif", 20, #bold);
+                draw "Mobility Mode" at: { 40#px, y } color: text_color font: font("SansSerif", 20, #bold);
                 y <- y + 30 #px;
                 draw circle(10#px) at: { 20#px, y } color:#white border: #black;
-                draw "Walking" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+                draw "Walking" at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);
                  y <- y + 25#px;
-                draw triangle(15#px) at: { 20#px, y } color:#white  border: #black;
-                draw "Bike" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+                draw triangle(15#px) at: { 20#px, y } color:text_color  border: #black;
+                draw "Bike" at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);
                 y <- y + 25#px;
-                 draw square(20#px) at: { 20#px, y } color:#white border: #black;
-                draw "Car" at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);       
+                 draw square(20#px) at: { 20#px, y } color:text_color border: #black;
+                draw "Car" at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);       
             }
 		} 
 
