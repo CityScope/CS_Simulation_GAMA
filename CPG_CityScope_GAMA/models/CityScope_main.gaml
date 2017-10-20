@@ -279,7 +279,7 @@ global {
 		interaction_graph <- graph<people, people>(people as_distance_graph(distance));
 	}
 	
-	reflex updateEntropy when: (length(interaction_graph) != 0){
+	reflex updateEntropy when: (length(interaction_graph) != 0 and false){
 		clusters <- connected_components_of(interaction_graph);
 		averageClusterSize <- clusters sum_of (length(each))/length(clusters);
 	//	write "average cluster size: "+averageClusterSize;
@@ -380,7 +380,7 @@ species road  schedules: []{
 	
 	aspect white {
 		draw shape color: #white ;
-	}
+	} 
 }
 
 species people skills:[moving]{
