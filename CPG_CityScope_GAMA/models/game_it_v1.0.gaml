@@ -10,9 +10,10 @@ model gamit
 import "../includes/data_viz/pie_charts.gaml"
 
 global {
-	string case_study <- "volpe" ;
+	string case_study <- "volpe_game_it" ;
 	int nb_people <- 1000;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/"+case_study+"/Buildings.shp");
+	file<geometry> parks_shapefile <- file<geometry>("../includes/"+case_study+"/Park.shp");
 	file<geometry> amenities_shapefile <- file_exists("../includes/"+case_study+"/amenities.shp") ? file<geometry>("../includes/"+case_study+"/amenities.shp") : nil;
 	file<geometry> roads_shapefile <- file<geometry>("../includes/"+case_study+"/Roads.shp");
 	file activity_file <- file("../includes/game_IT/ActivityTablePerProfile.csv");
@@ -28,7 +29,9 @@ global {
 	
 	float luminosity update: 1.0 - abs(12 - current_date.hour)/12;
 	
-	map<string,rgb> color_per_usage <- ["R"::rgb(175,175,175), "O"::#dimgray, "Shopping"::#EE6808, "Restaurant"::#A8C0D0, "Night"::#6294B0,"GP"::#548099, "Park"::#8CB80F, "HS"::#orange, "Uni"::#yellow, "Cultural"::#brown];
+	map<string,rgb> color_per_usage <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];
+	map<string,rgb> color_per_type <- [ "High School Student"::#FFFFB2, "College student"::#FECC5C,"Young professional"::#FD8D3C,  "Mid-career workers"::#F03B20, "Executives"::#BD0026, "Home maker"::#0B5038, "Retirees"::#8CAB13];
+	
 	geometry shape <- envelope(roads_shapefile);
 	
 	map<string,map<string,int>> activity_data;
@@ -39,7 +42,6 @@ global {
 	list<building> office_buildings;
 	list<string> mobility_list <- ["walking", "bike","car","bus"];
 	
-	map<string, rgb> color_per_type;
 	map<string, float> proportion_per_type;
 	map<string, float> proba_bike_per_type;
 	map<string, float> proba_car_per_type;
@@ -161,7 +163,7 @@ global {
 		loop i from: 0 to:  profil_matrix.rows - 1 {
 			string profil_type <- profil_matrix[0,i];
 			if(profil_type != "") {
-				color_per_type[profil_type] <- rgb(profil_matrix[1,i]);
+				//color_per_type[profil_type] <- rgb(profil_matrix[1,i]);
 				proba_car_per_type[profil_type] <- float(profil_matrix[2,i]);
 				proba_bike_per_type[profil_type] <- float(profil_matrix[3,i]);
 				proportion_per_type[profil_type] <- float(profil_matrix[4,i]);
@@ -179,6 +181,9 @@ global {
 			congestion_map [self] <- shape.perimeter;
 		}
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))] ;
+		create building from: parks_shapefile{
+			usage<-"Park";
+		}
 		
 		if (amenities_shapefile != nil) {
 			loop am over: amenities_shapefile {
@@ -192,7 +197,7 @@ global {
 		office_buildings <- building where (each.usage = "O");
 		residential_buildings <- building where (each.usage = "R");
 		
-		do random_init;	
+		//do random_init;//Only if we don't have the information 	
 	}
 	
 	
@@ -262,10 +267,6 @@ global {
 		}
 		ask one_of (office_buildings) {
 			usage <- "Shopping";
-			office_buildings >> self;
-		}
-		ask one_of (office_buildings) {
-			usage <- "Restaurant";
 			office_buildings >> self;
 		}
 		ask one_of (office_buildings) {
@@ -366,7 +367,7 @@ species bus skills: [moving] {
 	}
 	
 	reflex r {
-		do goto target: my_target.location on: graph_per_mobility["car"];
+		do goto target: my_target.location on: graph_per_mobility["car"] speed:speed_per_mobility["bus"];
 		if(location = my_target.location) {
 			////////      release some people
 			ask stop_passengers[my_target] {
@@ -404,6 +405,7 @@ grid plot_pollution height: 20 width: 20 {
 species people skills: [moving]{
 	string type;
 	rgb color ;
+	int size<-15;
 	building living_place;
 	list<trip_objective> objectives;
 	trip_objective my_current_objective;
@@ -570,14 +572,14 @@ species people skills: [moving]{
 	
 	aspect default {
 		if (mobility_mode = nil) {
-			draw circle(8) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+			draw circle(size) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 		} else {
 			if (mobility_mode = "walking") {
-				draw circle(8) color: color  ;
+				draw circle(size) color: color  ;
 			}else if (mobility_mode = "bike") {
-				draw triangle(10) rotate: heading +90  color: color depth: 8 ;
+				draw triangle(size) rotate: heading +90  color: color depth: 8 ;
 			} else if (mobility_mode = "car") {
-				draw square(20)  color: color ;
+				draw square(size*2)  color: color ;
 			}
 		}
 	}
@@ -614,7 +616,7 @@ species building {
 	string usage;
 	string scale;
 	rgb color <- #grey;
-	float height <- 10.0 + rnd(10);
+	float height <- 50.0 + rnd(50);
 	aspect default {
 		draw shape color: color ;
 	}
@@ -622,22 +624,24 @@ species building {
 		draw shape color: color  depth: height;
 	}
 }
-experiment gamit type: gui {
+experiment gameit type: gui {
 	output {
-		display map type: opengl draw_env: false background: #white{//rgb(255 *luminosity,255*luminosity, 255*luminosity ){
-			species building refresh: false;
-			species road ;
-			species bus_stop aspect: c;
-			species bus aspect: bu; 			
-			species people;
+		display map type: opengl draw_env: false background: #black{//rgb(255 *luminosity,255*luminosity, 255*luminosity ){
 			species pie;
+			species building aspect:depth refresh: false;
+			species road ;
+			//species bus_stop aspect: c;
+			//species bus aspect: bu; 			
+			species people;
 			
+
 			
 			graphics "time" {
 				point loc <- {-1350,2000};
-				draw clock_normal size: 400 at:loc ;
+				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.9,world.shape.height*0.55};
+				/*draw clock_normal size: 400 at:loc ;
 				draw clock_big_hand rotate: current_date.minute*(360/60)  + 90  size: {400,400/14} at:loc + {0,0,0.1}; 
-				draw clock_small_hand rotate: current_date.hour*(360/12)  + 90  size: {240,240/10} at:loc + {0,0,0.1};		 
+				draw clock_small_hand rotate: current_date.hour*(360/12)  + 90  size: {240,240/10} at:loc + {0,0,0.1};		 */
 			}
 			
 			overlay position: { 5, 5 } size: { 240 #px, 680 #px } background: # black transparency: 1.0 border: #black 
