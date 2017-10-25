@@ -28,7 +28,7 @@ global {
 	
 	float luminosity update: 1.0 - abs(12 - current_date.hour)/12;
 	
-	map<string,rgb> color_per_usage <- ["R"::#lightgray, "O"::#dimgray, "Shopping"::#EE6808, "Restaurant"::#A8C0D0, "Night"::#6294B0,"GP"::#548099, "Park"::#8CB80F, "HS"::#orange, "Uni"::#yellow, "Cultural"::#brown];
+	map<string,rgb> color_per_usage <- ["R"::rgb(175,175,175), "O"::#dimgray, "Shopping"::#EE6808, "Restaurant"::#A8C0D0, "Night"::#6294B0,"GP"::#548099, "Park"::#8CB80F, "HS"::#orange, "Uni"::#yellow, "Cultural"::#brown];
 	geometry shape <- envelope(roads_shapefile);
 	
 	map<string,map<string,int>> activity_data;
@@ -514,7 +514,8 @@ species people skills: [moving]{
 	}	
 	
 	reflex choose_objective when: my_current_objective = nil {
-	    location <- any_location_in(current_place);
+	    //location <- any_location_in(current_place);
+		do wander speed:0.01;
 		my_current_objective <- objectives first_with ((each.starting_hour = current_date.hour) and (current_date.minute >= each.starting_minute) and (current_place != each.place) );
 		if (my_current_objective != nil) {
 			current_place <- nil;
