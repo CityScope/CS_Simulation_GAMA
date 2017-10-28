@@ -34,7 +34,6 @@ global {
 			do die;
 		}
 		ask building{
-
 			create powerSupply{
 	  		  location<-myself.location;
 	  		  color<-myself.color;
@@ -68,7 +67,7 @@ species powerSupply{
 	int energy;
 	aspect base{
 		if(time>100){
-			draw sphere(10 +abs(cos(time)*energy/250)) color:color;
+			draw cube(10 +abs(cos(time)*energy/250)) color:color;
 		}
 	  
 	}

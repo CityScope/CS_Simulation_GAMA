@@ -97,6 +97,47 @@ global {
 			do create_trip_objectives;
 		}
 		
+				
+		create externalCities{
+			id <-"boston";
+			real_location<-{world.shape.width*1.2,world.shape.height*0.375};
+			entry_location<-{3411,3906};
+			location<-entry_location;
+			shape<-circle(100);
+	        people_distribution <-[0.2,0.1,0.1,0.2,0.1,0.2,0.1];
+	        building_distribution <-[0.2,0.1,0.1,0.2,0.1,0.2,0.1];
+	        create people number: nb_people/4 {
+				type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
+				has_car <- flip(proba_car_per_type[type]);
+				has_bike <- flip(proba_bike_per_type[type]);
+				living_place <- myself;
+				current_place <- living_place;
+				location <- any_location_in(living_place);
+				color <- color_per_type[type];
+				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
+				do create_trip_objectives;
+		    }
+		}
+		
+		create externalCities{
+			id <-"harvard";
+			real_location<-{-world.shape.width*0.2,world.shape.height*0.375};
+			entry_location<-{3411,3906};
+	        people_distribution <-[0.2,0.1,0.1,0.2,0.1,0.2,0.1];
+	        building_distribution <-[0.2,0.1,0.1,0.2,0.1,0.2,0.1];
+	        create people number: nb_people/4 {
+				type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
+				has_car <- flip(proba_car_per_type[type]);
+				has_bike <- flip(proba_bike_per_type[type]);
+				living_place <- myself;
+				current_place <- living_place;
+				location <- any_location_in(living_place);
+				color <- color_per_type[type];
+				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
+				do create_trip_objectives;
+		    }
+		}
+		
 		create pie{
 			id <- "transport";
 			labels <- transport_type_cumulative_usage.keys;
@@ -128,6 +169,8 @@ global {
 			font_size <- diameter/40;
 			do calculate_pies;
 		}
+
+
 		
 	   /*create pie{
 			id <- "usage";
@@ -624,6 +667,22 @@ species building {
 		draw shape color: color  depth: height;
 	}
 }
+
+
+species externalCities parent:building{
+	string id;
+	point real_location;
+	point entry_location;
+	list<float> people_distribution;
+	list<float> building_distribution;
+	list<building> external_buildings;
+	
+	aspect base{
+		draw circle(100) color:#yellow at:real_location;
+		draw circle(100) color:#red at:entry_location;
+	}
+}
+
 experiment gameit type: gui {
 	output {
 		display map type: opengl draw_env: false background: #black{//rgb(255 *luminosity,255*luminosity, 255*luminosity ){
@@ -633,6 +692,7 @@ experiment gameit type: gui {
 			//species bus_stop aspect: c;
 			//species bus aspect: bu; 			
 			species people;
+			species externalCities aspect:base;
 			
 
 			
