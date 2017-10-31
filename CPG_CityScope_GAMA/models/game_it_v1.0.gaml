@@ -98,7 +98,7 @@ global {
 		}
 		
 				
-		create externalCities{
+		/*create externalCities{
 			id <-"boston";
 			real_location<-{world.shape.width*1.2,world.shape.height*0.375};
 			entry_location<-{3411,3906};
@@ -136,7 +136,7 @@ global {
 				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 				do create_trip_objectives;
 		    }
-		}
+		}*/
 		
 		create pie{
 			id <- "transport";
@@ -626,6 +626,10 @@ species people skills: [moving]{
 			}
 		}
 	}
+	
+	aspect timelapse {
+      draw circle(size/2) at: {location.x,location.y,cycle} + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+	}
 }
 
 species road  {
@@ -685,7 +689,7 @@ species externalCities parent:building{
 
 experiment gameit type: gui {
 	output {
-		display map type: opengl draw_env: false background: #black{//rgb(255 *luminosity,255*luminosity, 255*luminosity ){
+		display map type: opengl draw_env: false background: #black refresh_every:10{//rgb(255 *luminosity,255*luminosity, 255*luminosity ){
 			species pie;
 			species building aspect:depth refresh: false;
 			species road ;
@@ -693,6 +697,7 @@ experiment gameit type: gui {
 			//species bus aspect: bu; 			
 			species people;
 			species externalCities aspect:base;
+
 			
 
 			
@@ -740,10 +745,8 @@ experiment gameit type: gui {
             }
 		} 
 
-		/*display pollution type: opengl {
-			species building refresh: false;
-			species road ;
-			grid plot_pollution lines:#red elevation: pollution_level triangulation: true;			
+		/*display timelapse type: opengl background: #black refresh_every:10{
+		  species people aspect:timelapse trace: 2500;		
 		}*/		
 		
 	}
