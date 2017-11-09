@@ -35,7 +35,14 @@ species road  schedules: []{
 }
 
 
-experiment CityScopeVolpe type: gui {	
+species TAZ  schedules: []{
+}
+
+species Simnode  schedules: []{
+}
+
+
+experiment CityScopeSimMobility type: gui {	
 	output {	
 		display CityScope  type:opengl background:#black {
 			species road aspect: base refresh:false;
