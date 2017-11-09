@@ -98,7 +98,7 @@ global {
 		}
 		
 				
-		create externalCities{
+		/*create externalCities{
 			id <-"boston";
 			real_location<-{world.shape.width*1.2,world.shape.height*0.375};
 			entry_location<-{3411,3906};
@@ -136,7 +136,7 @@ global {
 				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 				do create_trip_objectives;
 		    }
-		}
+		}*/
 		
 		create pie{
 			id <- "transport";
