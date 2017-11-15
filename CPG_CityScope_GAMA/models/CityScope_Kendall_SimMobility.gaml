@@ -9,6 +9,8 @@ model CityScope_Kendall
 global {
 	file buildings_shapefile <- file("../includes/Volpe/Buildings.shp");
 	file roads_shapefile <- file("../includes/Volpe/Roads.shp");
+	file TAZ_shapefile <- file("../includes/Volpe/Buildings.shp");
+	file node_shapefile <- file("../includes/Volpe/Roads.shp");
 	file imageRaster <- file('../includes/images/gama_black.png') ;
 	geometry shape <- envelope(buildings_shapefile);
 	graph road_graph;
@@ -18,6 +20,7 @@ global {
 	init {
 		create building from: buildings_shapefile;
 		create road from: roads_shapefile ;
+		
 		road_graph <- as_edge_graph(road);				
 	}
 }
@@ -36,9 +39,16 @@ species road  schedules: []{
 
 
 species TAZ  schedules: []{
+	aspect base {	
+     	draw shape color:#blue;
+	}
+	
 }
 
 species Simnode  schedules: []{
+	aspect base {	
+     	draw circle(10) color:#green;
+	}
 }
 
 
@@ -47,6 +57,8 @@ experiment CityScopeSimMobility type: gui {
 		display CityScope  type:opengl background:#black {
 			species road aspect: base refresh:false;
 			species building aspect:base;
+			species TAZ aspect:base;
+			species Simnode aspect:base;
 		}			
 	}
 }
