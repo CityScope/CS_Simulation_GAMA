@@ -11,7 +11,7 @@ import "../includes/data_viz/pie_charts.gaml"
 
 global {
 	string case_study <- "volpe_game_it" ;
-	int nb_people <- 1000;
+	int nb_people <- 500;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/"+case_study+"/Buildings.shp");
 	file<geometry> parks_shapefile <- file<geometry>("../includes/"+case_study+"/Park.shp");
 	file<geometry> amenities_shapefile <- file_exists("../includes/"+case_study+"/amenities.shp") ? file<geometry>("../includes/"+case_study+"/amenities.shp") : nil;
@@ -615,7 +615,7 @@ species people skills: [moving]{
 	
 	aspect default {
 		if (mobility_mode = nil) {
-			draw circle(size) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+			draw circle(10#m) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 		} else {
 			if (mobility_mode = "walking") {
 				draw circle(size) color: color  ;
@@ -627,9 +627,9 @@ species people skills: [moving]{
 		}
 	}
 	
-	aspect timelapse {
+	/*aspect timelapse {
       draw circle(size/2) at: {location.x,location.y,cycle} + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
-	}
+	}*/
 }
 
 species road  {
@@ -745,9 +745,9 @@ experiment gameit type: gui {
             }
 		} 
 
-		/*display timelapse type: opengl background: #black refresh_every:10{
-		  species people aspect:timelapse trace: 2500;		
-		}*/		
+		display timelapse type: opengl background: #black{
+			species people aspect: default position:{0,0,cycle*0.01} trace: 100;	
+		}	
 		
 	}
 }
