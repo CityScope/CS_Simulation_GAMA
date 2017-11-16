@@ -7,7 +7,7 @@
 
 model fieldofvision
 
-import "CityScope_main.gaml"
+import "./../CityScope_main.gaml"
 
 global {
 	
