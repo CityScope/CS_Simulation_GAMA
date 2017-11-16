@@ -150,7 +150,7 @@ global {
 			inner_diameter <- diameter*0.8;
 			type <- "ring";
 			line_width <- diameter / 400;
-			font_size <- diameter/30;
+			font_size <- (diameter/10);
 			do calculate_pies;
 		}
 		
@@ -166,7 +166,7 @@ global {
 			inner_diameter <- diameter*0.8;
 			type <- "pie";
 			line_width <- diameter / 400;
-			font_size <- diameter/40;
+			font_size <- diameter/10;
 			do calculate_pies;
 		}
 
@@ -448,7 +448,7 @@ grid plot_pollution height: 20 width: 20 {
 species people skills: [moving]{
 	string type;
 	rgb color ;
-	int size<-15;
+	int size<-1;
 	building living_place;
 	list<trip_objective> objectives;
 	trip_objective my_current_objective;
@@ -615,7 +615,7 @@ species people skills: [moving]{
 	
 	aspect default {
 		if (mobility_mode = nil) {
-			draw circle(10#m) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+			draw circle(4) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 		} else {
 			if (mobility_mode = "walking") {
 				draw circle(size) color: color  ;
@@ -627,6 +627,10 @@ species people skills: [moving]{
 		}
 	}
 	
+	
+	aspect base{
+		draw circle(size) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+	}
 	/*aspect timelapse {
       draw circle(size/2) at: {location.x,location.y,cycle} + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 	}*/
