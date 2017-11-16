@@ -94,7 +94,7 @@ global {
         if(cityScopeCity= "volpe"){
 			angle <- -9.74;
 			center <-{1007,632};
-			brickSize <- 20;
+			brickSize <- 21.3;
 			coeffPop<-1.0;
 			coeffSize<-1;
 		}
@@ -199,11 +199,13 @@ global {
   		}
 		if(onlineGrid = true){
 		  cityMatrixData <- json_file(cityIOUrl).contents;
+		  if (length(list(cityMatrixData["grid"])) = nil){
+		  	cityMatrixData <- json_file("https://cityio.media.mit.edu/api/table/citymatrix_volpe").contents;
+		  }
 	    }
 	    else{
 	      cityMatrixData <- json_file("../includes/cityIO_Kendall.json").contents;
 	    }	
-	    write "fuck " + cityMatrixData;
 		cityMatrixCell <- cityMatrixData["grid"];
 		density_array <- cityMatrixData["objects"]["density"];
 		toggle1 <- int(cityMatrixData["objects"]["toggle1"]);	
@@ -273,7 +275,6 @@ global {
 
 		
 	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){	
-		write "fucking update";
 		do initGrid;
 	}
 	
@@ -547,6 +548,7 @@ experiment CityScopeMainVirtual type: gui {
 	output {	
 		display CityScopeVirtual  type:opengl background:#black virtual:true toolbar:false{
 			species table aspect:base refresh:false;
+			species building aspect:base position:{0,0,-0.0015} refresh:false;
 			species building aspect:demoScreen position:{0,0,-0.001};
 			species road aspect: base refresh:false;
 			species people aspect:scale;
@@ -559,8 +561,8 @@ experiment CityScopeMainVirtual type: gui {
             }
             graphics "density"{
              	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
-             	int barW<-60;
-             	int factor<-20;
+             	int barW<-20;
+             	int factor<-10;
              	loop i from: 0 to: length(density_array) -1{
              		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamared : ((i=1 or i=4) ? #gamaorange: #gamablue) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
              	}
