@@ -1,7 +1,7 @@
 /**
 * Name: CityScope Kendall
 * Author: Arnaud Grignard
-* Description: Agent-based model running on the CityScope Platform. Actually used on 2 different cities.
+* Description: Agent-based model running on the CityScope Platform. 
 */
 
 model CityScope
@@ -539,7 +539,7 @@ species table{
 
 
 
-experiment CityScopeMainVirtual type: gui{
+experiment CityScopeMainVirtual type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];
 	float minimum_cycle_duration <- 0.02;
 	output {	
