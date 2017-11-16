@@ -24,9 +24,9 @@ global {
 	matrix data <- matrix(my_csv_file);
 	
 	//CLUSTERING
-	bool clustering<-false;
-	int k parameter: 'number of groups to create (kmeans) ' category: "Visualization" min: 1 <- 10;	
-	float eps parameter: 'the maximum radius of the neighborhood (DBscan)' category: "Visualization" min: 10.0 <- 150.0;	
+	bool clustering <- true parameter: "Clustering:" category: "Simulation";
+	int k parameter: 'number of groups to create (kmeans) ' category: "Visualization" min: 1 max:100 <- 10;	
+	float eps parameter: 'the maximum radius of the neighborhood (DBscan)' category: "Visualization" min: 10.0 max: 100.0 <- 50.0;	
 	int minPoints <- 3; //the minimum number of elements needed for a cluster (DBscan)
 	
 	init {
@@ -41,8 +41,7 @@ global {
 	   global_start_date<-min(mobileData collect int(each["init_date"]));
 	   global_end_date<-max(mobileData collect int(each["init_date"]));	
 	}
-	reflex cluster_building when:(cycle=0 and clustering=true){
-		eps <-cycle*10.0;
+	reflex cluster_building when:(clustering){
 		list<list> instances <- mobileData collect ([each.location.x, each.location.y]);
 		//DBSCAN
 		list<list<int>> clusters_dbscan <- list<list<int>>(dbscan(instances, eps,minPoints));
@@ -98,14 +97,16 @@ species mobileData skills:[moving]{
 	
 	aspect timelapse{
 		if (visible){
-		  draw circle(4) color:#white;	
+		  draw circle(8) color:#white;	
 		}
+	}
+	aspect spacelapse{
+	      draw sphere(10) color:#white at:{location.x,location.y,(init_date-global_start_date)/100}; 	
 	}
 	aspect timespace{
 		if (visible){
 	      draw sphere(10) color:#white at:{location.x,location.y,(init_date-global_start_date)/100};
-		}
-		  	
+		}	  	
 	}
 	rgb color_dbscan <- #grey;
 	rgb color_kmeans <- #grey;
@@ -128,8 +129,11 @@ experiment CityScopeDev type: gui {
 		
 		display CityScopeTimeLapse  type:opengl background:#black {
 			species road aspect: base refresh:false;
-			species mobileData aspect:timelapse;
-			
+			species mobileData aspect:timelapse;	
+		}
+		display CityScopeSpaceLapse  type:opengl background:#black {
+			species road aspect: base refresh:false;
+			species mobileData aspect:spacelapse;	
 		}
 		
 		display CityScopeTimeSpace  type:opengl background:#black {
