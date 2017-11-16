@@ -93,8 +93,8 @@ global {
         
         if(cityScopeCity= "volpe"){
 			angle <- -9.74;
-			center <-{3305,2075};
-			brickSize <- 70.0;
+			center <-{1007,632};
+			brickSize <- 20;
 			coeffPop<-1.0;
 			coeffSize<-1;
 		}
@@ -203,6 +203,7 @@ global {
 	    else{
 	      cityMatrixData <- json_file("../includes/cityIO_Kendall.json").contents;
 	    }	
+	    write "fuck " + cityMatrixData;
 		cityMatrixCell <- cityMatrixData["grid"];
 		density_array <- cityMatrixData["objects"]["density"];
 		toggle1 <- int(cityMatrixData["objects"]["toggle1"]);	
@@ -272,6 +273,7 @@ global {
 
 		
 	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){	
+		write "fucking update";
 		do initGrid;
 	}
 	
@@ -305,7 +307,7 @@ global {
 		entropySeries[current_day-1]<-[];
 		
 	}
-	
+		
 	action generateSquarePop(int nb, string _scale){
 		create people number:nb	{
 				living_place <- one_of(amenity where (each.scale=_scale and each.fromGrid));
