@@ -24,11 +24,12 @@ global {
 	matrix data <- matrix(my_csv_file);
 	
 	//CLUSTERING
-	bool clustering <- true parameter: "Clustering:" category: "Simulation";
-	int k parameter: 'number of groups to create (kmeans) ' category: "Visualization" min: 1 max:100 <- 10;	
-	float eps parameter: 'the maximum radius of the neighborhood (DBscan)' category: "Visualization" min: 10.0 max: 100.0 <- 50.0;	
+	bool clustering <- false parameter: "Clustering:" category: "Simulation";
+	int k parameter: 'number of groups to create (kmeans) ' category: "Simulation" min: 1 max:100 <- 10;	
+	float eps parameter: 'the maximum radius of the neighborhood (DBscan)' category: "Simulation" min: 10.0 max: 100.0 <- 50.0;	
 	int minPoints <- 3; //the minimum number of elements needed for a cluster (DBscan)
-	
+	bool whiteBackground <- false parameter: "Black background:" category: "Visualization";
+	rgb background_color <- whiteBackground ? #black : #white;
 	init {
 	  create road from:roads_shapefile;
 	  loop i from: 1 to: data.rows -1{
@@ -74,6 +75,7 @@ species mobileData skills:[moving]{
 	float duration;
 	int init_date;
 	bool visible <-false;
+	int size<-4;
 	
 	reflex update{
 		if(global_start_date + (cycle*1000) > init_date and global_start_date + (cycle*1000) < init_date + duration){
@@ -87,69 +89,72 @@ species mobileData skills:[moving]{
 	}
 	
 	aspect base {
-		draw cone3D(5,duration/100) color:#white depth:duration/100;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
+		draw cone3D(size,duration/100) color:whiteBackground ? #white : #black depth:duration/100;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
 	}
 	
 	
 	aspect circle {
-		draw circle(8) color:#white;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
+		draw circle(size) color:whiteBackground ? #white : #black;//rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
 	}
 	
 	aspect timelapse{
 		if (visible){
-		  draw circle(8) color:#white;	
+		  draw circle(size) color:whiteBackground ? #white : #black;	
 		}
 	}
 	aspect spacelapse{
-	      draw sphere(10) color:#white at:{location.x,location.y,(init_date-global_start_date)/100}; 	
+	      draw sphere(size) color:whiteBackground ? #white : #black at:{location.x,location.y,(init_date-global_start_date)/100}; 	
 	}
 	aspect timespace{
 		if (visible){
-	      draw sphere(10) color:#white at:{location.x,location.y,(init_date-global_start_date)/100};
+	      draw sphere(size) color:whiteBackground ? #white : #black at:{location.x,location.y,(init_date-global_start_date)/100};
 		}	  	
 	}
 	rgb color_dbscan <- #grey;
 	rgb color_kmeans <- #grey;
 	aspect dbscan_aspect {
-		draw circle(10) color: color_dbscan;
+		draw circle(size) color: color_dbscan;
 	}
 	aspect kmeans_aspect {
-		draw circle(10) color: color_kmeans;
+		draw circle(size) color: color_kmeans;
 	}
 }
 
 
 experiment CityScopeDev type: gui {	
 	output {		
-		display CityScope  type:opengl background:#black {
+		display CityScope  type:opengl background:whiteBackground ? #black : #white {
 			species road aspect: base refresh:false;
 			species mobileData aspect:circle;
-			
 		}
 		
-		display CityScopeTimeLapse  type:opengl background:#black {
+		display CityScopeDuration  type:opengl background:whiteBackground ? #black : #white {
+			species road aspect: base refresh:false;
+			species mobileData aspect:base;	
+		}
+		
+		display CityScopeTimeLapse  type:opengl background:whiteBackground ? #black : #white {
 			species road aspect: base refresh:false;
 			species mobileData aspect:timelapse;	
 		}
-		display CityScopeSpaceLapse  type:opengl background:#black {
+		display CityScopeSpaceLapse  type:opengl background:whiteBackground ? #black : #white {
 			species road aspect: base refresh:false;
 			species mobileData aspect:spacelapse;	
 		}
 		
-		display CityScopeTimeSpace  type:opengl background:#black {
+		display CityScopeTimeSpace  type:opengl background:whiteBackground ? #black : #white {
 			species road aspect: base refresh:false;
 			species mobileData aspect:timespace;
 			
 		}
-		display CityScopeDBScan  type:opengl background:#black{
+		display CityScopeDBScan  type:opengl background:whiteBackground ? #black : #white{
 			species road aspect: base refresh:false;
 			species mobileData aspect:dbscan_aspect;
 			
 		}	
-		display CityScopeKMeans  type:opengl background:#black {
+		display CityScopeKMeans  type:opengl background:whiteBackground ? #black : #white {
 			species road aspect: base refresh:false;
-			species mobileData aspect:kmeans_aspect;
-			
+			species mobileData aspect:kmeans_aspect;	
 		}
 	}
 }
