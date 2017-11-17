@@ -169,28 +169,34 @@ global {
 				fromTheGrid<-false;  
 			}				
 		  }
-		  ask amenity where  (each.usage="R"){
-		  	float nb <- (self.scale ="L") ? density_array[0] : ((self.scale ="M") ? density_array[1] :density_array[2]);
-		  	create people number: 1+nb/3 { 
-				living_place <- myself;
-				location <- any_location_in (living_place);
-				scale <- myself.scale;	
-				speed <- min_speed + rnd (max_speed - min_speed) ;
-				initialSpeed <-speed;
-				time_to_work <- min_work_start + rnd (max_work_start - min_work_start) ;
-				time_to_lunch <- min_lunch_start + rnd (max_lunch_start - min_lunch_start) ;
-				time_to_rework <- min_rework_start + rnd (max_rework_start - min_rework_start) ;
-				time_to_dinner <- min_dinner_start + rnd (max_dinner_start - min_dinner_start) ;
-				time_to_sleep <- min_work_end + rnd (max_work_end - min_work_end) ;
-				working_place <- one_of(building  where (each.usage="O" and each.scale=scale)) ;
-				eating_place <- one_of(amenity where (each.scale=scale )) ;
-				dining_place <- one_of(amenity where (each.scale=scale )) ;
-				objective <- "resting";
-				fromTheGrid<-true; 
-			}
-		  	
+		  if(length(density_array)>0){
+			  ask amenity where  (each.usage="R"){
+	
+				  	float nb <- (self.scale ="L") ? density_array[0] : ((self.scale ="M") ? density_array[1] :density_array[2]);
+				  	create people number: 1+nb/3 { 
+						living_place <- myself;
+						location <- any_location_in (living_place);
+						scale <- myself.scale;	
+						speed <- min_speed + rnd (max_speed - min_speed) ;
+						initialSpeed <-speed;
+						time_to_work <- min_work_start + rnd (max_work_start - min_work_start) ;
+						time_to_lunch <- min_lunch_start + rnd (max_lunch_start - min_lunch_start) ;
+						time_to_rework <- min_rework_start + rnd (max_rework_start - min_rework_start) ;
+						time_to_dinner <- min_dinner_start + rnd (max_dinner_start - min_dinner_start) ;
+						time_to_sleep <- min_work_end + rnd (max_work_end - min_work_end) ;
+						working_place <- one_of(building  where (each.usage="O" and each.scale=scale)) ;
+						eating_place <- one_of(amenity where (each.scale=scale )) ;
+						dining_place <- one_of(amenity where (each.scale=scale )) ;
+						objective <- "resting";
+						fromTheGrid<-true; 
+					}
+			  }
+			  write "initPop from density array" + density_array + " nb people: " + length(people); 
 		  }
-		  write "initPop from density array" + density_array + " nb people: " + length(people); 
+		  else{
+		  	write "density array is empty";
+		  }
+		  
 		 }
 	
 	action initGrid{
@@ -448,7 +454,7 @@ species people skills:[moving]{
 	 
 	reflex move {
 	    if(moveOnRoad = true and the_target !=nil){
-	      do goto target: the_target on: road_graph ; 
+	      do goto target: the_target on: road_graph  ; 
 	    }else{
 	      do goto target: the_target;
 	    }
