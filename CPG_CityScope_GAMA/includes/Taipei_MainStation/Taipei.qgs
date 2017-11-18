@@ -31,10 +31,10 @@
   <mapcanvas>
     <units>degrees</units>
     <extent>
-      <xmin>121.50383443426392205</xmin>
-      <ymin>25.03460124803592279</ymin>
-      <xmax>121.53267115622543315</xmax>
-      <ymax>25.05254958604478688</ymax>
+      <xmin>121.50399137930673987</xmin>
+      <ymin>25.03346918543212851</ymin>
+      <xmax>121.53282810126825098</xmax>
+      <ymax>25.05141752344102102</ymax>
     </extent>
     <rotation>0</rotation>
     <projections>0</projections>
@@ -443,6 +443,9 @@ def my_form_open(dialog, layer, feature):
         <edittype widgetv2type="TextEdit" name="Category">
           <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
         </edittype>
+        <edittype widgetv2type="TextEdit" name="Floors">
+          <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+        </edittype>
       </edittypes>
       <renderer-v2 forceraster="0" symbollevels="0" type="singleSymbol" enableorderby="0">
         <symbols>
@@ -669,17 +672,19 @@ def my_form_open(dialog, layer, feature):
         <alias field="Usage" index="1" name=""/>
         <alias field="Scale" index="2" name=""/>
         <alias field="Category" index="3" name=""/>
+        <alias field="Floors" index="4" name=""/>
       </aliases>
       <excludeAttributesWMS/>
       <excludeAttributesWFS/>
       <attributeactions default="-1"/>
-      <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="-697219303">
+      <attributetableconfig actionWidgetStyle="dropDown" sortExpression="&quot;Usage&quot;" sortOrder="-697219303">
         <columns>
           <column width="-1" hidden="1" type="actions"/>
           <column width="-1" hidden="0" type="field" name="Usage"/>
           <column width="-1" hidden="0" type="field" name="Scale"/>
           <column width="-1" hidden="0" type="field" name="TYPE"/>
           <column width="-1" hidden="0" type="field" name="Category"/>
+          <column width="-1" hidden="0" type="field" name="Floors"/>
         </columns>
       </attributetableconfig>
       <editform>.</editform>
@@ -715,6 +720,7 @@ def my_form_open(dialog, layer, feature):
         <default field="Usage" expression=""/>
         <default field="Scale" expression=""/>
         <default field="Category" expression=""/>
+        <default field="Floors" expression=""/>
       </defaults>
       <previewExpression>COALESCE( "name", '&lt;NULL>' )</previewExpression>
     </maplayer>
@@ -1873,6 +1879,7 @@ def my_form_open(dialog, layer, feature):
       <SingleCategoryDiagramRenderer diagramType="Histogram" sizeLegend="0" attributeLegend="1">
         <DiagramCategory penColor="#000000" labelPlacementMethod="XHeight" penWidth="0" diagramOrientation="Up" sizeScale="0,0,0,0,0,0" minimumSize="0" barWidth="5" penAlpha="255" maxScaleDenominator="1e+08" backgroundColor="#ffffff" transparency="0" width="15" scaleDependency="Area" backgroundAlpha="255" angleOffset="1440" scaleBasedVisibility="0" enabled="0" height="15" lineSizeScale="0,0,0,0,0,0" sizeType="MM" lineSizeType="MM" minScaleDenominator="inf">
           <fontProperties description=".SF NS Text,13,-1,5,50,0,0,0,0,0" style=""/>
+          <attribute field="" color="#000000" label=""/>
         </DiagramCategory>
         <symbol alpha="1" clip_to_extent="1" type="marker" name="sizeSymbol">
           <layer pass="0" class="SimpleMarker" locked="0">
@@ -1898,7 +1905,7 @@ def my_form_open(dialog, layer, feature):
         </symbol>
       </SingleCategoryDiagramRenderer>
       <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
-      <annotationform></annotationform>
+      <annotationform>.</annotationform>
       <aliases>
         <alias field="Name" index="0" name=""/>
       </aliases>
@@ -1911,10 +1918,10 @@ def my_form_open(dialog, layer, feature):
           <column width="-1" hidden="1" type="actions"/>
         </columns>
       </attributetableconfig>
-      <editform></editform>
+      <editform>.</editform>
       <editforminit/>
       <editforminitcodesource>0</editforminitcodesource>
-      <editforminitfilepath></editforminitfilepath>
+      <editforminitfilepath>.</editforminitfilepath>
       <editforminitcode><![CDATA[# -*- coding: utf-8 -*-
 """
 QGIS forms can have a Python function that is called when the form is
@@ -2250,6 +2257,7 @@ def my_form_open(dialog, layer, feature):
       <ProjectCRSProj4String type="QString">+proj=longlat +datum=WGS84 +no_defs</ProjectCRSProj4String>
       <ProjectCrs type="QString">EPSG:4326</ProjectCrs>
       <ProjectCRSID type="int">3452</ProjectCRSID>
+      <ProjectionsEnabled type="int">0</ProjectionsEnabled>
     </SpatialRefSys>
     <Paths>
       <Absolute type="bool">false</Absolute>
