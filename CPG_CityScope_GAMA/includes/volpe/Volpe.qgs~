@@ -8,10 +8,10 @@
     <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="amenities20171023154332688" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/volpe/amenities.shp" name="amenities">
       <customproperties/>
     </layer-tree-layer>
-    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Buildings20171023153527837" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/volpe/Buildings.shp" name="Buildings">
+    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Roads20171023154339915" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/volpe/Roads.shp" name="Roads">
       <customproperties/>
     </layer-tree-layer>
-    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Roads20171023154339915" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/volpe/Roads.shp" name="Roads">
+    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Buildings20171023153527837" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/volpe/Buildings.shp" name="Buildings">
       <customproperties/>
     </layer-tree-layer>
     <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Park20171023154338898" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/volpe/Park.shp" name="Park">
@@ -28,10 +28,10 @@
   <mapcanvas>
     <units>feet</units>
     <extent>
-      <xmin>759559.60498183069285005</xmin>
-      <ymin>2951751.90458018844947219</ymin>
-      <xmax>779699.70884921902325004</xmax>
-      <ymax>2963942.34575045621022582</ymax>
+      <xmin>760258.21784109040163457</xmin>
+      <ymin>2953689.79209277639165521</ymin>
+      <xmax>777991.25445593823678792</xmax>
+      <ymax>2964708.37795054586604238</ymax>
     </extent>
     <rotation>0</rotation>
     <projections>1</projections>
@@ -76,14 +76,14 @@
         <legendlayerfile isInOverview="0" layerid="amenities20171023154332688" visible="1"/>
       </filegroup>
     </legendlayer>
-    <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="Buildings" showFeatureCount="0">
-      <filegroup open="true" hidden="false">
-        <legendlayerfile isInOverview="0" layerid="Buildings20171023153527837" visible="1"/>
-      </filegroup>
-    </legendlayer>
     <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="Roads" showFeatureCount="0">
       <filegroup open="true" hidden="false">
         <legendlayerfile isInOverview="0" layerid="Roads20171023154339915" visible="1"/>
+      </filegroup>
+    </legendlayer>
+    <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="Buildings" showFeatureCount="0">
+      <filegroup open="true" hidden="false">
+        <legendlayerfile isInOverview="0" layerid="Buildings20171023153527837" visible="1"/>
       </filegroup>
     </legendlayer>
     <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="Park" showFeatureCount="0">
