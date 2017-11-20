@@ -10,7 +10,7 @@ model gamit
 import "../includes/data_viz/pie_charts.gaml"
 
 global {
-	string case_study <- "volpe_game_it" ;
+	string case_study <- "Taipei_MainStation" ;
 	int nb_people <- 500;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/"+case_study+"/Buildings.shp");
 	file<geometry> parks_shapefile <- file<geometry>("../includes/"+case_study+"/Park.shp");
@@ -223,7 +223,7 @@ global {
 			capacity <- shape.perimeter / 10.0;
 			congestion_map [self] <- shape.perimeter;
 		}
-		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))] ;
+		create building from: buildings_shapefile with: [usage::string(read ("Category")),scale::string(read ("Scale"))] ;
 		create building from: parks_shapefile{
 			usage<-"Park";
 		}
