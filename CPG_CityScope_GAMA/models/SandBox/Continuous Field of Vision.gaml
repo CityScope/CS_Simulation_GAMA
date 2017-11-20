@@ -1,17 +1,15 @@
 /**
 * Name: fieldofvision
-* Author: Patrick Taillandier
+* Author: Arnaud Grignard
 * Description: This model illustrate how to use the masked_by operator to compute the field of vision of an agent (with obtsacles)
 * Tags: perception, spatial_computation, masked_by
 */
 
 model fieldofvision
 
-import "./../CityScope_main.gaml"
-
 global {
 	
-	file obstacle_shapefile <- file("../includes/MIT/Buildings.shp");
+	file obstacle_shapefile <- file("./MIT/Buildings.shp");
 	
 	//number of obstacles
 	int nb_obstacles <- 10 parameter: true;
@@ -97,7 +95,6 @@ species pev skills: [moving]{
 
 experiment fieldofvision type: gui {
 	float minimum_cycle_duration <- 0.05;
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "Andorra"];	
 	output {
 		display view type:opengl{
 			species obstacle;
