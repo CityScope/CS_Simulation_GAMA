@@ -14,7 +14,7 @@ global {
 	file roads_shapefile <- file("../includes/"+cityScopeCity+"/Roads.shp");
 	file amenities_shapefile <- file("../includes/"+cityScopeCity+"/Amenities.shp");
 	file table_bound_shapefile <- file("../includes/"+cityScopeCity+"/table_bounds.shp");
-	file imageRaster <- file('../includes/images/gama_black.png') ;
+	file imageRaster <- file('../images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	graph road_graph;
 	graph<people, people> interaction_graph;
