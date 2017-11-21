@@ -627,7 +627,7 @@ experiment gameit type: gui {
 			species building aspect:depth refresh: false;
 			species road ;		
 			species people aspect:base ;
-			species people aspect:layer trace:true;
+			//species people aspect:layer trace:true;
 			species externalCities aspect:base;
 
 			graphics "time" {
