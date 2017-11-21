@@ -10,10 +10,9 @@ model gamit
 import "./data_viz/pie_charts.gaml"
 
 global {
-	string case_study <- "volpe" ;
+	string case_study <- "Taipei_MainStation" ;
 	int nb_people <- 500;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/City/"+case_study+"/Buildings.shp");
-	file<geometry> amenities_shapefile <- file_exists("../includes/City/"+case_study+"/amenities.shp") ? file<geometry>("../includes/City/"+case_study+"/amenities.shp") : nil;
 	file<geometry> roads_shapefile <- file<geometry>("../includes/City/"+case_study+"/Roads.shp");
 	file activity_file <- file("../includes/game_IT/ActivityTablePerProfile.csv");
 	file criteria_file <- file("../includes/game_IT/CriteriaFile.csv");
@@ -223,16 +222,6 @@ global {
 			congestion_map [self] <- shape.perimeter;
 		}
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category"))] ;
-		
-		if (amenities_shapefile != nil) {
-			loop am over: amenities_shapefile {
-				ask (building closest_to am) {
-					usage <- "Restaurant";
-					scale <- am get "Scale";
-					name <- am get "name";
-				} 
-			}
-		}
 		office_buildings <- building where (each.usage = "O");
 		residential_buildings <- building where (each.usage = "R");
 		
