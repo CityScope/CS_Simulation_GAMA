@@ -10,10 +10,10 @@ model gamit
 import "./data_viz/pie_charts.gaml"
 
 global {
-	string case_study <- "volpe_game_it" ;
+	string case_study <- "Taipei_MainStation" ;
 	int nb_people <- 500;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/City/"+case_study+"/Buildings.shp");
-	file<geometry> parks_shapefile <- file<geometry>("../includes/City/"+case_study+"/Park.shp");
+	//file<geometry> parks_shapefile <- file<geometry>("../includes/City/"+case_study+"/Park.shp");
 	file<geometry> amenities_shapefile <- file_exists("../includes/City/"+case_study+"/amenities.shp") ? file<geometry>("../includes/City/"+case_study+"/amenities.shp") : nil;
 	file<geometry> roads_shapefile <- file<geometry>("../includes/City/"+case_study+"/Roads.shp");
 	file activity_file <- file("../includes/game_IT/ActivityTablePerProfile.csv");
@@ -223,10 +223,11 @@ global {
 			capacity <- shape.perimeter / 10.0;
 			congestion_map [self] <- shape.perimeter;
 		}
-		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))] ;
-		create building from: parks_shapefile{
+		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category"))] ;
+		/*create building from: parks_shapefile{
 			usage<-"Park";
-		}
+			category<-"Park";
+		}*/
 		
 		if (amenities_shapefile != nil) {
 			loop am over: amenities_shapefile {
@@ -477,7 +478,7 @@ species people skills: [moving]{
 					possible_bds <- building where ((each.usage = "O") and (each.scale = last(act_real)));
 				} 
 				else {
-					possible_bds <- building where (each.usage = act_real);
+					possible_bds <- building where (each.category = act_real);
 				}
 				building act_build <- one_of(possible_bds);
 				if (act_build= nil) {write "problem with act_real: " + act_real;}
@@ -666,6 +667,7 @@ species road  {
 species building {
 	string usage;
 	string scale;
+	string category;
 	rgb color <- #grey;
 	float height <- 50.0 + rnd(50);
 	aspect default {
