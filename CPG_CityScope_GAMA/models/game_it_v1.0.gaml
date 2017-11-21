@@ -16,7 +16,7 @@ global {
 	bool updatePollution <-false parameter: "Pollution:" category: "Simulation";
 	bool updateDensity <-false parameter: "DEnsity:" category: "Simulation";
 	
-	string case_study <- "Andorra" ;
+	string case_study <- "volpe" ;
 	int nb_people <- 500;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/City/"+case_study+"/Buildings.shp");
 	file<geometry> roads_shapefile <- file<geometry>("../includes/City/"+case_study+"/Roads.shp");
@@ -627,7 +627,7 @@ experiment gameit type: gui {
 			species building aspect:depth refresh: false;
 			species road ;		
 			species people aspect:base ;
-			//species people aspect:layer trace:true;
+			species people aspect:layer trace:true;
 			species externalCities aspect:base;
 
 			graphics "time" {
