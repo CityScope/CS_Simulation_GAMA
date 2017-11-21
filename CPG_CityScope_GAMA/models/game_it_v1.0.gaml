@@ -10,22 +10,19 @@ model gamit
 import "./data_viz/pie_charts.gaml"
 
 global {
-	string case_study <- "Taipei_MainStation" ;
+	string case_study <- "volpe" ;
 	int nb_people <- 500;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/City/"+case_study+"/Buildings.shp");
 	file<geometry> roads_shapefile <- file<geometry>("../includes/City/"+case_study+"/Roads.shp");
+	
+	
+	
 	file activity_file <- file("../includes/game_IT/ActivityTablePerProfile.csv");
 	file criteria_file <- file("../includes/game_IT/CriteriaFile.csv");
 	file dataOnProfils_file <- file("../includes/game_IT/DataOnProfiles.csv");
 	file modeCharacteristics_file <- file("../includes/game_IT/ModeCharacteristics.csv");
 	file dataOnMobilityMode_file <- file("../includes/game_IT/DataOnModes.csv");
-	
-	
-	file clock_normal     const: true <- image_file("../images/clock.png");
-	file clock_big_hand   const: true <- image_file("../images/big_hand.png");
-	file clock_small_hand const: true <- image_file("../images/small_hand.png");
-	
-	float luminosity update: 1.0 - abs(12 - current_date.hour)/12;
+		
 	
 	map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];
 	map<string,rgb> color_per_type <- [ "High School Student"::#FFFFB2, "College student"::#FECC5C,"Young professional"::#FD8D3C,  "Mid-career workers"::#F03B20, "Executives"::#BD0026, "Home maker"::#0B5038, "Retirees"::#8CAB13];
@@ -650,7 +647,7 @@ species externalCities parent:building{
 
 experiment gameit type: gui {
 	output {
-		display map type: opengl draw_env: false background: #black refresh_every:10{//rgb(255 *luminosity,255*luminosity, 255*luminosity ){
+		display map type: opengl draw_env: false background: #black refresh_every:10{
 			species pie;
 			species building aspect:depth refresh: false;
 			species road ;
@@ -665,9 +662,6 @@ experiment gameit type: gui {
 			graphics "time" {
 				point loc <- {-1350,2000};
 				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.9,world.shape.height*0.55};
-				/*draw clock_normal size: 400 at:loc ;
-				draw clock_big_hand rotate: current_date.minute*(360/60)  + 90  size: {400,400/14} at:loc + {0,0,0.1}; 
-				draw clock_small_hand rotate: current_date.hour*(360/12)  + 90  size: {240,240/10} at:loc + {0,0,0.1};		 */
 			}
 			
 			overlay position: { 5, 5 } size: { 240 #px, 680 #px } background: # black transparency: 1.0 border: #black 
