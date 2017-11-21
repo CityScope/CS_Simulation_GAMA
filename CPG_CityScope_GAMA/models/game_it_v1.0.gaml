@@ -10,11 +10,17 @@ model gamit
 import "./data_viz/pie_charts.gaml"
 
 global {
+	
+	//PARAMETERS
+	int timelapse <-0 min:0 max:1000 parameter: "TimeLapse Length:" category: "Visualization";
+	bool updatePollution <-false parameter: "Pollution:" category: "Simulation";
+	bool updateDensity <-false parameter: "DEnsity:" category: "Simulation";
+	
 	string case_study <- "volpe" ;
 	int nb_people <- 500;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/City/"+case_study+"/Buildings.shp");
 	file<geometry> roads_shapefile <- file<geometry>("../includes/City/"+case_study+"/Roads.shp");
-	
+	geometry shape <- envelope(roads_shapefile);
 	
 	
 	file activity_file <- file("../includes/game_IT/ActivityTablePerProfile.csv");
@@ -27,11 +33,12 @@ global {
 	map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];
 	map<string,rgb> color_per_type <- [ "High School Student"::#FFFFB2, "College student"::#FECC5C,"Young professional"::#FD8D3C,  "Mid-career workers"::#F03B20, "Executives"::#BD0026, "Home maker"::#0B5038, "Retirees"::#8CAB13];
 	
-	geometry shape <- envelope(roads_shapefile);
+	
 	
 	map<string,map<string,int>> activity_data;
 	float step <- 1 #mn;
 	date starting_date <- date([2017,9,25,0,0]);
+	float unitFactor<-0.3;
 	
 	list<building> residential_buildings;
 	list<building> office_buildings;
@@ -54,7 +61,7 @@ global {
 	// outputs
 	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
-	bool updatePollution <-false;
+	
 	
 	init {
 		gama.pref_display_flat_charts <- true;
@@ -144,8 +151,8 @@ global {
 			diameter <- world.shape.width*0.10;
 			inner_diameter <- diameter*0.8;
 			type <- "ring";
-			line_width <- diameter / 400;
-			font_size <- (diameter/10);
+			line_width <- unitFactor*diameter / 400;
+			font_size <- (unitFactor*diameter/10);
 			do calculate_pies;
 		}
 		
@@ -160,8 +167,8 @@ global {
 			diameter <- world.shape.width*0.10;
 			inner_diameter <- diameter*0.8;
 			type <- "pie";
-			line_width <- diameter / 400;
-			font_size <- diameter/10;
+			line_width <- unitFactor*diameter / 400;
+			font_size <- unitFactor*diameter/10;
 			do calculate_pies;
 		}
 
@@ -386,14 +393,23 @@ species bus skills: [moving] {
 	aspect bu {
 		draw rectangle(40,20) color: empty(stop_passengers.values accumulate(each))?#yellow:#red border: #black;
 	}
-	
 }
 
-grid plot_pollution height: 20 width: 20 {
+grid gridHeatmaps height: 50 width: 50 {
 	int pollution_level <- 0 ;
-	rgb color <- hsb(pollution_level,1.0,1.0) update: hsb(pollution_level,1.0,1.0);
+	int density<-0;
+	rgb pollution_color <- rgb(255-pollution_level*10,255-pollution_level*10,255-pollution_level*10) update:rgb(255-pollution_level*10,255-pollution_level*10,255-pollution_level*10);
+	rgb density_color <- rgb(255-density*50,255-density*50,255-density*50) update:rgb(255-density*50,255-density*50,255-density*50);
 	
-	reflex raz when: every(1#day) {
+	aspect density{
+		draw shape color:density_color at:{location.x+current_date.hour*world.shape.width,location.y};
+	}
+	
+	aspect pollution{
+		draw shape color:pollution_color;
+	}
+	
+	reflex raz when: every(1#hour) {
 		pollution_level <- 0;
 	}
 }
@@ -401,7 +417,7 @@ grid plot_pollution height: 20 width: 20 {
 species people skills: [moving]{
 	string type;
 	rgb color ;
-	int size<-1;
+	float size<-30*unitFactor;
 	building living_place;
 	list<trip_objective> objectives;
 	trip_objective my_current_objective;
@@ -506,10 +522,18 @@ species people skills: [moving]{
 	}
 	
 	action updatePollutionMap{
-		ask plot_pollution overlapping(current_path.shape) {
+		ask gridHeatmaps overlapping(current_path.shape) {
 			pollution_level <- pollution_level + 1;
 		}
 	}	
+	
+	reflex updateDensityMap when: (every(#hour) and updateDensity=true){
+		ask gridHeatmaps{
+		  density<-length(people overlapping self);	
+		}
+	}
+	
+	
 	
 	reflex choose_objective when: my_current_objective = nil {
 	    //location <- any_location_in(current_place);
@@ -533,7 +557,7 @@ species people skills: [moving]{
 		}
 		
 		if (location = my_current_objective.place.location) {
-			if(mobility_mode = "car" and updatePollution = true) {do updatePollutionMap;}						
+			if(mobility_mode = "car" and updatePollution = true) {do updatePollutionMap;}					
 			current_place <- my_current_objective.place;
 			location <- any_location_in(current_place);
 			my_current_objective <- nil;	
@@ -568,7 +592,7 @@ species people skills: [moving]{
 	
 	aspect default {
 		if (mobility_mode = nil) {
-			draw circle(4) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+			draw circle(size) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 		} else {
 			if (mobility_mode = "walking") {
 				draw circle(size) color: color  ;
@@ -582,11 +606,11 @@ species people skills: [moving]{
 	
 	
 	aspect base{
-		draw circle(size) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+	  draw circle(size) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 	}
-	/*aspect timelapse {
-      draw circle(size/2) at: {location.x,location.y,cycle} + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
-	}*/
+	aspect timelapse {
+      draw circle(size) at: {location.x,location.y,cycle} + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+	}
 }
 
 species road  {
@@ -648,17 +672,15 @@ species externalCities parent:building{
 experiment gameit type: gui {
 	output {
 		display map type: opengl draw_env: false background: #black refresh_every:10{
+			//species gridHeatmaps aspect:density;
 			species pie;
 			species building aspect:depth refresh: false;
 			species road ;
 			//species bus_stop aspect: c;
 			//species bus aspect: bu; 			
-			species people;
+			species people aspect:base ;
 			species externalCities aspect:base;
 
-			
-
-			
 			graphics "time" {
 				point loc <- {-1350,2000};
 				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.9,world.shape.height*0.55};
@@ -699,10 +721,6 @@ experiment gameit type: gui {
                 draw "Car" at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);       
             }
 		} 
-
-		display timelapse type: opengl background: #black{
-			species people aspect: default position:{0,0,cycle*0.01} trace: 100;	
-		}	
 		
 	}
 }
