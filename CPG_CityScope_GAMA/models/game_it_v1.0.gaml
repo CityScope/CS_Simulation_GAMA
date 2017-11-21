@@ -16,7 +16,7 @@ global {
 	bool updatePollution <-false parameter: "Pollution:" category: "Simulation";
 	bool updateDensity <-false parameter: "DEnsity:" category: "Simulation";
 	
-	string case_study <- "volpe" ;
+	string case_study <- "Andorra" ;
 	int nb_people <- 500;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/City/"+case_study+"/Buildings.shp");
 	file<geometry> roads_shapefile <- file<geometry>("../includes/City/"+case_study+"/Roads.shp");
