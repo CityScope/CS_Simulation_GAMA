@@ -10,10 +10,9 @@ model gamit
 import "./data_viz/pie_charts.gaml"
 
 global {
-	string case_study <- "Taipei_MainStation" ;
+	string case_study <- "volpe" ;
 	int nb_people <- 500;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/City/"+case_study+"/Buildings.shp");
-	//file<geometry> parks_shapefile <- file<geometry>("../includes/City/"+case_study+"/Park.shp");
 	file<geometry> amenities_shapefile <- file_exists("../includes/City/"+case_study+"/amenities.shp") ? file<geometry>("../includes/City/"+case_study+"/amenities.shp") : nil;
 	file<geometry> roads_shapefile <- file<geometry>("../includes/City/"+case_study+"/Roads.shp");
 	file activity_file <- file("../includes/game_IT/ActivityTablePerProfile.csv");
@@ -29,7 +28,7 @@ global {
 	
 	float luminosity update: 1.0 - abs(12 - current_date.hour)/12;
 	
-	map<string,rgb> color_per_usage <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];
+	map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];
 	map<string,rgb> color_per_type <- [ "High School Student"::#FFFFB2, "College student"::#FECC5C,"Young professional"::#FD8D3C,  "Mid-career workers"::#F03B20, "Executives"::#BD0026, "Home maker"::#0B5038, "Retirees"::#8CAB13];
 	
 	geometry shape <- envelope(roads_shapefile);
@@ -58,7 +57,7 @@ global {
 	
 	// outputs
 	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
-	map<string, int> buildings_distribution <- map(color_per_usage.keys collect (each::0));
+	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
 	bool updatePollution <-false;
 	
 	init {
@@ -72,7 +71,7 @@ global {
 		
 		do compute_graph;
 		ask building {
-			color <- color_per_usage[usage]; 
+			color <- color_per_category[category]; 
 		}
 		
 		create bus_stop number: 6 {
@@ -224,10 +223,6 @@ global {
 			congestion_map [self] <- shape.perimeter;
 		}
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category"))] ;
-		/*create building from: parks_shapefile{
-			usage<-"Park";
-			category<-"Park";
-		}*/
 		
 		if (amenities_shapefile != nil) {
 			loop am over: amenities_shapefile {
@@ -301,35 +296,6 @@ global {
 			}
 		}
 	}
-
-	 
-	
-	action random_init {
-		ask one_of (office_buildings) {
-			usage <- "Uni";
-			office_buildings >> self;
-		}
-		ask one_of (office_buildings) {
-			usage <- "Shopping";
-			office_buildings >> self;
-		}
-		ask one_of (office_buildings) {
-			usage <- "Night";
-			office_buildings >> self;
-		}
-		ask one_of (office_buildings) {
-			usage <- "Park";
-			office_buildings >> self;
-		}
-		ask one_of (office_buildings) {
-			usage <- "HS";
-			office_buildings >> self;
-		}
-		ask one_of (office_buildings) {
-			usage <- "Cultural";
-			office_buildings >> self;
-		}
-	}
 	
 	action compute_graph {
 		loop mobility_mode over: color_per_mobility.keys {
@@ -363,7 +329,7 @@ global {
 	}
 	
 	reflex update_buildings_distribution{
-		buildings_distribution <- map(color_per_usage.keys collect (each::0));
+		buildings_distribution <- map(color_per_category.keys collect (each::0));
 		ask building{
 			buildings_distribution[usage] <- buildings_distribution[usage]+1;
 		}
@@ -722,9 +688,9 @@ experiment gameit type: gui {
                 float y <- 30#px;
   				draw "Building Usage" at: { 40#px, y } color: text_color font: font("SansSerif", 20, #bold);
                 y <- y + 30 #px;
-                loop type over: color_per_usage.keys
+                loop type over: color_per_category.keys
                 {
-                    draw square(10#px) at: { 20#px, y } color: color_per_usage[type] border: #white;
+                    draw square(10#px) at: { 20#px, y } color: color_per_category[type] border: #white;
                     draw type at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);
                     y <- y + 25#px;
                 }
