@@ -5,19 +5,19 @@
   <evaluateDefaultValues active="0"/>
   <layer-tree-group expanded="1" checked="Qt::Checked" name="">
     <customproperties/>
-    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="amenities20170730163402443" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/Shanghai/amenities.shp" name="amenities">
+    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="amenities20170730163402443" source="/Users/eric/Desktop/Changing Places UROP/Github/CityScope_GAMA/CPG_CityScope_GAMA/includes/City/Shanghai/amenities.shp" name="amenities">
       <customproperties/>
     </layer-tree-layer>
-    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Roads20170730170823942" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/Shanghai/Roads.shp" name="Roads">
+    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Roads20170730170823942" source="/Users/eric/Desktop/Changing Places UROP/Github/CityScope_GAMA/CPG_CityScope_GAMA/includes/City/Shanghai/Roads.shp" name="Roads">
       <customproperties/>
     </layer-tree-layer>
-    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Buildings20170730172248746" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/Shanghai/Buildings.shp" name="Buildings">
+    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Buildings20170730172248746" source="/Users/eric/Desktop/Changing Places UROP/Github/CityScope_GAMA/CPG_CityScope_GAMA/includes/City/Shanghai/Buildings.shp" name="Buildings">
       <customproperties/>
     </layer-tree-layer>
-    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="table_bounds20170730165257489" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/Shanghai/table_bounds.shp" name="table_bounds">
+    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="table_bounds20170730165257489" source="/Users/eric/Desktop/Changing Places UROP/Github/CityScope_GAMA/CPG_CityScope_GAMA/includes/City/Shanghai/table_bounds.shp" name="table_bounds">
       <customproperties/>
     </layer-tree-layer>
-    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Bounds20170730165127889" source="/Users/eric/Desktop/Changing Places UROP/Github/CPG_CityScope_GAMA/CPG_CityScope_GAMA/includes/Shanghai/Bounds.shp" name="Bounds">
+    <layer-tree-layer expanded="1" providerKey="ogr" checked="Qt::Checked" id="Bounds20170730165127889" source="/Users/eric/Desktop/Changing Places UROP/Github/CityScope_GAMA/CPG_CityScope_GAMA/includes/City/Shanghai/Bounds.shp" name="Bounds">
       <customproperties/>
     </layer-tree-layer>
   </layer-tree-group>
@@ -25,10 +25,10 @@
   <mapcanvas>
     <units>degrees</units>
     <extent>
-      <xmin>121.47406224166567767</xmin>
-      <ymin>31.26072361977594483</ymin>
-      <xmax>121.53979701297461702</xmax>
-      <ymax>31.300511689775945</ymax>
+      <xmin>121.48696282331947316</xmin>
+      <ymin>31.27325449718604133</ymin>
+      <xmax>121.51983020897394283</xmax>
+      <ymax>31.29367695040823705</ymax>
     </extent>
     <rotation>0</rotation>
     <projections>0</projections>
@@ -422,6 +422,9 @@ def my_form_open(dialog, layer, feature):
         <edittype widgetv2type="TextEdit" name="Scale">
           <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
         </edittype>
+        <edittype widgetv2type="TextEdit" name="Category">
+          <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+        </edittype>
       </edittypes>
       <renderer-v2 forceraster="0" symbollevels="0" type="singleSymbol" enableorderby="0">
         <symbols>
@@ -647,17 +650,18 @@ def my_form_open(dialog, layer, feature):
         <alias field="TYPE" index="0" name=""/>
         <alias field="Usage" index="1" name=""/>
         <alias field="Scale" index="2" name=""/>
+        <alias field="Category" index="3" name=""/>
       </aliases>
       <excludeAttributesWMS/>
       <excludeAttributesWFS/>
       <attributeactions default="-1"/>
       <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
         <columns>
-          <column width="-1" hidden="0" type="field" name="type"/>
           <column width="-1" hidden="1" type="actions"/>
           <column width="-1" hidden="0" type="field" name="TYPE"/>
           <column width="-1" hidden="0" type="field" name="Usage"/>
           <column width="-1" hidden="0" type="field" name="Scale"/>
+          <column width="-1" hidden="0" type="field" name="Category"/>
         </columns>
       </attributetableconfig>
       <editform>.</editform>
@@ -692,6 +696,7 @@ def my_form_open(dialog, layer, feature):
         <default field="TYPE" expression=""/>
         <default field="Usage" expression=""/>
         <default field="Scale" expression=""/>
+        <default field="Category" expression=""/>
       </defaults>
       <previewExpression>COALESCE( "Scale", '&lt;NULL>' )</previewExpression>
     </maplayer>
