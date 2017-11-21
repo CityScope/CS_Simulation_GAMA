@@ -119,26 +119,8 @@ global {
 				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 				do create_trip_objectives;
 		    }
-		}
-		
-		create externalCities{
-			id <-"harvard";
-			real_location<-{-world.shape.width*0.2,world.shape.height*0.375};
-			entry_location<-{3411,3906};
-	        people_distribution <-[0.2,0.1,0.1,0.2,0.1,0.2,0.1];
-	        building_distribution <-[0.2,0.1,0.1,0.2,0.1,0.2,0.1];
-	        create people number: nb_people/4 {
-				type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
-				has_car <- flip(proba_car_per_type[type]);
-				has_bike <- flip(proba_bike_per_type[type]);
-				living_place <- myself;
-				current_place <- living_place;
-				location <- any_location_in(living_place);
-				color <- color_per_type[type];
-				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
-				do create_trip_objectives;
-		    }
 		}*/
+
 		
 		create pie{
 			id <- "transport";
@@ -171,25 +153,7 @@ global {
 			font_size <- unitFactor*diameter/10;
 			do calculate_pies;
 		}
-
-
-		
-	   /*create pie{
-			id <- "usage";
-			labels <- buildings_distribution.keys;
-			labels_h_offset <- [diameter*10,diameter*10,diameter*10,diameter*10,diameter*23,diameter*13,diameter*10,diameter*10,diameter*10,diameter*10];
-			labels_v_offset <- diameter ;
-			colors <- color_per_usage.values;
-			location <-{world.shape.width*0.9,world.shape.height*0.55};
-			diameter <- world.shape.width*0.10;
-			inner_diameter <- diameter*0.8;
-			type <- "pie";
-			line_width <- diameter / 400;
-			font_size <- diameter/40;
-			do calculate_pies;
-		}*/
-		
-		
+				
 	}
 	action modes_data_import {
 		matrix mode_matrix <- matrix(dataOnMobilityMode_file);
@@ -228,26 +192,8 @@ global {
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category"))] ;
 		office_buildings <- building where (each.usage = "O");
 		residential_buildings <- building where (each.usage = "R");
-		
-		//do random_init;//Only if we don't have the information 	
 	}
-	
-	
-	
-	user_command "add bus_stop" {
-		create bus_stop returns: new_bus_stop {
-			location <- #user_location;
-		}
-		// recompute bus line
-		bus_stop closest_bus_stop <- (bus_stop - first(new_bus_stop)) with_min_of(each distance_to(#user_location));
-		ask bus {
-			int i <- (stops index_of(closest_bus_stop));
-			bus_stop bb <- first(new_bus_stop);
-			add bb at: i to: stops ;
-		}
 		
-	}	
-	
 	action characteristic_file_import {
 		matrix criteria_matrix <- matrix (modeCharacteristics_file);
 		loop i from: 0 to:  criteria_matrix.rows - 1 {
@@ -427,7 +373,6 @@ species people skills: [moving]{
 	bool has_car ;
 	bool has_bike;
 
-	//
 	bus_stop closest_bus_stop;	
 	int bus_status <- 0;
 	
@@ -611,6 +556,11 @@ species people skills: [moving]{
 	aspect timelapse {
       draw circle(size) at: {location.x,location.y,cycle} + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 	}
+	aspect layer {
+		if(cycle mod 180 = 0){
+			draw sphere(size) at: {location.x,location.y,cycle*2} color: color ;
+		}
+	}
 }
 
 species road  {
@@ -675,10 +625,9 @@ experiment gameit type: gui {
 			//species gridHeatmaps aspect:density;
 			species pie;
 			species building aspect:depth refresh: false;
-			species road ;
-			//species bus_stop aspect: c;
-			//species bus aspect: bu; 			
+			species road ;		
 			species people aspect:base ;
+			//species people aspect:layer trace:true;
 			species externalCities aspect:base;
 
 			graphics "time" {
