@@ -6,7 +6,7 @@
 
 model CityScope_Kendall_Volpe_Demo
 
-import "CityScope_main.gaml"
+import "./../CityScope_main.gaml"
 
 global {
 

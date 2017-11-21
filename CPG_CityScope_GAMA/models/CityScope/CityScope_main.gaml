@@ -9,12 +9,12 @@ model CityScope
 global {
 	string cityScopeCity;
 	// GIS FILE //	
-	file bound_shapefile <- file("../includes/"+cityScopeCity+"/Bounds.shp");
-	file buildings_shapefile <- file("../includes/"+cityScopeCity+"/Buildings.shp");
-	file roads_shapefile <- file("../includes/"+cityScopeCity+"/Roads.shp");
-	file amenities_shapefile <- file("../includes/"+cityScopeCity+"/Amenities.shp");
-	file table_bound_shapefile <- file("../includes/"+cityScopeCity+"/table_bounds.shp");
-	file imageRaster <- file('../images/gama_black.png') ;
+	file bound_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Bounds.shp");
+	file buildings_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Buildings.shp");
+	file roads_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Roads.shp");
+	file amenities_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Amenities.shp");
+	file table_bound_shapefile <- file("./../../includes/City/"+cityScopeCity+"/table_bounds.shp");
+	file imageRaster <- file('./../../images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	graph road_graph;
 	graph<people, people> interaction_graph;
