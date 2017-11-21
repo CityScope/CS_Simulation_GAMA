@@ -10,7 +10,7 @@ model gamit
 import "./data_viz/pie_charts.gaml"
 
 global {
-	string case_study<-"volpe";
+	string case_study <- "volpe_game_it" ;
 	int nb_people <- 500;
 	file<geometry> buildings_shapefile <- file<geometry>("../includes/City/"+case_study+"/Buildings.shp");
 	file<geometry> parks_shapefile <- file<geometry>("../includes/City/"+case_study+"/Park.shp");
@@ -75,7 +75,7 @@ global {
 			color <- color_per_usage[usage]; 
 		}
 		
-		/*create bus_stop number: 6 {
+		create bus_stop number: 6 {
 			location <- one_of(building).location;
 		}
 		
@@ -83,7 +83,7 @@ global {
 			stops <- list(bus_stop);
 			location <- first(stops).location;
 			stop_passengers <- map<bus_stop, list<people>>(stops collect(each::[]));
-		}	*/	
+		}		
 		
 		create people number: nb_people {
 			type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
@@ -168,7 +168,25 @@ global {
 			line_width <- diameter / 400;
 			font_size <- diameter/10;
 			do calculate_pies;
-		}		
+		}
+
+
+		
+	   /*create pie{
+			id <- "usage";
+			labels <- buildings_distribution.keys;
+			labels_h_offset <- [diameter*10,diameter*10,diameter*10,diameter*10,diameter*23,diameter*13,diameter*10,diameter*10,diameter*10,diameter*10];
+			labels_v_offset <- diameter ;
+			colors <- color_per_usage.values;
+			location <-{world.shape.width*0.9,world.shape.height*0.55};
+			diameter <- world.shape.width*0.10;
+			inner_diameter <- diameter*0.8;
+			type <- "pie";
+			line_width <- diameter / 400;
+			font_size <- diameter/40;
+			do calculate_pies;
+		}*/
+		
 		
 	}
 	action modes_data_import {
@@ -205,7 +223,7 @@ global {
 			capacity <- shape.perimeter / 10.0;
 			congestion_map [self] <- shape.perimeter;
 		}
-		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category"))] ;
+		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale"))] ;
 		create building from: parks_shapefile{
 			usage<-"Park";
 		}
@@ -283,7 +301,35 @@ global {
 		}
 	}
 
-	 	
+	 
+	
+	action random_init {
+		ask one_of (office_buildings) {
+			usage <- "Uni";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "Shopping";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "Night";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "Park";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "HS";
+			office_buildings >> self;
+		}
+		ask one_of (office_buildings) {
+			usage <- "Cultural";
+			office_buildings >> self;
+		}
+	}
+	
 	action compute_graph {
 		loop mobility_mode over: color_per_mobility.keys {
 			graph_per_mobility[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) use_cache false;	
@@ -418,8 +464,8 @@ species people skills: [moving]{
 	
 	action create_trip_objectives {
 		map<string,int> activities <- activity_data[type];
+		//if (activities = nil ) or (empty(activities)) {write "my type: " + type;}
 		loop act over: activities.keys {
-			write "act" + act;
 			if (act != "") {
 				list<string> parse_act <- act split_with "|";
 				string act_real <- one_of(parse_act);
@@ -431,8 +477,7 @@ species people skills: [moving]{
 					possible_bds <- building where ((each.usage = "O") and (each.scale = last(act_real)));
 				} 
 				else {
-					write "ca else";
-					possible_bds <- building where (each.category = act_real);
+					possible_bds <- building where (each.usage = act_real);
 				}
 				building act_build <- one_of(possible_bds);
 				if (act_build= nil) {write "problem with act_real: " + act_real;}
@@ -621,7 +666,6 @@ species road  {
 species building {
 	string usage;
 	string scale;
-	string category;
 	rgb color <- #grey;
 	float height <- 50.0 + rnd(50);
 	aspect default {
@@ -648,7 +692,6 @@ species externalCities parent:building{
 }
 
 experiment gameit type: gui {
-	//parameter 'CityScope:' var: case_study category: 'GIS' <-"volpe" among:["volpe", "Taipei_MainStation"];
 	output {
 		display map type: opengl draw_env: false background: #black refresh_every:10{//rgb(255 *luminosity,255*luminosity, 255*luminosity ){
 			species pie;
@@ -706,9 +749,9 @@ experiment gameit type: gui {
             }
 		} 
 
-		/*display timelapse type: opengl background: #black{
+		display timelapse type: opengl background: #black{
 			species people aspect: default position:{0,0,cycle*0.01} trace: 100;	
-		*/	
+		}	
 		
 	}
 }

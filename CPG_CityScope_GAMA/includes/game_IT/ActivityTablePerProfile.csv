@@ -1,8 +1,8 @@
 ,00:00,01:00,02:00,03:00,04:00,05:00,06:00,07:00,08:00,09:00,10:00,11:00,12:00,13:00,14:00,15:00,16:00,17:00,18:00,19:00,20:00,21:00,22:00,23:00
-High School Student,RM,RM,RM,RM,RM,RM,RM,RM,,HS,HS,HS,HS,HS,HS,HS,HS,Park,Park,Park,,RM,RM,RM
-College student,RS|Night,RS|Night,RS,RS,RS,RS,RS,RS,,Uni,Uni,Uni,Uni,Uni,Uni,Uni,Park,Park,,RS,RS,RS|Night,RS|Night,RS|Night
+High School Student,RM,RM,RM,RM,RM,RM,RM,RM,RM,HS,HS,HS,HS,HS,HS,HS,HS,Park,Park,Park,RM,RM,RM,RM
+College student,RS|Night,RS|Night,RS,RS,RS,RS,RS,RS,RS,Uni,Uni,Uni,Uni,Uni,Uni,Uni,Park,Park,RS,RS,RS,RS|Night,RS|Night,RS|Night
 Young professional,RS|Night|Restaurant,RS|Night|Restaurant,RS,RS,RS,RS,RS,OS,OS,OS,OS,OS,OS,OS,OS,OS,OS|Park,OS|Park,OS|Park,RS,RS,RS|Night|Restaurant,RS|Night|Restaurant,RS|Night|Restaurant
-Home maker,RM|Restaurant,RM|Restaurant,RM,RM,RM,RM,RM,RM,RM,RM,Shopping,Shopping,Shopping,Shopping,,,Park,Park,Park,RM,RM,RM,RM,RM|Restaurant
+Home maker,RM|Restaurant,RM|Restaurant,RM,RM,RM,RM,RM,RM,RM,RM,RM,Shopping,Shopping,Shopping,Shopping,Park,Park,Park,Park,RM,RM,RM,RM,RM|Restaurant
 Executives,RL|Restaurant,RL|Restaurant,RL,RL,RL,RL,RL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,Cultural,Cultural,RL,RL,RL,RL|Restaurant
 Mid-career workers,RL|Restaurant,RL|Restaurant,RL,RL,RL,RL,RL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,Cultural,Cultural,RL,RL,RL,RL|Restaurant
 Retirees,RM|Restaurant,RM|Restaurant,RM,RM,RM,RM,RM,RM,RM,RM,RM,RM,RM,RM,RM,RM,RM|Park,RM|Park,RM,RM,RM,RM,RM,RM|Restaurant
