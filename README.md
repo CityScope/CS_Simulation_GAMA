@@ -11,6 +11,8 @@ running on the physical table at the lab and synchronized with CityIOServer.
 # [Game IT](https://github.com/mitmedialab/CityScope_GAMA/wiki/Game-IT)
 An open source, multi-level and highly complex agent-based model simulating real life traffic flow has been developed using the Gama Platform. It models agent behaviours in different vehicle type travelling through a city. It shows how the future mobility mode can change the local feel of the city. The model and the simulation output helps to see the impact of different mobility modes on traffic flow and congestion. 
 
+![Game IT](docs/Game_IT.png?raw=true "Physical Table ")
+
 # 
 
 Developped by [Arnaud Grignard](https://github.com/agrignard)
