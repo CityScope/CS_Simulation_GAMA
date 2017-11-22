@@ -18,6 +18,7 @@ experiment GameITMulti type: gui parent: gameit
 	{
         create simulation with: [case_study::"Taipei"];
         create simulation with: [case_study::"Andorra"];
+        create simulation with: [case_study::"Shanghai"];
 	}
 
 
