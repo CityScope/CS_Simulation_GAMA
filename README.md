@@ -1,13 +1,15 @@
-Agent based model of the Kendal CityScope using GAMA Platform - Devel
+CityScope Agent Based Model using [GAMA Platform](http://gama-platform.org/) 
 
-## CPG_CityScope_GAMA
+Please have a look [wiki] (https://github.com/mitmedialab/CityScope_GAMA/wiki)
+
+# [CityScope](https://github.com/mitmedialab/CityScope_GAMA/wiki/CityScope)
 This is the first version of the actual ABM model running on the
 CityScope table using the GAMA Platform. This version is the one
 running on the physical table at the lab and synchronized with CityIOServer.
 
-## Software used
-http://gama-platform.org/
+# [Game IT](https://github.com/mitmedialab/CityScope_GAMA/wiki/Game-IT)
 
-Developped by [Arnaud Grignard](https://github.com/agrignard)
+
+Developped and maintained by [Arnaud Grignard](https://github.com/agrignard)
 
 
