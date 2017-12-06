@@ -1,6 +1,6 @@
 /**
 * Name: SolarBlockChain
-* Author: Luis Alonso
+* Author: Luis Alonso, Tri Nguyen Huu and Arnaud Grignard
 * Description: 
 * Tags: Tag1, Tag2, TagN
 */
@@ -23,6 +23,7 @@ global{
 	int maxCon;
 	int minCon;
 	map<string,int> class_map<- ["OL"::2, "OM"::3,  "OS"::3,  "RL"::4, "RM"::5,  "RS"::6, "PL"::7, "PM"::8,  "PS"::9];
+	map<string,int> energy_price_map<- ["OL"::10, "OM"::7,  "OS"::6,  "RL"::3, "RM"::2,  "RS"::1];
 	matrix consumption_matrix ;
 	map<string,rgb> class_color_map<- ["OL"::rgb(12,30,51), "OM"::rgb(31,76,128),  "OS"::rgb(53,131,219),  "RL"::rgb(143,71,12), "RM"::rgb(219,146,25),  "RS"::rgb(219,198,53), "PL"::rgb(110,46,100), "PM"::rgb(127,53,116),  "PS"::rgb(179,75,163), "Park"::rgb(142,183,31)];
 		file my_csv_file <- csv_file("../includes/171203_Energy_Consumption_CSV.csv",",");
@@ -32,11 +33,13 @@ global{
 	float max_energy;
 	matrix production_matrix;
 	float max_produce_energy;
+	int distance <- 100 min: 1 max:1000 parameter: "Sharing Distance:" category: "Simulation";
 	
 	init{
 		
 		
-		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category")), nbFloors::1+float(read ("Floors"))]{
+		create building from: buildings_shapefile with: 
+		[usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category")), nbFloors::1+float(read ("Floors"))]{
 	    //option1
 	    //consumption<-consomption_map[usage];
 		
@@ -58,8 +61,7 @@ global{
 			//write "hey guys I am a Office and my scale";
 			consumption<-2.3;
 		}
-		
-			
+	    price <-	energy_price_map[usage+scale];			
 			area <-shape.area;
 			//consumption<-area* (50+rnd(50));
 			//production<-area* (10+rnd(10));
@@ -70,6 +72,7 @@ global{
 		//minCon<-min(building collect int(each["consumption"]));
 		
 		max_surface <-max (building collect (each.area));
+		
 		write max_surface;
 		
 
@@ -102,8 +105,6 @@ global{
 	
 	reflex show_time{
 		write "It is "+int(time)+':00';
-
-		
 	}
 	
 
@@ -119,6 +120,10 @@ species building {
 	string scale;
 	float nbFloors;
 	string category;
+	bool isSeller;
+	float energyPrice;
+	float price;
+	building myBuyer;
 		
 	//float get_consumption(string class,int t){
 		//write float(consumption_matrix[t+1,class_map[class]])*((1/2)*(1+sqrt(average_surface/(area+1))))*(area*nbFloors);
@@ -132,21 +137,51 @@ species building {
 	
 	reflex calculate_production when:not (category= "Park"){
 		production<-float(production_matrix[mod (time,24)+1,1])*((1/2)*(1+sqrt(average_surface/(area+1))))*area;
-		write production_matrix[mod (time,24)+1,1];
-		write production_matrix;
+		//write production_matrix[mod (time,24)+1,1];
+		//write production_matrix;
 		//write consumption;
+	}
+	
+	reflex updateSellingStatus{
+		if(production-consumption>0){
+			isSeller<-true;
+		}
+		else{
+			isSeller<-false;
+		}
+	}
+	
+	reflex sharingEnergy{
+		if(isSeller){
+			list<building> nearest_building<- building where (!each.isSeller) at_distance distance;
+			if(length(nearest_building)=0){
+				write "it's a shame i cannot sell my stuff";
+				myBuyer<-nil;
+				
+			}else{
+			  myBuyer<- nearest_building with_min_of price;	
+			}
+			
+
+			
+		}else{
+			
+		}
 	}
 	
 	float color_magnitude(float value, float steepness, float midpoint){
 		return 255/(1+exp(steepness*(midpoint-value)));
 	}
 
+//	reflex essai{// when: max_produce_energy < 10 {
+//		write max_produce_energy;
+//	}
 	
 	aspect prod{
 		//draw shape color:rgb(((production-minProd)/maxProd)*255,0,0);
 		draw shape color:rgb((3.5*production/max_produce_energy)^0.3*255,55-(3.5*production/max_produce_energy)^0.3*55,0);
-		
-		if 3.5*production/max_produce_energy*255>255 {
+		//write max_produce_energy;
+		if (3.5*production/max_produce_energy*255>255) {	
 			write "Power "+(3.5*production/max_produce_energy*255);
 		}
 	}
@@ -157,12 +192,12 @@ species building {
 		//draw shape color:rgb(color_magnitude(consumption,1,max_energy/10),0,0);
 		
 		if 3.5*consumption/max_energy*255>255 {
-			write "Power "+(3.5*consumption/max_energy*255);
+			//write "Power "+(3.5*consumption/max_energy*255);
 		}
 		
 	}
 	aspect diff{
-		draw shape color:rgb((production-consumption)*10,0,0);
+		draw shape color:rgb((consumption - production)*10,(production - consumption)*10,0);
 	}
 	aspect base {
 		
@@ -172,6 +207,17 @@ species building {
 		else{
 			draw shape color: class_color_map[usage+scale];
 		}
+	}
+	aspect selling{
+		if(isSeller){
+			if(myBuyer != nil){
+				draw line([self.location,myBuyer.location]) color:#blue width:1 end_arrow:5;
+			}else{
+				draw circle(20) color:#red;
+			}
+		 
+		}
+		
 	}
 }
 
@@ -184,17 +230,45 @@ species road {
 
 experiment start type: gui {
 	output {
+		display chartprod
+		{
+			chart prod axes:#white 
+			{
+				data 'production' value:sum(building collect each.production) color:#red marker:false thickness:2.0;
+				data 'consumption' value:sum(building collect each.consumption) color:#blue marker:false thickness:2.0;
+				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:#green marker:false thickness:2.0;
+			}
+		}
+		display chartprodhist
+		{
+			chart prod axes:#white type:histogram style:stack
+			{
+				data 'production' value:sum(building collect each.production) accumulate_values:true color:#red marker:false thickness:2.0;
+				data 'consumption' value:-sum(building collect each.consumption)  accumulate_values:true color:#blue marker:false thickness:2.0;
+			}
+		}
 		display view  type:opengl  {		
 			species building aspect:base;
+			chart prod size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:#white 
+			{
+				data 'production' value:sum(building collect each.production) color:#red marker:false thickness:2.0;
+				data 'consumption' value:sum(building collect each.consumption) color:#blue marker:false thickness:2.0;
+				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:#green marker:false thickness:2.0;
+			}
 		}
-		display prod  type:opengl  {		
+		/*display prod  type:opengl  {		
 			species building aspect:prod;
 		}
 		display cons  type:opengl  {		
 			species building aspect:con;
 		}
 		display diff  type:opengl  {		
-			species building aspect:base;
+			species building aspect:diff;
+		}*/
+		
+		display sharing type:opengl{
+			species building aspect:diff;
+			species building aspect:selling;
 		}
 	}
 }
