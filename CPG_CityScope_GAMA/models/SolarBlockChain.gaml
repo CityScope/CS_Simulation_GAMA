@@ -211,9 +211,9 @@ species building {
 	aspect selling{
 		if(isSeller){
 			if(myBuyer != nil){
-				draw line([self.location,myBuyer.location]) color:#blue width:1 end_arrow:5;
+				draw line([self.location,myBuyer.location]) color:rgb(48,78,208) width:1 end_arrow:5;
 			}else{
-				draw circle(20) color:#red;
+				draw circle(20) color:rgb(208,73,20);
 			}
 		 
 		}
