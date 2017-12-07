@@ -26,8 +26,8 @@ global{
 	map<string,int> energy_price_map<- ["OL"::10, "OM"::7,  "OS"::6,  "RL"::3, "RM"::2,  "RS"::1];
 	matrix consumption_matrix ;
 	map<string,rgb> class_color_map<- ["OL"::rgb(12,30,51), "OM"::rgb(31,76,128),  "OS"::rgb(53,131,219),  "RL"::rgb(143,71,12), "RM"::rgb(219,146,25),  "RS"::rgb(219,198,53), "PL"::rgb(110,46,100), "PM"::rgb(127,53,116),  "PS"::rgb(179,75,163), "Park"::rgb(142,183,31)];
-		file my_csv_file <- csv_file("./../../includes/Energy/171203_Energy_Consumption_CSV.csv",",");
-	file my_csv_file2 <- csv_file("./../../includes/Energy/171203_Energy_Production_CSV.csv",",");
+	file consumption_csv_file <- csv_file("./../../includes/Energy/171203_Energy_Consumption_CSV.csv",",");
+	file production_csv_file <- csv_file("./../../includes/Energy/171203_Energy_Production_CSV.csv",",");
 	float average_surface;
 	float max_surface;
 	float max_energy;
@@ -37,12 +37,10 @@ global{
 	
 	init{
 		
-		
 		create building from: buildings_shapefile with: 
 		[usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category")), nbFloors::1+float(read ("Floors"))]{
-	    //option1
+/* 	    //option1
 	    //consumption<-consomption_map[usage];
-		
 		
 		//option2
 		if(usage="R"){//Residential
@@ -60,51 +58,41 @@ global{
 		if(usage="O"){//Residential
 			//write "hey guys I am a Office and my scale";
 			consumption<-2.3;
+		}*/
+	    price <-energy_price_map[usage+scale];			
+		area <-shape.area;
 		}
-	    price <-	energy_price_map[usage+scale];			
-			area <-shape.area;
-			//consumption<-area* (50+rnd(50));
-			//production<-area* (10+rnd(10));
+
+		
+		ask building{
+			nearest_buildings <- building at_distance distance;
 		}
-		//maxProd<-max(building collect int(each["production"]));
-		//minProd<-min(building collect int(each["production"]));
-		//maxCon<-max(building collect int(each["consumption"]));
-		//minCon<-min(building collect int(each["consumption"]));
 		
 		max_surface <-max (building collect (each.area));
-		
-		write max_surface;
-		
-
-		
-
-		
+		//write max_surface;
 		average_surface<-mean (building collect (each.area));
-		write average_surface;
+		//write average_surface;
 	
-	//convert the file into a matrix
-		consumption_matrix <- matrix(my_csv_file); 
-
+		//convert the file into a matrix
+		consumption_matrix <- matrix(consumption_csv_file); 
 		max_energy <- float (max (consumption_matrix))*max_surface;
-				write 'max '+max_energy;	
-				
-		/*//loop on the matrix rows (skip the first header line)
-		loop i from: 1 to: consumption_matrix.rows -1{
-			//loop on the matrix columns
-			loop j from: 0 to: consumption_matrix.columns -1{
-				//write "consumption_matrix rows:"+ i +" colums:" + j + " = " + consumption_matrix[j,i];
-		
-			}	
-		}*/
-		production_matrix <- matrix(my_csv_file2); 
-
+		write 'Max consumed energy: '+max_energy;	
+	
+		production_matrix <- matrix(production_csv_file); 
 		max_produce_energy <- float (max (production_matrix))*max_surface;
-				write 'max '+max_produce_energy;	
+		write 'Max produced energy: '+max_produce_energy;	
 	}
 	
 	
-	reflex show_time{
-		write "It is "+int(time)+':00';
+	reflex simulation{
+		string moment <- (mod(time,24)<12? "AM":"PM");
+		write "Day "+int(time/24+1)+': '+ (1+mod(time-1,12)) +":00 "+moment;
+		ask building {
+			if not(self.category = "Park"){
+				do calculate_consumption;
+				do calculate_production ;
+			}
+		}
 	}
 	
 
@@ -124,22 +112,15 @@ species building {
 	float energyPrice;
 	float price;
 	building myBuyer;
+	list<building> nearest_buildings;
 		
-	//float get_consumption(string class,int t){
-		//write float(consumption_matrix[t+1,class_map[class]])*((1/2)*(1+sqrt(average_surface/(area+1))))*(area*nbFloors);
-		//return float(consumption_matrix[t+1,class_map[class]])*((1/2)*(1+sqrt(average_surface/(area+1))))*(area*nbFloors);
-	//}
 	
-	reflex calculate_consumption when:not (category= "Park"){
+	action calculate_consumption {
 		consumption<-float(consumption_matrix[mod (time,24)+1,class_map[usage+scale]])*((1/2)*(1+sqrt(average_surface/(area+1))))*(area*nbFloors);
-		//write consumption;
 	}
 	
-	reflex calculate_production when:not (category= "Park"){
+	action calculate_production {
 		production<-float(production_matrix[mod (time,24)+1,1])*((1/2)*(1+sqrt(average_surface/(area+1))))*area;
-		//write production_matrix[mod (time,24)+1,1];
-		//write production_matrix;
-		//write consumption;
 	}
 	
 	reflex updateSellingStatus{
@@ -153,13 +134,14 @@ species building {
 	
 	reflex sharingEnergy{
 		if(isSeller){
-			list<building> nearest_building<- building where (!each.isSeller) at_distance distance;
-			if(length(nearest_building)=0){
-				write "it's a shame i cannot sell my stuff";
+			// list<building> nearest_building<- building where (!each.isSeller) at_distance distance;
+			list<building> nearest_selling_buildings<- nearest_buildings where (!each.isSeller);
+			if(length(nearest_selling_buildings)=0){
+			//	write "it's a shame i cannot sell my stuff";
 				myBuyer<-nil;
 				
 			}else{
-			  myBuyer<- nearest_building with_min_of price;	
+			  myBuyer<- nearest_selling_buildings with_min_of price;	
 			}
 			
 
@@ -173,35 +155,27 @@ species building {
 		return 255/(1+exp(steepness*(midpoint-value)));
 	}
 
-//	reflex essai{// when: max_produce_energy < 10 {
-//		write max_produce_energy;
-//	}
 	
 	aspect prod{
-		//draw shape color:rgb(((production-minProd)/maxProd)*255,0,0);
 		draw shape color:rgb((3.5*production/max_produce_energy)^0.3*255,55-(3.5*production/max_produce_energy)^0.3*55,0);
-		//write max_produce_energy;
-		if (3.5*production/max_produce_energy*255>255) {	
-			write "Power "+(3.5*production/max_produce_energy*255);
-		}
+/*/		if (3.5*production/max_produce_energy*255>255) {	
+			write "Warning: consumed power value over scale"+(3.5*production/max_produce_energy*255);
+		}*/
 	}
+	
 	aspect con{
-		//draw shape color:rgb(((consumption-minCon)/maxCon)*255,0,0);
-		//draw shape color:rgb((3.5*consumption/max_energy)^0.3*255,0,0);
 		draw shape color:rgb((3.5*consumption/max_energy)^0.3*255,55-(3.5*consumption/max_energy)^0.3*55,0);
-		//draw shape color:rgb(color_magnitude(consumption,1,max_energy/10),0,0);
-		
-		if 3.5*consumption/max_energy*255>255 {
-			//write "Power "+(3.5*consumption/max_energy*255);
-		}
-		
+/*		if 3.5*consumption/max_energy*255>255 {
+			write "Warning: produced power value over scale "+(3.5*consumption/max_energy*255);
+		}*/	
 	}
+	
 	aspect diff{
 		//draw shape color:rgb((consumption - production)*10,(production - consumption)*10,0);
 		draw shape color:rgb((consumption - production)*255,(production - consumption)*55,0);
 	}
-	aspect base {
-		
+	
+	aspect base {	
 		if category="Park"{
 			draw shape color: class_color_map["Park"];
 		}
@@ -209,6 +183,7 @@ species building {
 			draw shape color: class_color_map[usage+scale];
 		}
 	}
+	
 	aspect selling{
 		if(isSeller){
 			if(myBuyer != nil){
@@ -233,12 +208,12 @@ experiment start type: gui {
 	output {
 		display view  type:opengl  {		
 			species building aspect:base;
-			chart prod size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
+ /*			chart prod size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
 			{
 				data 'production' value:sum(building collect each.production) color:rgb(218,82,82) marker:false thickness:2.0;
 				data 'consumption' value:sum(building collect each.consumption) color:rgb(76,140,218) marker:false thickness:2.0;
 				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:#green marker:false thickness:2.0;
-			}
+			}*/
 		}
 		display prod  type:opengl  {		
 			species building aspect:prod;
