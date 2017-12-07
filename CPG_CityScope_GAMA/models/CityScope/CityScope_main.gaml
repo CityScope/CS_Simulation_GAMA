@@ -26,7 +26,7 @@ global {
 	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
 	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
 	bool localHost <-false parameter: "Local Host:" category: "Environment";
-	bool dynamicGrid <-true parameter: "Update Grid:" category: "Environment";
+	bool dynamicGrid <-false parameter: "Update Grid:" category: "Environment";
 	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
 	bool dynamicPop <-false parameter: "Dynamic Population:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
@@ -39,7 +39,7 @@ global {
 	list<float> current_density_array;
 	int toggle1;
 	map<int,list> citymatrix_map_settings<- [-1::["Green","Green"],0::["R","L"],1::["R","M"],2::["R","S"],3::["O","L"],4::["O","M"],5::["O","S"],6::["A","Road"],7::["A","Plaza"],8::["Pa","Park"],9::["P","Parking"]];	
-	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#white, "Road"::#black,"Park"::#green,"Parking"::rgb(50,50,50)]; 
+	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#white, "Road"::#black,"Park"::#black,"Parking"::rgb(50,50,50)]; 
 	list scale_string<- ["S", "M", "L"];
 	list usage_string<- ["R", "O"]; 
 	list density_map<- [89,55,15,30,18,5]; //Use for Volpe Site (Could be change for each city)
@@ -63,7 +63,7 @@ global {
 	point center;
 	float brickSize;
 	float coeffPop<-1.0;
-	int coeffSize<-1;
+	int coeffSize<-20;
 	string cityIOUrl;
 	//Global indicator
 	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
@@ -91,19 +91,30 @@ global {
 		  }		
         }
         
-        if(cityScopeCity= "volpe"){
-			angle <- -9.74;
+        if(cityScopeCity= "volpe"){        	
+        	if(false){// last realease with feet
+        	angle <- -9.74;
 			center <-{1007,632};
 			brickSize <- 21.3;
 			coeffPop<-1.0;
+			coeffSize<-3;
+        		
+        	}else{
+        		angle <- -9.74;
+			center <-{3305,2075};
+			brickSize <-  70.0;
+			coeffPop<-1.0;
 			coeffSize<-1;
+        	}
+        	
+			
 		}
 		if(cityScopeCity= "andorra"){
 			angle <-3.0;
 			center <-{2550,895};
 			brickSize <- 37.5;
 			coeffPop<-2.0;
-			coeffSize<-2;
+			coeffSize<-1;
 		}
 		
 		if(cityScopeCity= "Lyon"){
@@ -122,7 +133,7 @@ global {
 			coeffSize<-1;
 		}
 		
-		if(cityScopeCity= "Taipei_MainStation"){
+		if(cityScopeCity= "Taipei"){
 			angle <-3.0;
 			center <-{2550,895};
 			brickSize <- 37.5;
@@ -228,6 +239,9 @@ global {
 				  scale <- citymatrix_map_settings[id][1];
 				  usage<-citymatrix_map_settings[id][0];
 				  color<-color_map[scale];
+				  if(id!=-1 and id!=-2 and id!=7){
+				  	density<-density_array[id];
+				  }
               }	        
         }
         ask amenity{
@@ -280,7 +294,7 @@ global {
 	
 
 		
-	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){	
+	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){		
 		do initGrid;
 	}
 	
@@ -355,6 +369,19 @@ species building schedules: []{
 	aspect scale{
 		draw shape color: color_map[scale];
 	}
+	aspect scaleRes{
+		if(usage = "R"){
+		  draw shape color: color_map[scale];
+		}
+		
+	}
+	aspect usageRes{
+		if(usage = "R"){
+		  draw shape color: color_map[usage];
+		}
+		
+	}
+	
 	aspect demoScreen{
 		if(toggle1=1){
 			draw shape color: color_map[usage];
@@ -384,7 +411,7 @@ species building schedules: []{
 species road  schedules: []{
 	rgb color <- #red ;
 	aspect base {
-		draw shape color: rgb(125,125,125,75);
+		draw shape color: rgb(125,125,125);
 	}
 	
 	aspect white {
@@ -472,10 +499,10 @@ species people skills:[moving]{
 	aspect scale{
 	if(toggle1 !=1){
       if(!fromTheGrid){	
-		  draw circle(world.shape.width*(0.00075/coeffSize)) color: color_map[scale];
+		  draw circle(10#m*coeffSize) color: color_map[scale];
 		   
 	  }else{
-		  draw square(world.shape.width*(0.00075/coeffSize)*2) color: color_map[scale];  
+		  draw square(10#m*2*coeffSize) color: color_map[scale];  
 	  }
 	 } 
 	}
@@ -483,7 +510,7 @@ species people skills:[moving]{
 	aspect scaleTable{
 		if(toggle1 >4)
 		{
-		  draw circle(4) color: color_map[scale];	
+		  draw circle(coeffSize*4) color: color_map[scale];	
 		}
       
 	}
@@ -498,6 +525,18 @@ species amenity parent:building schedules:[]{
 	int y;
 	float size;
 	
+	aspect white{
+		if(fromGrid and id!=-2	){
+			draw shape rotated_by -angle color: #white;
+		}
+	}
+	
+	aspect scaleGrid{
+		if(fromGrid and id!=-2	){
+			draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue);
+		}
+	}
+	
 	aspect base{
 		if(fromGrid){
 			draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue,75);
@@ -509,12 +548,8 @@ species amenity parent:building schedules:[]{
 	}
 	
 	aspect realistic {	
-     	if(fromGrid){
-			draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue,75) depth:density;
-		}
-		else{
-			  draw circle(size/coeffSize) empty:true border:#white color: #white;
-		      draw circle(size/coeffSize) color: rgb(255,255,255,125);	
+     	if(fromGrid and id!=-2){
+			draw shape rotated_by -angle color: #gray depth:density*10;//rgb(color.red, color.green, color.blue) depth:density*10;
 		}
 	}
 
@@ -554,8 +589,7 @@ experiment CityScopeMainVirtual type: gui {
 	output {	
 		display CityScopeVirtual  type:opengl background:#black virtual:true toolbar:false{
 			species table aspect:base refresh:false;
-			species building aspect:base position:{0,0,-0.0015} refresh:false;
-			species building aspect:demoScreen position:{0,0,-0.001};
+			species building aspect:base position:{0,0,-0.0015};	
 			species road aspect: base refresh:false;
 			species people aspect:scale;
 			species amenity aspect: onScreen ;

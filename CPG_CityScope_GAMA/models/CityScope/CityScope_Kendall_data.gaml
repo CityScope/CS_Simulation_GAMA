@@ -8,9 +8,9 @@ model CityScope_volpe
 
 global {
 	// GIS FILE //	
-	file bound_shapefile <- file("../includes/volpe/Bounds.shp");
-	file roads_shapefile <- file("../includes/volpe/Roads.shp");
-	file imageRaster <- file('../includes/images/gama_black.png') ;
+	file bound_shapefile <- file("./../../includes/City/volpe/Bounds.shp");
+	file roads_shapefile <- file("./../../includes/City/volpe/Roads.shp");
+	file imageRaster <- file('./../../includes/images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	float angle <--9.74;
 	
@@ -20,7 +20,7 @@ global {
 	float lenghtMax <-0.0;
 	//kendall_1_08_10_2017
 	//boston_1_08_10_2017
-	file my_csv_file <- csv_file("../includes/volpe/mobility/kendall_1_08_10_2017.csv",",");
+	file my_csv_file <- csv_file("./../../includes/City/volpe/mobility/kendall_1_08_10_2017.csv",",");
 	matrix data <- matrix(my_csv_file);
 	
 	graph<mobileData, mobileData> interaction_graph;
@@ -33,7 +33,7 @@ global {
 	int k parameter: 'number of groups to create (kmeans) ' category: "Simulation" min: 1 max:100 <- 10;	
 	float eps parameter: 'the maximum radius of the neighborhood (DBscan)' category: "Simulation" min: 10.0 max: 100.0 <- 50.0;	
 	int minPoints <- 3; //the minimum number of elements needed for a cluster (DBscan)
-	bool whiteBackground <- false parameter: "Black background:" category: "Visualization";
+	bool whiteBackground <- true parameter: "Black background:" category: "Visualization";
 	rgb background_color <- whiteBackground ? #black : #white;
 	init {
 	  create road from:roads_shapefile;
@@ -75,7 +75,7 @@ global {
 species road  schedules: []{
 	rgb color <- #red ;
 	aspect base {
-		draw shape color: rgb(125,125,125,75) ;
+		draw shape color: whiteBackground ? #white : #black;
 	}
 }
 
@@ -84,7 +84,7 @@ species mobileData skills:[moving]{
 	float duration;
 	int init_date;
 	bool visible <-false;
-	int size<-4;
+	int size<-12;
 	
 	reflex update{
 		if(global_start_date + (cycle*1000) > init_date and global_start_date + (cycle*1000) < init_date + duration){
@@ -98,7 +98,7 @@ species mobileData skills:[moving]{
 	}
 	
 	aspect duration {
-		draw cone3D(size,duration/1000) color:whiteBackground ? #white : #black;//depth:duration/1000; //rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
+		draw cone3D(size,duration/100) color:whiteBackground ? #white : #black;//depth:duration/1000; //rgb((255 * lenght/50) / 100,(255 * (100 - lenght/50)) / 100 ,0) depth:lenght/100;
 	}
 	
 	
@@ -133,9 +133,9 @@ species mobileData skills:[moving]{
 experiment CityScopeDev type: gui {	
 	output {		
 		display CityScope  type:opengl background:whiteBackground ? #black : #white {
-			species road aspect: base refresh:false;
+			species road aspect: base;
 			species mobileData aspect:circle;
-			graphics "interaction_graph" {
+			/*graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true) ) {	
 					loop eg over: interaction_graph.edges {
                         mobileData src <- interaction_graph source_of eg;
@@ -144,10 +144,10 @@ experiment CityScopeDev type: gui {
 						draw line(edge_geom.points)  color:#gray;//(src.color = target.color) ? color_map[src.scale] : #green;
 					}
 				} 	
-		    }
+		    }*/
 		}
 		
-		display CityScopeDuration  type:opengl background:whiteBackground ? #black : #white {
+		/*display CityScopeDuration  type:opengl background:whiteBackground ? #black : #white {
 			species road aspect: base refresh:false;
 			species mobileData aspect:duration;	
 		}
@@ -174,7 +174,7 @@ experiment CityScopeDev type: gui {
 		display CityScopeKMeans  type:opengl background:whiteBackground ? #black : #white {
 			species road aspect: base refresh:false;
 			species mobileData aspect:kmeans_aspect;	
-		}
+		}*/
 	}
 }
 

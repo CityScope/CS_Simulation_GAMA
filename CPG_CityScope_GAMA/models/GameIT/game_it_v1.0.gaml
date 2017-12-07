@@ -1,60 +1,61 @@
 /**
 * Name: gamit
-* Author: Arnaud, Tri, Patrick, Benoit
+* Author: Arnaud Grignard, Tri Nguyne Huu, Patrick Taillandier, Benoit Gaudou
 * Description: Describe here the model and its experiments
 * Tags: Tag1, Tag2, TagN
 */
 
 model gamit
 
-import "./data_viz/pie_charts.gaml"
+import "./../data_viz/pie_charts.gaml"
 
 global {
+	
+	//PARAMETERS
+	int timelapse <-0 min:0 max:1000 parameter: "TimeLapse Length:" category: "Visualization";
+	bool updatePollution <-false parameter: "Pollution:" category: "Simulation";
+	bool updateDensity <-false parameter: "DEnsity:" category: "Simulation";
+		
+	//ENVIRONMENT
+	float step <- 1 #mn;
+	date starting_date <- date([2017,9,25,0,0]);
 	string case_study <- "volpe" ;
 	int nb_people <- 500;
-	file<geometry> buildings_shapefile <- file<geometry>("../includes/City/"+case_study+"/Buildings.shp");
-	file<geometry> roads_shapefile <- file<geometry>("../includes/City/"+case_study+"/Roads.shp");
+	float unitFactor<-0.3;
+
+	file<geometry> buildings_shapefile <- file<geometry>("../../includes/City/"+case_study+"/Buildings.shp");
+	file<geometry> roads_shapefile <- file<geometry>("../../includes/City/"+case_study+"/Roads.shp");
+	geometry shape <- envelope(roads_shapefile);
 	
-	
-	
-	file activity_file <- file("../includes/game_IT/ActivityTablePerProfile.csv");
-	file criteria_file <- file("../includes/game_IT/CriteriaFile.csv");
-	file dataOnProfils_file <- file("../includes/game_IT/DataOnProfiles.csv");
-	file modeCharacteristics_file <- file("../includes/game_IT/ModeCharacteristics.csv");
-	file dataOnMobilityMode_file <- file("../includes/game_IT/DataOnModes.csv");
+	// MOBILITY DATA
+	list<string> mobility_list <- ["walking", "bike","car","bus"];
+	file activity_file <- file("../../includes/game_IT/ActivityTablePerProfile.csv");
+	file criteria_file <- file("../../includes/game_IT/CriteriaFile.csv");
+	file dataOnProfils_file <- file("../../includes/game_IT/DataOnProfiles.csv");
+	file modeCharacteristics_file <- file("../../includes/game_IT/ModeCharacteristics.csv");
+	file dataOnMobilityMode_file <- file("../../includes/game_IT/DataOnModes.csv");
 		
 	
 	map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];
 	map<string,rgb> color_per_type <- [ "High School Student"::#FFFFB2, "College student"::#FECC5C,"Young professional"::#FD8D3C,  "Mid-career workers"::#F03B20, "Executives"::#BD0026, "Home maker"::#0B5038, "Retirees"::#8CAB13];
 	
-	geometry shape <- envelope(roads_shapefile);
-	
 	map<string,map<string,int>> activity_data;
-	float step <- 1 #mn;
-	date starting_date <- date([2017,9,25,0,0]);
-	
-	list<building> residential_buildings;
-	list<building> office_buildings;
-	list<string> mobility_list <- ["walking", "bike","car","bus"];
 	
 	map<string, float> proportion_per_type;
 	map<string, float> proba_bike_per_type;
-	map<string, float> proba_car_per_type;
-	
-	
+	map<string, float> proba_car_per_type;	
 	map<string,rgb> color_per_mobility;
 	map<string,float> width_per_mobility ;
 	map<string,float> speed_per_mobility;
 	map<string,graph> graph_per_mobility;
 	map<string,list<float>> charact_per_mobility;
-	
 	map<road,float> congestion_map;  
 	map<string,map<string,list<float>>> weights_map <- map([]);
 	
-	// outputs
+	// INDICATOR
 	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
-	bool updatePollution <-false;
+	
 	
 	init {
 		gama.pref_display_flat_charts <- true;
@@ -63,13 +64,9 @@ global {
 		do activity_data_import;
 		do criteria_file_import;
 		do characteristic_file_import;
-		do import_shapefiles;	
-		
+		do import_shapefiles;			
 		do compute_graph;
-		ask building {
-			color <- color_per_category[category]; 
-		}
-		
+
 		create bus_stop number: 6 {
 			location <- one_of(building).location;
 		}
@@ -84,7 +81,7 @@ global {
 			type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 			has_car <- flip(proba_car_per_type[type]);
 			has_bike <- flip(proba_bike_per_type[type]);
-			living_place <- one_of(residential_buildings);
+			living_place <- one_of(building where (each.usage = "R"));
 			current_place <- living_place;
 			location <- any_location_in(living_place);
 			color <- color_per_type[type];
@@ -112,26 +109,8 @@ global {
 				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 				do create_trip_objectives;
 		    }
-		}
-		
-		create externalCities{
-			id <-"harvard";
-			real_location<-{-world.shape.width*0.2,world.shape.height*0.375};
-			entry_location<-{3411,3906};
-	        people_distribution <-[0.2,0.1,0.1,0.2,0.1,0.2,0.1];
-	        building_distribution <-[0.2,0.1,0.1,0.2,0.1,0.2,0.1];
-	        create people number: nb_people/4 {
-				type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
-				has_car <- flip(proba_car_per_type[type]);
-				has_bike <- flip(proba_bike_per_type[type]);
-				living_place <- myself;
-				current_place <- living_place;
-				location <- any_location_in(living_place);
-				color <- color_per_type[type];
-				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
-				do create_trip_objectives;
-		    }
 		}*/
+
 		
 		create pie{
 			id <- "transport";
@@ -144,8 +123,8 @@ global {
 			diameter <- world.shape.width*0.10;
 			inner_diameter <- diameter*0.8;
 			type <- "ring";
-			line_width <- diameter / 400;
-			font_size <- (diameter/10);
+			line_width <- unitFactor*diameter / 400;
+			font_size <- (unitFactor*diameter/10);
 			do calculate_pies;
 		}
 		
@@ -160,30 +139,26 @@ global {
 			diameter <- world.shape.width*0.10;
 			inner_diameter <- diameter*0.8;
 			type <- "pie";
-			line_width <- diameter / 400;
-			font_size <- diameter/10;
+			line_width <- unitFactor*diameter / 400;
+			font_size <- unitFactor*diameter/10;
 			do calculate_pies;
 		}
-
-
-		
-	   /*create pie{
-			id <- "usage";
-			labels <- buildings_distribution.keys;
-			labels_h_offset <- [diameter*10,diameter*10,diameter*10,diameter*10,diameter*23,diameter*13,diameter*10,diameter*10,diameter*10,diameter*10];
-			labels_v_offset <- diameter ;
-			colors <- color_per_usage.values;
-			location <-{world.shape.width*0.9,world.shape.height*0.55};
-			diameter <- world.shape.width*0.10;
-			inner_diameter <- diameter*0.8;
-			type <- "pie";
-			line_width <- diameter / 400;
-			font_size <- diameter/40;
-			do calculate_pies;
-		}*/
-		
-		
+				
 	}
+	
+	
+	action profils_data_import {
+		matrix profil_matrix <- matrix(dataOnProfils_file);
+		loop i from: 0 to:  profil_matrix.rows - 1 {
+			string profil_type <- profil_matrix[0,i];
+			if(profil_type != "") {
+				proba_car_per_type[profil_type] <- float(profil_matrix[2,i]);
+				proba_bike_per_type[profil_type] <- float(profil_matrix[3,i]);
+				proportion_per_type[profil_type] <- float(profil_matrix[4,i]);
+			}
+		}
+	}
+	
 	action modes_data_import {
 		matrix mode_matrix <- matrix(dataOnMobilityMode_file);
 		loop i from: 0 to:  mode_matrix.rows - 1 {
@@ -196,64 +171,23 @@ global {
 		}
 	}
 	
-	action profils_data_import {
-		matrix profil_matrix <- matrix(dataOnProfils_file);
-		loop i from: 0 to:  profil_matrix.rows - 1 {
-			string profil_type <- profil_matrix[0,i];
-			if(profil_type != "") {
-				//color_per_type[profil_type] <- rgb(profil_matrix[1,i]);
-				proba_car_per_type[profil_type] <- float(profil_matrix[2,i]);
-				proba_bike_per_type[profil_type] <- float(profil_matrix[3,i]);
-				proportion_per_type[profil_type] <- float(profil_matrix[4,i]);
-			}
-		}
-	}
-	
-	action import_shapefiles {
-		create road from: roads_shapefile {
-			mobility_allowed << "walking";
-			mobility_allowed << "bike";
-			mobility_allowed << "car";
-			mobility_allowed << "bus";
-			capacity <- shape.perimeter / 10.0;
-			congestion_map [self] <- shape.perimeter;
-		}
-		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category"))] ;
-		office_buildings <- building where (each.usage = "O");
-		residential_buildings <- building where (each.usage = "R");
-		
-		//do random_init;//Only if we don't have the information 	
-	}
-	
-	
-	
-	user_command "add bus_stop" {
-		create bus_stop returns: new_bus_stop {
-			location <- #user_location;
-		}
-		// recompute bus line
-		bus_stop closest_bus_stop <- (bus_stop - first(new_bus_stop)) with_min_of(each distance_to(#user_location));
-		ask bus {
-			int i <- (stops index_of(closest_bus_stop));
-			bus_stop bb <- first(new_bus_stop);
-			add bb at: i to: stops ;
-		}
-		
-	}	
-	
-	action characteristic_file_import {
-		matrix criteria_matrix <- matrix (modeCharacteristics_file);
-		loop i from: 0 to:  criteria_matrix.rows - 1 {
-			string mobility_type <- criteria_matrix[0,i];
-			if(mobility_type != "") {
-				list<float> vals <- [];
-				loop j from: 1 to:  criteria_matrix.columns - 1 {
-					vals << float(criteria_matrix[j,i]);	
+	action activity_data_import {
+		matrix activity_matrix <- matrix (activity_file);
+		loop i from: 1 to:  activity_matrix.rows - 1 {
+			string people_type <- activity_matrix[0,i];
+			map<string, int> activities;
+			string current_activity <- "";
+			loop j from: 1 to:  activity_matrix.columns - 1 {
+				string act <- activity_matrix[j,i];
+				if (act != current_activity) {
+					activities[act] <-j;
+					 current_activity <- act;
 				}
-				charact_per_mobility[mobility_type] <- vals;
 			}
+			activity_data[people_type] <- activities;
 		}
 	}
+	
 	action criteria_file_import {
 		matrix criteria_matrix <- matrix (criteria_file);
 		int nbCriteria <- criteria_matrix[1,0] as int;
@@ -283,30 +217,38 @@ global {
 		}
 	}
 	
+	action characteristic_file_import {
+		matrix criteria_matrix <- matrix (modeCharacteristics_file);
+		loop i from: 0 to:  criteria_matrix.rows - 1 {
+			string mobility_type <- criteria_matrix[0,i];
+			if(mobility_type != "") {
+				list<float> vals <- [];
+				loop j from: 1 to:  criteria_matrix.columns - 1 {
+					vals << float(criteria_matrix[j,i]);	
+				}
+				charact_per_mobility[mobility_type] <- vals;
+			}
+		}
+	}
+	
+	action import_shapefiles {
+		create road from: roads_shapefile {
+			mobility_allowed <-["walking","bike","car","bus"];
+			capacity <- shape.perimeter / 10.0;
+			congestion_map [self] <- shape.perimeter;
+		}
+		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category"))]{
+			color <- color_per_category[category];
+		}
+	}
+		
+	
 	action compute_graph {
 		loop mobility_mode over: color_per_mobility.keys {
 			graph_per_mobility[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) use_cache false;	
 		}
 	}
-	
-	action activity_data_import {
-		matrix activity_matrix <- matrix (activity_file);
-		loop i from: 1 to:  activity_matrix.rows - 1 {
-			string people_type <- activity_matrix[0,i];
-			map<string, int> activities;
-			string current_activity <- "";
-			loop j from: 1 to:  activity_matrix.columns - 1 {
-				string act <- activity_matrix[j,i];
-				if (act != current_activity) {
-					activities[act] <-j;
-					 current_activity <- act;
-				}
-			}
-			activity_data[people_type] <- activities;
-		}
-	}
-	
-	
+		
 	reflex update_road_weights {
 		ask road {
 			do update_speed_coeff;	
@@ -331,7 +273,6 @@ global {
 			}
 			do calculate_pies;
 		}
-
 	}
 	
 }
@@ -380,20 +321,28 @@ species bus skills: [moving] {
 			my_target.waiting_people <- [];						
 			my_target <- nil;			
 		}
-		
 	}
 	
 	aspect bu {
 		draw rectangle(40,20) color: empty(stop_passengers.values accumulate(each))?#yellow:#red border: #black;
 	}
-	
 }
 
-grid plot_pollution height: 20 width: 20 {
+grid gridHeatmaps height: 50 width: 50 {
 	int pollution_level <- 0 ;
-	rgb color <- hsb(pollution_level,1.0,1.0) update: hsb(pollution_level,1.0,1.0);
+	int density<-0;
+	rgb pollution_color <- rgb(255-pollution_level*10,255-pollution_level*10,255-pollution_level*10) update:rgb(255-pollution_level*10,255-pollution_level*10,255-pollution_level*10);
+	rgb density_color <- rgb(255-density*50,255-density*50,255-density*50) update:rgb(255-density*50,255-density*50,255-density*50);
 	
-	reflex raz when: every(1#day) {
+	aspect density{
+		draw shape color:density_color at:{location.x+current_date.hour*world.shape.width,location.y};
+	}
+	
+	aspect pollution{
+		draw shape color:pollution_color;
+	}
+	
+	reflex raz when: every(1#hour) {
 		pollution_level <- 0;
 	}
 }
@@ -401,7 +350,7 @@ grid plot_pollution height: 20 width: 20 {
 species people skills: [moving]{
 	string type;
 	rgb color ;
-	int size<-1;
+	float size<-30*unitFactor;
 	building living_place;
 	list<trip_objective> objectives;
 	trip_objective my_current_objective;
@@ -411,7 +360,6 @@ species people skills: [moving]{
 	bool has_car ;
 	bool has_bike;
 
-	//
 	bus_stop closest_bus_stop;	
 	int bus_status <- 0;
 	
@@ -506,10 +454,18 @@ species people skills: [moving]{
 	}
 	
 	action updatePollutionMap{
-		ask plot_pollution overlapping(current_path.shape) {
+		ask gridHeatmaps overlapping(current_path.shape) {
 			pollution_level <- pollution_level + 1;
 		}
 	}	
+	
+	reflex updateDensityMap when: (every(#hour) and updateDensity=true){
+		ask gridHeatmaps{
+		  density<-length(people overlapping self);	
+		}
+	}
+	
+	
 	
 	reflex choose_objective when: my_current_objective = nil {
 	    //location <- any_location_in(current_place);
@@ -533,7 +489,7 @@ species people skills: [moving]{
 		}
 		
 		if (location = my_current_objective.place.location) {
-			if(mobility_mode = "car" and updatePollution = true) {do updatePollutionMap;}						
+			if(mobility_mode = "car" and updatePollution = true) {do updatePollutionMap;}					
 			current_place <- my_current_objective.place;
 			location <- any_location_in(current_place);
 			my_current_objective <- nil;	
@@ -568,7 +524,7 @@ species people skills: [moving]{
 	
 	aspect default {
 		if (mobility_mode = nil) {
-			draw circle(4) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+			draw circle(size) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 		} else {
 			if (mobility_mode = "walking") {
 				draw circle(size) color: color  ;
@@ -582,11 +538,16 @@ species people skills: [moving]{
 	
 	
 	aspect base{
-		draw circle(size) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+	  draw circle(size) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 	}
-	/*aspect timelapse {
-      draw circle(size/2) at: {location.x,location.y,cycle} + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
-	}*/
+	aspect timelapse {
+      draw circle(size) at: {location.x,location.y,cycle} + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
+	}
+	aspect layer {
+		if(cycle mod 180 = 0){
+			draw sphere(size) at: {location.x,location.y,cycle*2} color: color ;
+		}
+	}
 }
 
 species road  {
@@ -606,7 +567,6 @@ species road  {
 	
 	aspect mobility {
 		string max_mobility <- mobility_allowed with_max_of (width_per_mobility[each]);
-		
 		draw shape width: width_per_mobility[max_mobility] color:color_per_mobility[max_mobility] ;
 	}
 	
@@ -648,61 +608,58 @@ species externalCities parent:building{
 experiment gameit type: gui {
 	output {
 		display map type: opengl draw_env: false background: #black refresh_every:10{
+			//species gridHeatmaps aspect:density;
 			species pie;
 			species building aspect:depth refresh: false;
-			species road ;
-			//species bus_stop aspect: c;
-			//species bus aspect: bu; 			
-			species people;
+			species road ;		
+			species people aspect:base ;
+			species people aspect:layer trace:true;
 			species externalCities aspect:base;
 
-			
-
-			
+			graphics "indicator" {
+				draw "Intersection per km2" + string(length(graph_per_mobility["car"].edges))  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*1.1,0};
+				draw "Buildings foot print" + "???"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*1.1,500*1};
+				draw "Roadways length" + "???"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*1.1,500*2};
+			}
+					
 			graphics "time" {
-				point loc <- {-1350,2000};
 				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.9,world.shape.height*0.55};
 			}
 			
 			overlay position: { 5, 5 } size: { 240 #px, 680 #px } background: # black transparency: 1.0 border: #black 
             {
-            	//for each possible type, we draw a square with the corresponding color and we write the name of the type
-                rgb text_color<-#darkgray;
+                rgb text_color<-#white;
                 float y <- 30#px;
-  				draw "Building Usage" at: { 40#px, y } color: text_color font: font("SansSerif", 20, #bold);
+  				draw "Building Usage" at: { 40#px, y } color: text_color font: font("Helvetica", 20, #bold);
                 y <- y + 30 #px;
                 loop type over: color_per_category.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_category[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold);
                     y <- y + 25#px;
                 }
-                 y <- y + 30 #px;
-                draw "People Type" at: { 40#px, y } color: text_color font: font("SansSerif", 20, #bold);
+                 y <- y + 30 #px;     
+                draw "People Type" at: { 40#px, y } color: text_color font: font("Helvetica", 20, #bold);
                 y <- y + 30 #px;
                 loop type over: color_per_type.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_type[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold);
                     y <- y + 25#px;
                 }
 				 y <- y + 30 #px;
-                draw "Mobility Mode" at: { 40#px, y } color: text_color font: font("SansSerif", 20, #bold);
+                draw "Mobility Mode" at: { 40#px, y } color: text_color font: font("Helvetica", 20, #bold);
                 y <- y + 30 #px;
                 draw circle(10#px) at: { 20#px, y } color:#white border: #black;
-                draw "Walking" at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);
-                 y <- y + 25#px;
-                draw triangle(15#px) at: { 20#px, y } color:text_color  border: #black;
-                draw "Bike" at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);
+                draw "Walking" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold);
                 y <- y + 25#px;
-                 draw square(20#px) at: { 20#px, y } color:text_color border: #black;
-                draw "Car" at: { 40#px, y + 4#px } color: text_color font: font("SansSerif", 18, #bold);       
+                draw triangle(15#px) at: { 20#px, y } color:text_color  border: #black;
+                draw "Bike" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold);
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color:text_color border: #black;
+                draw "Car" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold);       
             }
 		} 
-
-		display timelapse type: opengl background: #black{
-			species people aspect: default position:{0,0,cycle*0.01} trace: 100;	
-		}	
 		
 	}
 }
