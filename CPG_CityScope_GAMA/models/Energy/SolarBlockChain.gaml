@@ -91,6 +91,7 @@ global{
 			if not(self.category = "Park"){
 				do calculate_consumption;
 				do calculate_production ;
+				do update_status ;
 			}
 		}
 	}
@@ -102,16 +103,17 @@ global{
 species building {
 	rgb color;
 	float area;
-	float production <-0;
-	float consumption <-0;
+	float production <-0.0;
+	float consumption <-0.0;
 	string usage; 
 	string scale;
 	float nbFloors;
 	string category;
-	bool isSeller;
+	string status <- "idle"; //among "buying", "selling", "finished_buying", "finished_selling","idle"
 	float energyPrice;
 	float price;
-	building myBuyer;
+	float energy_shared;
+	list<building> mySellers;
 	list<building> nearest_buildings;
 		
 	
@@ -123,25 +125,50 @@ species building {
 		production<-float(production_matrix[mod (time,24)+1,1])*((1/2)*(1+sqrt(average_surface/(area+1))))*area;
 	}
 	
-	reflex updateSellingStatus{
-		if(production-consumption>0){
-			isSeller<-true;
+	action update_status{
+		status <- "idle";
+		if(production - consumption>0){
+			status<- "selling";
 		}
-		else{
-			isSeller<-false;
+		if(production - consumption<0){
+			status<-"buying";
 		}
+		energy_shared <- 0;
 	}
 	
 	reflex sharingEnergy{
-		if(isSeller){
-			// list<building> nearest_building<- building where (!each.isSeller) at_distance distance;
-			list<building> nearest_selling_buildings<- nearest_buildings where (!each.isSeller);
+		mySellers <- [];
+		list<building> nearest_selling_buildings<- nearest_buildings where (each.status="selling");
+		loop while: (status = "buying") {//look for sellers because need to buy energy
 			if(length(nearest_selling_buildings)=0){
-			//	write "it's a shame i cannot sell my stuff";
-				myBuyer<-nil;
+			//	cannot find anyone who sells energy;
+				status <- "finished_buying";
+			}else{
+			 	building seller <- nearest_selling_buildings with_min_of price;	
+			 	mySellers <- mySellers + seller;
+			 	nearest_selling_buildings <- nearest_selling_buildings - seller;
+			 	float amount_transfered <- min([self.consumption - energy_shared,seller.production - seller.energy_shared]);
+			 	energy_shared <- energy_shared + amount_transfered;
+			 	seller.energy_shared <- seller.energy_shared + amount_transfered;
+			 	if (energy_shared = consumption - production){
+			 		status <- "finished_buying";	
+			 	}
+			 	if (seller.energy_shared = seller.production - seller.consumption){
+			 		seller.status <- "finished_selling";	
+			 	}	 	
+			}				
+		}
+	}
+	
+	/*reflex sharingEnergy{
+		if(status = "buying"){
+			list<building> nearest_selling_buildings<- nearest_buildings where (each.status="selling");
+			if(length(nearest_selling_buildings)=0){
+			//	write "it's a shame i cannot by energy";
+				mySeller <- nil;
 				
 			}else{
-			  myBuyer<- nearest_selling_buildings with_min_of price;	
+			 	mySeller <- nearest_selling_buildings with_min_of price;	
 			}
 			
 
@@ -149,7 +176,7 @@ species building {
 		}else{
 			
 		}
-	}
+	}*/
 	
 	float color_magnitude(float value, float steepness, float midpoint){
 		return 255/(1+exp(steepness*(midpoint-value)));
@@ -184,15 +211,30 @@ species building {
 		}
 	}
 	
-	aspect selling{
-		if(isSeller){
-			if(myBuyer != nil){
-				draw line([self.location,myBuyer.location]) color:rgb(48,78,208) width:1 end_arrow:5;
+	/*aspect buying{
+		if(status="buying"){
+			if(mySeller != nil){
+				draw line([self.location+{0,0,1},mySeller.location+{0,0,1}]) color:rgb(48,78,208) width:1 end_arrow:5;
 			}else{
 				draw circle(20) color:rgb(208,60,14);
 			}
 		 
 		}
+		
+	}*/
+	
+	aspect buying{
+//		if(status="finished_buying"){
+			loop while: (not empty(mySellers)){
+				
+				draw line([self.location+{0,0,1},first(mySellers).location+{0,0,1}]) color:rgb(48,78,208) width:1 end_arrow:5;
+				mySellers <- mySellers - first(mySellers);
+			}
+			//else{
+			//	draw circle(20) color:rgb(208,60,14);
+			//}
+		 
+//		}
 		
 	}
 }
@@ -226,7 +268,7 @@ experiment start type: gui {
 		}	
 		display sharing type:opengl{
 			species building aspect:diff;
-			species building aspect:selling;
+			species building aspect:buying;
 		}
 	}
 }
