@@ -10,6 +10,11 @@ model SolarBlockChain
 /* Insert your model definition here */
 
 global{
+	
+	float buying_scale_factor <- 40000.0;
+	float selling_scale_factor <- 25000.0;
+	
+	
 	string cityScopeCity <-"Andorra";
 	// GIS FILE //	
 	file bound_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Bounds.shp");
@@ -26,6 +31,8 @@ global{
 	map<string,int> energy_price_map<- ["OL"::10, "OM"::7,  "OS"::6,  "RL"::3, "RM"::2,  "RS"::1];
 	matrix consumption_matrix ;
 	map<string,rgb> class_color_map<- ["OL"::rgb(12,30,51), "OM"::rgb(31,76,128),  "OS"::rgb(53,131,219),  "RL"::rgb(143,71,12), "RM"::rgb(219,146,25),  "RS"::rgb(219,198,53), "PL"::rgb(110,46,100), "PM"::rgb(127,53,116),  "PS"::rgb(179,75,163), "Park"::rgb(142,183,31)];
+	
+	
 	file consumption_csv_file <- csv_file("./../../includes/Energy/171203_Energy_Consumption_CSV.csv",",");
 	file production_csv_file <- csv_file("./../../includes/Energy/171203_Energy_Production_CSV.csv",",");
 	float average_surface;
@@ -33,33 +40,15 @@ global{
 	float max_energy;
 	matrix production_matrix;
 	float max_produce_energy;
-	int distance <- 100 min: 1 max:1000 parameter: "Sharing Distance:" category: "Simulation";
+
+	int distance <- 150 min: 1 max:1000 parameter: "Sharing Distance:" category: "Simulation";
 	
 	init{
 		
 		create building from: buildings_shapefile with: 
 		[usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category")), nbFloors::1+float(read ("Floors"))]{
-/* 	    //option1
-	    //consumption<-consomption_map[usage];
-		
-		//option2
-		if(usage="R"){//Residential
-			//write "hey guys I am a residential";	
-			if(scale="S"){
-				consumption<-4.2;
-			}
-			if(scale="M"){
-				consumption<-4.2;
-			}
-			if(scale="L"){
-				consumption<-4.2;
-			}
-		}
-		if(usage="O"){//Residential
-			//write "hey guys I am a Office and my scale";
-			consumption<-2.3;
-		}*/
-	    price <-energy_price_map[usage+scale];			
+
+	    price <-float(energy_price_map[usage+scale]);			
 		area <-shape.area;
 		}
 
@@ -115,6 +104,7 @@ species building {
 	float energy_shared;
 	list<building> mySellers;
 	list<building> nearest_buildings;
+
 		
 	
 	action calculate_consumption {
@@ -133,21 +123,20 @@ species building {
 		if(production - consumption<0){
 			status<-"buying";
 		}
-		energy_shared <- 0;
+		energy_shared <- 0.0;
 	}
 	
 	reflex sharingEnergy{
 		mySellers <- [];
 		list<building> nearest_selling_buildings<- nearest_buildings where (each.status="selling");
 		loop while: (status = "buying") {//look for sellers because need to buy energy
-			if(length(nearest_selling_buildings)=0){
-			//	cannot find anyone who sells energy;
+			if(length(nearest_selling_buildings)=0){//	cannot find anyone who sells energy;
 				status <- "finished_buying";
 			}else{
 			 	building seller <- nearest_selling_buildings with_min_of price;	
 			 	mySellers <- mySellers + seller;
 			 	nearest_selling_buildings <- nearest_selling_buildings - seller;
-			 	float amount_transfered <- min([self.consumption - energy_shared,seller.production - seller.energy_shared]);
+			 	float amount_transfered <- min([self.consumption - self.production - energy_shared, seller.production - seller.consumption - seller.energy_shared]);
 			 	energy_shared <- energy_shared + amount_transfered;
 			 	seller.energy_shared <- seller.energy_shared + amount_transfered;
 			 	if (energy_shared = consumption - production){
@@ -160,23 +149,7 @@ species building {
 		}
 	}
 	
-	/*reflex sharingEnergy{
-		if(status = "buying"){
-			list<building> nearest_selling_buildings<- nearest_buildings where (each.status="selling");
-			if(length(nearest_selling_buildings)=0){
-			//	write "it's a shame i cannot by energy";
-				mySeller <- nil;
-				
-			}else{
-			 	mySeller <- nearest_selling_buildings with_min_of price;	
-			}
-			
 
-			
-		}else{
-			
-		}
-	}*/
 	
 	float color_magnitude(float value, float steepness, float midpoint){
 		return 255/(1+exp(steepness*(midpoint-value)));
@@ -198,7 +171,6 @@ species building {
 	}
 	
 	aspect diff{
-		//draw shape color:rgb((consumption - production)*10,(production - consumption)*10,0);
 		draw shape color:rgb((consumption - production)*255,(production - consumption)*55,0);
 	}
 	
@@ -223,19 +195,29 @@ species building {
 		
 	}*/
 	
-	aspect buying{
-//		if(status="finished_buying"){
+	
+	aspect status {	
+		if (status = "idle"){
+			draw shape color:rgb(50,50,50);
+		}
+		//if (status = "finished_buying") or (status = "buying"){
+		if (status in ["finished_buying","buying"]){
+			draw shape color:rgb(50+(consumption - production - energy_shared)/buying_scale_factor*205,0,0);
+		}
+		//if (status = "finished_selling") or (status = "selling"){
+		if (status in ["finished_selling", "selling"]){
+			draw shape color:rgb(min([(production - consumption - energy_shared)/selling_scale_factor*150,150]),50+(production - consumption - energy_shared)/selling_scale_factor*205,min([50,(production - consumption - energy_shared)/selling_scale_factor*50]));
+		}
+		
+	}
+	
+	aspect sales_network{
+
 			loop while: (not empty(mySellers)){
 				
-				draw line([self.location+{0,0,1},first(mySellers).location+{0,0,1}]) color:rgb(48,78,208) width:1 end_arrow:5;
+				draw line([self.location+{0,0,1},first(mySellers).location+{0,0,1}]) color:rgb(48,78,208) width:1;// end_arrow:5;
 				mySellers <- mySellers - first(mySellers);
-			}
-			//else{
-			//	draw circle(20) color:rgb(208,60,14);
-			//}
-		 
-//		}
-		
+			}	
 	}
 }
 
@@ -267,8 +249,8 @@ experiment start type: gui {
 			species building aspect:diff;
 		}	
 		display sharing type:opengl{
-			species building aspect:diff;
-			species building aspect:buying;
+			species building aspect:status;
+			species building aspect:sales_network transparency: 0.5;
 		}
 	}
 }
