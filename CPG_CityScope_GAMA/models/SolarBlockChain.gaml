@@ -256,7 +256,7 @@ experiment start type: gui {
 				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:#green marker:false thickness:2.0;
 			}
 		}
-		/*display prod  type:opengl  {		
+		display prod  type:opengl  {		
 			species building aspect:prod;
 		}
 		display cons  type:opengl  {		
@@ -264,7 +264,7 @@ experiment start type: gui {
 		}
 		display diff  type:opengl  {		
 			species building aspect:diff;
-		}*/
+		}
 		
 		display sharing type:opengl{
 			species building aspect:diff;

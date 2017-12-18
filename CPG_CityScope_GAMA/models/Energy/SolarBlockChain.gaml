@@ -73,6 +73,7 @@ global{
 	}
 	
 	
+	
 	reflex simulation{
 		string moment <- (mod(time,24)<12? "AM":"PM");
 		write "Day "+int(time/24+1)+': '+ (1+mod(time-1,12)) +":00 "+moment;
@@ -230,14 +231,31 @@ species road {
 
 experiment start type: gui {
 	output {
-		display view  type:opengl  {		
-			species building aspect:base;
- /*			chart prod size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
+		display chartprod
+		{
+			chart prod axes:#white 
+			{
+				data 'production' value:sum(building collect each.production) color:#red marker:false thickness:2.0;
+				data 'consumption' value:sum(building collect each.consumption) color:#blue marker:false thickness:2.0;
+				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:#green marker:false thickness:2.0;
+			}
+		}
+		display chartprodhist
+		{
+			chart prod axes:#white type:histogram style:stack
+			{
+				data 'production' value:sum(building collect each.production) accumulate_values:true color:#red marker:false thickness:2.0;
+				data 'consumption' value:-sum(building collect each.consumption)  accumulate_values:true color:#blue marker:false thickness:2.0;
+			}
+		}
+		display view1  type:opengl  {	
+			species building aspect:base;	
+ 		chart prod size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
 			{
 				data 'production' value:sum(building collect each.production) color:rgb(218,82,82) marker:false thickness:2.0;
 				data 'consumption' value:sum(building collect each.consumption) color:rgb(76,140,218) marker:false thickness:2.0;
 				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:#green marker:false thickness:2.0;
-			}*/
+			}
 		}
 		display prod  type:opengl  {		
 			species building aspect:prod;
