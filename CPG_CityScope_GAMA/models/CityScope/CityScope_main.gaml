@@ -539,7 +539,9 @@ species amenity parent:building schedules:[]{
 	
 	aspect base{
 		if(fromGrid){
+			if(color!=nil){
 			draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue,75);
+			}
 		}
 		else{
 			  draw circle(size/coeffSize) empty:true border:#white color: #white;
@@ -555,7 +557,9 @@ species amenity parent:building schedules:[]{
 
 	aspect onScreen {
 		if(fromGrid){
-			draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue,75);
+			if(color!=nil){
+			  draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue,75);	
+			}
 		}
 		else{
 			if (toggle1 =  6){
