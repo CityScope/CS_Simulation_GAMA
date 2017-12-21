@@ -233,19 +233,20 @@ experiment start type: gui {
 	output {
 		display chartprod
 		{
-			chart prod axes:#white 
+			chart prod axes:rgb(125,125,125) //white
 			{
-				data 'production' value:sum(building collect each.production) color:#red marker:false thickness:2.0;
-				data 'consumption' value:sum(building collect each.consumption) color:#blue marker:false thickness:2.0;
-				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:#green marker:false thickness:2.0;
+				data 'production' value:sum(building collect each.production) color: rgb(169,25,37) marker:false thickness:2.0;  //red
+				data 'consumption' value:sum(building collect each.consumption) color:rgb(71,168,243) marker:false thickness:2.0; //blue
+				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:rgb(143,176,9) marker:false thickness:2.0; //Green
 			}
+		
 		}
 		display chartprodhist
 		{
-			chart prod axes:#white type:histogram style:stack
+			chart prod axes:rgb(125,125,125) type:histogram style:stack //white
 			{
-				data 'production' value:sum(building collect each.production) accumulate_values:true color:#red marker:false thickness:2.0;
-				data 'consumption' value:-sum(building collect each.consumption)  accumulate_values:true color:#blue marker:false thickness:2.0;
+				data 'production' value:sum(building collect each.production) accumulate_values:true color:rgb(169,25,37) marker:false thickness:2.0; //red
+				data 'consumption' value:-sum(building collect each.consumption)  accumulate_values:true color:rgb(71,168,243) marker:false thickness:2.0; //blue
 			}
 		}
 		display view1  type:opengl  {	
