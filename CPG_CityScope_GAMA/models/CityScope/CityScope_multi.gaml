@@ -17,7 +17,6 @@ experiment CityScopeMulti type: gui parent: CityScopeMainVirtual
 	init
 	{
         create simulation with: [cityScopeCity::"andorra", minimum_cycle_duration::0.02, cityMatrix::false];
-       // create simulation with: [cityScopeCity:: "Lyon", minimum_cycle_duration::0.02, cityMatrix::false];
 		create simulation with: [cityScopeCity:: "Taipei", minimum_cycle_duration::0.02, cityMatrix::false];
 		create simulation with: [cityScopeCity:: "Shanghai", minimum_cycle_duration::0.02, cityMatrix::false];	
 	}

@@ -31,6 +31,7 @@ global {
 	bool dynamicPop <-false parameter: "Dynamic Population:" category: "Environment";
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
 	int refreshPop <- 100 min: 1 max:1000 parameter: "Pop Refresh rate (cycle):" category: "Environment";
+	float minimum_cycle_duration <- 0.02;
 	
 	/////////// CITYMATRIX   //////////////
 	map<string, unknown> cityMatrixData;
@@ -589,7 +590,7 @@ species table{
 
 experiment CityScopeMainVirtual type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];
-	float minimum_cycle_duration <- 0.02;
+	
 	output {	
 		display CityScopeVirtual  type:opengl background:#black virtual:true toolbar:false{
 			species table aspect:base refresh:false;
