@@ -233,7 +233,20 @@ experiment start type: gui {
 	output {
 		display chartprod
 		{
-			chart prod axes:rgb(125,125,125) //white
+			chart prod axes:rgb(125,125,125) size:{0.5,0.5} position:{world.shape.width/2,0}
+			{
+				data 'production' value:sum(building collect each.production) color: rgb(169,25,37) marker:false thickness:2.0;  //red
+				data 'consumption' value:sum(building collect each.consumption) color:rgb(71,168,243) marker:false thickness:2.0; //blue
+				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:rgb(143,176,9) marker:false thickness:2.0; //Green
+			}
+			
+			chart prod axes:rgb(125,125,125) size:{0.5,0.5} type:histogram style:stack //white
+			{
+				data 'production' value:sum(building collect each.production) accumulate_values:true color:rgb(169,25,37) marker:false thickness:2.0; //red
+				data 'consumption' value:-sum(building collect each.consumption)  accumulate_values:true color:rgb(71,168,243) marker:false thickness:2.0; //blue
+			}
+			
+			chart prod axes:rgb(125,125,125) size:{0.5,0.5} type:pie style:stack position:{0,world.shape.height/2}
 			{
 				data 'production' value:sum(building collect each.production) color: rgb(169,25,37) marker:false thickness:2.0;  //red
 				data 'consumption' value:sum(building collect each.consumption) color:rgb(71,168,243) marker:false thickness:2.0; //blue
@@ -241,14 +254,7 @@ experiment start type: gui {
 			}
 		}
 		
-		display chartprodhist
-		{
-			chart prod axes:rgb(125,125,125) type:histogram style:stack //white
-			{
-				data 'production' value:sum(building collect each.production) accumulate_values:true color:rgb(169,25,37) marker:false thickness:2.0; //red
-				data 'consumption' value:-sum(building collect each.consumption)  accumulate_values:true color:rgb(71,168,243) marker:false thickness:2.0; //blue
-			}
-		}
+
 		display pie
 		{
 			chart prod axes:rgb(125,125,125) type:pie style:stack //white
@@ -256,7 +262,7 @@ experiment start type: gui {
 				data 'production' value:sum(building collect each.production) color: rgb(169,25,37) marker:false thickness:2.0;  //red
 				data 'consumption' value:sum(building collect each.consumption) color:rgb(71,168,243) marker:false thickness:2.0; //blue
 				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:rgb(143,176,9) marker:false thickness:2.0; //Green
-				}
+			}
 		}
 		display view1  type:opengl  {	
 			species building aspect:base;	
