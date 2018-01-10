@@ -153,7 +153,7 @@ global {
         cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
 
 	    if(cityMatrix = true){
-	    	do initGrid;
+	   		do initGrid;
 	    }	
 	    write cityScopeCity + " width: " + world.shape.width + " height: " + world.shape.height;
 	}
@@ -588,7 +588,7 @@ species table{
 
 
 
-experiment CityScopeMainVirtual type: gui {
+experiment CityScopeMainVirtual type: gui virtual:true{
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];
 	
 	output {	
@@ -605,12 +605,14 @@ experiment CityScopeMainVirtual type: gui {
                draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
             }
             graphics "density"{
-             	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
-             	int barW<-20;
-             	int factor<-10;
-             	loop i from: 0 to: length(density_array) -1{
-             		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamared : ((i=1 or i=4) ? #gamaorange: #gamablue) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
-             	}
+            	    if(length(density_array)>0){
+		            	    	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
+		             	int barW<-20;
+		             	int factor<-10;
+		             	loop i from: 0 to: length(density_array) -1{
+		             		draw rectangle(barW,density_array[i]*factor) color: (i=0 or i=3) ? #gamared : ((i=1 or i=4) ? #gamaorange: #gamablue) at: {hpos.x+barW*1.1*i,hpos.y-density_array[i]*factor/2};
+		             	}
+            	    }	
             }
             graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true or toggle1=7) ) {	
