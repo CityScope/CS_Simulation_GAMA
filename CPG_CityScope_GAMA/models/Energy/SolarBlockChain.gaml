@@ -254,19 +254,9 @@ experiment start type: gui {
 			}
 		}
 		
-
-		display pie
-		{
-			chart prod axes:rgb(125,125,125) type:pie style:stack //white
-			{
-				data 'production' value:sum(building collect each.production) color: rgb(169,25,37) marker:false thickness:2.0;  //red
-				data 'consumption' value:sum(building collect each.consumption) color:rgb(71,168,243) marker:false thickness:2.0; //blue
-				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:rgb(143,176,9) marker:false thickness:2.0; //Green
-			}
-		}
 		display view1  type:opengl  {	
 			species building aspect:base;	
- 		chart prod size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
+ 			chart prod size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
 			{
 				data 'production' value:sum(building collect each.production) color:rgb(218,82,82) marker:false thickness:2.0;
 				data 'consumption' value:sum(building collect each.consumption) color:rgb(76,140,218) marker:false thickness:2.0;
