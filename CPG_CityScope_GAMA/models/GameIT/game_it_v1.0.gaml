@@ -7,7 +7,7 @@
 
 model gamit
 
-import "./../data_viz/pie_charts.gaml"
+import "./../SandBox/data_viz/pie_charts.gaml"
 
 global {
 	
