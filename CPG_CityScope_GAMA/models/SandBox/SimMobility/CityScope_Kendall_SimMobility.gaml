@@ -7,11 +7,11 @@
 model CityScope_Kendall
 
 global {
-	file buildings_shapefile <- file("../includes/Volpe/Buildings.shp");
-	file roads_shapefile <- file("../includes/Volpe/Roads.shp");
-	file TAZ_shapefile <- file("../includes/Volpe/Buildings.shp");
-	file node_shapefile <- file("../includes/Volpe/Roads.shp");
-	file imageRaster <- file('../includes/images/gama_black.png') ;
+	file buildings_shapefile <- file("./../../../includes/City/Volpe/Buildings.shp");
+	file roads_shapefile <- file("./../../../includes/City/Volpe/Roads.shp");
+	file TAZ_shapefile <- file("./../../../includes/City/Volpe/Buildings.shp");
+	file node_shapefile <- file("./../../../includes/City/Volpe/Roads.shp");
+	file imageRaster <- file('./../../../includes/images/gama_black.png') ;
 	geometry shape <- envelope(buildings_shapefile);
 	graph road_graph;
 	float step <- 10 #sec;
