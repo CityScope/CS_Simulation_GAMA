@@ -17,10 +17,10 @@ global{
 	
 	string cityScopeCity <-"Andorra";
 	// GIS FILE //	
-	file bound_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Bounds.shp");
-	file buildings_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Buildings.shp");
-	file roads_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Roads.shp");
-	file table_bound_shapefile <- file("./../../includes/City/"+cityScopeCity+"/table_bounds.shp");
+	file bound_shapefile <- file("./../../../includes/City/"+cityScopeCity+"/Bounds.shp");
+	file buildings_shapefile <- file("./../../../includes/City/"+cityScopeCity+"/Buildings.shp");
+	file roads_shapefile <- file("./../../../includes/City/"+cityScopeCity+"/Roads.shp");
+	file table_bound_shapefile <- file("./../../../includes/City/"+cityScopeCity+"/table_bounds.shp");
 	file imageRaster <- file('./../../images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	int maxProd;
@@ -33,8 +33,8 @@ global{
 	map<string,rgb> class_color_map<- ["OL"::rgb(12,30,51), "OM"::rgb(31,76,128),  "OS"::rgb(53,131,219),  "RL"::rgb(143,71,12), "RM"::rgb(219,146,25),  "RS"::rgb(219,198,53), "PL"::rgb(110,46,100), "PM"::rgb(127,53,116),  "PS"::rgb(179,75,163), "Park"::rgb(142,183,31)];
 	
 	
-	file consumption_csv_file <- csv_file("./../../includes/Energy/171203_Energy_Consumption_CSV.csv",",");
-	file production_csv_file <- csv_file("./../../includes/Energy/171203_Energy_Production_CSV.csv",",");
+	file consumption_csv_file <- csv_file("./../../../includes/Energy/171203_Energy_Consumption_CSV.csv",",");
+	file production_csv_file <- csv_file("./../../../includes/Energy/171203_Energy_Production_CSV.csv",",");
 	float average_surface;
 	float max_surface;
 	float max_energy;
