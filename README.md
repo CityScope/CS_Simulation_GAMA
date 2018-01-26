@@ -16,9 +16,11 @@ An open source, multi-level agent-based model simulating real life traffic flow 
 
 <div style="text-align:center"><img src ="https://github.com/CityScope/CS_CityScope_GAMA/wiki/resources/images/Game_IT.png" width="1000"/></div>
 
-# 
+# [Energy]https://github.com/CityScope/CS_CityScope_GAMA/wiki/Energy
 
-Developped by [Arnaud Grignard](https://github.com/agrignard)
+---
+
+Contacts: [Arnaud Grignard](https://github.com/agrignard)
 
 
 
