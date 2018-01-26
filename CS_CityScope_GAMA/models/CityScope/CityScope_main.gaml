@@ -19,19 +19,19 @@ global {
 	graph road_graph;
 	graph<people, people> interaction_graph;
 	
-	//PARAMETERS
-	bool moveOnRoadNetworkGlobal <- true parameter: "Move on road network:" category: "Simulation";
-	int distance parameter: 'distance ' category: "Visualization" min: 1 max:200 <- 100;	
-	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Visualization";
-	bool cityMatrix <-true parameter: "CityMatrix:" category: "Environment";
-	bool onlineGrid <-true parameter: "Online Grid:" category: "Environment";
-	bool localHost <-false parameter: "Local Host:" category: "Environment";
-	bool dynamicGrid <-false parameter: "Update Grid:" category: "Environment";
-	bool realAmenity <-true parameter: "Real Amenities:" category: "Environment";
-	bool dynamicPop <-false parameter: "Dynamic Population:" category: "Environment";
-	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Environment";
-	int refreshPop <- 100 min: 1 max:1000 parameter: "Pop Refresh rate (cycle):" category: "Environment";
+	//ONLINE PARAMETERS
+	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Interaction";
+	int distance parameter: 'distance ' category: "Interaction" min: 1 max:200 <- 100;
+	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Grid";
+	bool dynamicGrid <-false parameter: "Update Grid:" category: "Grid";
+	bool dynamicPop <-false parameter: "Dynamic Population:" category: "Population";
+	int refreshPop <- 100 min: 1 max:1000 parameter: "Pop Refresh rate (cycle):" category: "Population";
+	
+	//INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
+	bool cityMatrix <-true;
+	bool onlineGrid <-true; // In case cityIOServer is not working or if no internet connection
+	bool realAmenity <-true;
 	
 	/////////// CITYMATRIX   //////////////
 	map<string, unknown> cityMatrixData;
@@ -87,7 +87,7 @@ global {
 			center <-{1007,632};
 			brickSize <- 21.3;
         }
-		cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
+		cityIOUrl <- "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity;	
 
 	    if(cityMatrix = true){
 	   		do initGrid;
