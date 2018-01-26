@@ -1,7 +1,3 @@
-CityScope Agent Based Model using [GAMA Platform](http://gama-platform.org/)
-
-[Github](https://github.com/gama-platform)
-
 # [CityScope](https://github.com/mitmedialab/CityScope_GAMA/wiki/CityScope)
 
 
