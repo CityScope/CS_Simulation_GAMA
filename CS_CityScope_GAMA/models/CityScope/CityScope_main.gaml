@@ -64,7 +64,6 @@ global {
 	point center;
 	float brickSize;
 	float coeffPop<-1.0;
-	int coeffSize<-20;
 	string cityIOUrl;
 	//Global indicator
 	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
@@ -93,19 +92,17 @@ global {
         }
         
         if(cityScopeCity= "volpe"){        	
-        	if(false){// last realease with feet
+        	if(true){// last realease with feet
         	angle <- -9.74;
 			center <-{1007,632};
 			brickSize <- 21.3;
 			coeffPop<-1.0;
-			coeffSize<-3;
         		
         	}else{
         		angle <- -9.74;
 			center <-{3305,2075};
 			brickSize <-  70.0;
 			coeffPop<-1.0;
-			coeffSize<-1;
         	}
         	
 			
@@ -115,7 +112,6 @@ global {
 			center <-{2550,895};
 			brickSize <- 37.5;
 			coeffPop<-2.0;
-			coeffSize<-1;
 		}
 		
 		if(cityScopeCity= "Lyon"){
@@ -123,7 +119,6 @@ global {
 			center <-{2550,895};
 			brickSize <- 37.5;
 			coeffPop<-2.0;
-			coeffSize<-1;
 		}
 		
 		if(cityScopeCity= "San_Francisco"){
@@ -131,7 +126,6 @@ global {
 			center <-{2550,895};
 			brickSize <- 37.5;
 			coeffPop<-10.0;
-			coeffSize<-1;
 		}
 		
 		if(cityScopeCity= "Taipei"){
@@ -139,7 +133,6 @@ global {
 			center <-{2550,895};
 			brickSize <- 37.5;
 			coeffPop<-20.0;
-			coeffSize<-1;
 		}
 		
 		if(cityScopeCity= "Shanghai"){
@@ -147,7 +140,6 @@ global {
 			center <-{2550,895};
 			brickSize <- 37.5;
 			coeffPop<-10.0;
-			coeffSize<-1;
 		}
 		      
         cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
@@ -492,7 +484,7 @@ species people skills:[moving]{
 			curMovingMode <- "wandering";
 		}
 		if(curMovingMode = "wandering"){
-			do wander speed:(0.5/coeffSize) #km / #h;
+			do wander speed:(0.5) #km / #h;
 		}
 	}
 		
@@ -500,10 +492,10 @@ species people skills:[moving]{
 	aspect scale{
 	if(toggle1 !=1){
       if(!fromTheGrid){	
-		  draw circle(10#m*coeffSize) color: color_map[scale];
+		  draw circle(10#m) color: color_map[scale];
 		   
 	  }else{
-		  draw square(10#m*2*coeffSize) color: color_map[scale];  
+		  draw square(10#m*2) color: color_map[scale];  
 	  }
 	 } 
 	}
@@ -511,7 +503,7 @@ species people skills:[moving]{
 	aspect scaleTable{
 		if(toggle1 >4)
 		{
-		  draw circle(coeffSize*4) color: color_map[scale];	
+		  draw circle(4#m) color: color_map[scale];	
 		}
       
 	}
@@ -545,8 +537,8 @@ species amenity parent:building schedules:[]{
 			}
 		}
 		else{
-			  draw circle(size/coeffSize) empty:true border:#white color: #white;
-		      draw circle(size/coeffSize) color: rgb(255,255,255,125);	
+			  draw circle(size) empty:true border:#white color: #white;
+		      draw circle(size) color: rgb(255,255,255,125);	
 		}	
 	}
 	
