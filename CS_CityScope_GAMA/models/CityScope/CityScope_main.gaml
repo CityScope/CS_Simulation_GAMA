@@ -60,7 +60,7 @@ global {
 	int max_work_end <- 22; 
 	float min_speed <- 4 #km / #h;
 	float max_speed <- 6 #km / #h; 
-	float angle;
+	float angle<-0.0;
 	point center;
 	float brickSize;
 	string cityIOUrl;
@@ -89,52 +89,12 @@ global {
 		    size<-10+rnd(20);
 		  }		
         }
-        
-        if(cityScopeCity= "volpe"){        	
-        	if(true){// last realease with feet
-        	    angle <- -9.74;
+        if(cityScopeCity= "volpe"){ 
+        		angle <- -9.74;
 			center <-{1007,632};
 			brickSize <- 21.3;
-        		
-        	}else{
-        		angle <- -9.74;
-			center <-{3305,2075};
-			brickSize <-  70.0;
-        	}
-        	
-			
-		}
-		if(cityScopeCity= "andorra"){
-			angle <-3.0;
-			center <-{2550,895};
-			brickSize <- 37.5;
-		}
-		
-		if(cityScopeCity= "Lyon"){
-			angle <-3.0;
-			center <-{2550,895};
-			brickSize <- 37.5;
-		}
-		
-		if(cityScopeCity= "San_Francisco"){
-			angle <-3.0;
-			center <-{2550,895};
-			brickSize <- 37.5;
-		}
-		
-		if(cityScopeCity= "Taipei"){
-			angle <-3.0;
-			center <-{2550,895};
-			brickSize <- 37.5;
-		}
-		
-		if(cityScopeCity= "Shanghai"){
-			angle <-3.0;
-			center <-{2550,895};
-			brickSize <- 37.5;
-		}
-		      
-        cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
+        }
+		cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
 
 	    if(cityMatrix = true){
 	   		do initGrid;
@@ -644,9 +604,3 @@ experiment CityScopeMainVirtual type: gui virtual:true{
 		}			
 	}
 }
-
-
-
-
-
-
