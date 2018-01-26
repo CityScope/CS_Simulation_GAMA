@@ -66,12 +66,7 @@ global {
 	string cityIOUrl;
 	//Global indicator
 	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
-	list<list<point>> entropySeries <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
-	float averageEntropy;
-	float averageClusterSize <-1;
-	list<list<people>> clusters <- [];
-	
-	
+		
 	init {
 		create table from: table_bound_shapefile;
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),nbFloors::1+float(read ("Floors"))]{
@@ -247,31 +242,11 @@ global {
 		interaction_graph <- graph<people, people>(people as_distance_graph(distance));
 	}
 	
-	reflex updateEntropy when: (length(interaction_graph) != 0 and false){
-		clusters <- connected_components_of(interaction_graph);
-		averageClusterSize <- clusters sum_of (length(each))/length(clusters);
-	//	write "average cluster size: "+averageClusterSize;
-			
-		averageEntropy <- 0.0;
-		loop c over: clusters{
-			list<float> categoriesDistribution <- [];
-			int cLength <- length(c);
-			loop category over: scale_string{
-				categoriesDistribution <+ (c count (each.scale = category))/cLength;
-			}
-			averageEntropy <- averageEntropy - cLength * ((categoriesDistribution where (each != 0)) sum_of (each * log(each))) ;
-		}
-		
-		averageEntropy <- averageEntropy / length(people);
-		//write "Average Entropy: "+averageEntropy;	
-	}
 	
 	reflex initSim when: ((cycle mod 8640) = 0){
 		do initPop;
 		current_day<-current_day mod 6 +1;
-		nbInteraction[current_day-1]<-[];
-		entropySeries[current_day-1]<-[];
-		
+		nbInteraction[current_day-1]<-[];		
 	}
 		
 	action generateSquarePop(int nb, string _scale){
@@ -568,23 +543,7 @@ experiment CityScopeMainVirtual type: gui virtual:true{
 					}
 				} 	
 			}
-			
-			graphics "Entropy plot"{
-            	if(drawInteraction){
-	            	point ppos<-{world.shape.width*1.1,world.shape.height*0.5};
-	             	point proi<-{2500,1000};
-	             	draw "Average Entropy" color: # white font: font("Helvetica", 25, #plain) at: {ppos.x+proi.x*0.35,ppos.y+150};
-	             	draw string(averageEntropy/log(3)) color: # white font: font("Helvetica", 20, #plain) at: {ppos.x-proi.x*0.125,ppos.y-proi.y/2};
-	             	draw line([ppos,{ppos.x,ppos.y-proi.y}]) color:#white width:1 end_arrow:50;
-	             	draw line([ppos,{ppos.x+proi.x,ppos.y}]) color:#white width:1 end_arrow:50;
-	             	entropySeries[current_day-1]<+{ppos.x+(cycle mod 8640/8640)*proi.x,ppos.y-averageEntropy/log(3)*proi.y};
-	             	draw line(entropySeries[current_day-1]) color:rgb(255,255,255) width:2;
-	             	loop i from:1 to:current_day-1{
-	             	 draw line(entropySeries[current_day-1-i]) color:rgb(255-50*i,255-50*i,255-50*i) width:1;	
-	             	}	
-            	}      	
-            }
-			
+						
 			graphics "interaction plot"{
             	if(drawInteraction){
 	            	point ppos<-{world.shape.width*1.1,world.shape.height*0.2};
