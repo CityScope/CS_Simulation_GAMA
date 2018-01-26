@@ -63,7 +63,6 @@ global {
 	float angle;
 	point center;
 	float brickSize;
-	float coeffPop<-1.0;
 	string cityIOUrl;
 	//Global indicator
 	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
@@ -93,16 +92,14 @@ global {
         
         if(cityScopeCity= "volpe"){        	
         	if(true){// last realease with feet
-        	angle <- -9.74;
+        	    angle <- -9.74;
 			center <-{1007,632};
 			brickSize <- 21.3;
-			coeffPop<-1.0;
         		
         	}else{
         		angle <- -9.74;
 			center <-{3305,2075};
 			brickSize <-  70.0;
-			coeffPop<-1.0;
         	}
         	
 			
@@ -111,35 +108,30 @@ global {
 			angle <-3.0;
 			center <-{2550,895};
 			brickSize <- 37.5;
-			coeffPop<-2.0;
 		}
 		
 		if(cityScopeCity= "Lyon"){
 			angle <-3.0;
 			center <-{2550,895};
 			brickSize <- 37.5;
-			coeffPop<-2.0;
 		}
 		
 		if(cityScopeCity= "San_Francisco"){
 			angle <-3.0;
 			center <-{2550,895};
 			brickSize <- 37.5;
-			coeffPop<-10.0;
 		}
 		
 		if(cityScopeCity= "Taipei"){
 			angle <-3.0;
 			center <-{2550,895};
 			brickSize <- 37.5;
-			coeffPop<-20.0;
 		}
 		
 		if(cityScopeCity= "Shanghai"){
 			angle <-3.0;
 			center <-{2550,895};
 			brickSize <- 37.5;
-			coeffPop<-10.0;
 		}
 		      
         cityIOUrl <- (cityMatrix = true and !localHost) ? "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity : "http://localhost:8080/table/citymatrix_"+cityScopeCity;	
@@ -155,7 +147,7 @@ global {
 		  int nbPeopleToCreatePerBuilding;
 		  ask building where  (each.usage="R"){  	
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
-		  	create people number: (nbPeopleToCreatePerBuilding/100)*coeffPop { 
+		  	create people number: (nbPeopleToCreatePerBuilding/100) { 
 		  		living_place <- myself;
 				location <- any_location_in (living_place);
 				scale <- myself.scale;	
