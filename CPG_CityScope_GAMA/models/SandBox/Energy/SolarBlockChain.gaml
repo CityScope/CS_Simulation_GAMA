@@ -231,8 +231,14 @@ species road {
 
 experiment start type: gui {
 	output {
-		display chartprod
+		display chartprod type:opengl
 		{
+			chart prod axes:rgb(125,125,125) size:{0.5,0.5} type:histogram style:stack //white
+			{
+				data 'production' value:sum(building collect each.production) accumulate_values:true color:rgb(169,25,37) marker:false thickness:2.0; //red
+				data 'consumption' value:-sum(building collect each.consumption)  accumulate_values:true color:rgb(71,168,243) marker:false thickness:2.0; //blue
+			}
+			
 			chart prod axes:rgb(125,125,125) size:{0.5,0.5} position:{world.shape.width/2,0}
 			{
 				data 'production' value:sum(building collect each.production) color: rgb(169,25,37) marker:false thickness:2.0;  //red
@@ -240,13 +246,8 @@ experiment start type: gui {
 				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:rgb(143,176,9) marker:false thickness:2.0; //Green
 			}
 			
-			chart prod axes:rgb(125,125,125) size:{0.5,0.5} type:histogram style:stack //white
-			{
-				data 'production' value:sum(building collect each.production) accumulate_values:true color:rgb(169,25,37) marker:false thickness:2.0; //red
-				data 'consumption' value:-sum(building collect each.consumption)  accumulate_values:true color:rgb(71,168,243) marker:false thickness:2.0; //blue
-			}
 			
-			chart prod axes:rgb(125,125,125) size:{0.5,0.5} type:pie style:stack position:{0,world.shape.height/2}
+			chart prod axes:rgb(125,125,125) size:{0.5,0.5} type:pie style:stack position:{world.shape.width,0}
 			{
 				data 'production' value:sum(building collect each.production) color: rgb(169,25,37) marker:false thickness:2.0;  //red
 				data 'consumption' value:sum(building collect each.consumption) color:rgb(71,168,243) marker:false thickness:2.0; //blue
@@ -254,7 +255,7 @@ experiment start type: gui {
 			}
 		}
 		
-		display view1  {//type:opengl  {	
+		display view1  type:opengl  {	
 			species building aspect:base;	
  			chart prod size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
 			{
@@ -263,7 +264,7 @@ experiment start type: gui {
 				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:rgb(143,176,9) marker:false thickness:2.0; //green
 			}
 		}
-		display prod  type:opengl  {		
+		/*display prod  type:opengl  {		
 			species building aspect:prod;
 		}
 		display cons  type:opengl  {		
@@ -271,7 +272,7 @@ experiment start type: gui {
 		}
 		display diff  type:opengl  {		
 			species building aspect:diff;
-		}	
+		}*/	
 		display sharing type:opengl{
 			species building aspect:status;
 			species building aspect:sales_network transparency: 0.5;
