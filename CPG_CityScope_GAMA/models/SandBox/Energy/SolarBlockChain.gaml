@@ -254,7 +254,7 @@ experiment start type: gui {
 			}
 		}
 		
-		display view1  type:opengl  {	
+		display view1  {//type:opengl  {	
 			species building aspect:base;	
  			chart prod size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
 			{
