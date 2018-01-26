@@ -64,8 +64,6 @@ global {
 	point center;
 	float brickSize;
 	string cityIOUrl;
-	//Global indicator
-	list<list<point>> nbInteraction <-[{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}];
 		
 	init {
 		create table from: table_bound_shapefile;
@@ -238,15 +236,14 @@ global {
 		do initGrid;
 	}
 	
-	reflex updateGraph when:(drawInteraction = true or toggle1 = 7){
+	reflex updateGraph when:(drawInteraction = true){// or toggle1 = 7){
 		interaction_graph <- graph<people, people>(people as_distance_graph(distance));
 	}
 	
 	
 	reflex initSim when: ((cycle mod 8640) = 0){
 		do initPop;
-		current_day<-current_day mod 6 +1;
-		nbInteraction[current_day-1]<-[];		
+		current_day<-current_day mod 6 +1;		
 	}
 		
 	action generateSquarePop(int nb, string _scale){
@@ -543,23 +540,6 @@ experiment CityScopeMainVirtual type: gui virtual:true{
 					}
 				} 	
 			}
-						
-			graphics "interaction plot"{
-            	if(drawInteraction){
-	            	point ppos<-{world.shape.width*1.1,world.shape.height*0.2};
-	             	point proi<-{2500,1000};
-	             	draw "interactions" color: # white font: font("Helvetica", 25, #plain) at: {ppos.x+proi.x*0.35,ppos.y+150};
-	             	draw string(length(interaction_graph.edges)) color: # white font: font("Helvetica", 20, #plain) at: {ppos.x-proi.x*0.125,ppos.y-proi.y/2};
-	             	draw line([ppos,{ppos.x,ppos.y-proi.y}]) color:#white width:1 end_arrow:50;
-	             	draw line([ppos,{ppos.x+proi.x,ppos.y}]) color:#white width:1 end_arrow:50;
-	             	nbInteraction[current_day-1]<+{ppos.x+(cycle mod 8640/8640)*proi.x,ppos.y-(length(interaction_graph.edges))/5};
-	             	draw line(nbInteraction[current_day-1]) color:rgb(255,255,255) width:2;
-	             	loop i from:1 to:current_day-1{
-	             	 draw line(nbInteraction[current_day-1-i]) color:rgb(255-50*i,255-50*i,255-50*i) width:1;	
-	             	}	
-            	}      	
-            }
-				
 		}			
 	}
 }
