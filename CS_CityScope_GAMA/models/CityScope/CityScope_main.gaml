@@ -239,8 +239,7 @@ global {
 	reflex updateGraph when:(drawInteraction = true){// or toggle1 = 7){
 		interaction_graph <- graph<people, people>(people as_distance_graph(distance));
 	}
-	
-	
+		
 	reflex initSim when: ((cycle mod 8640) = 0){
 		do initPop;
 		current_day<-current_day mod 6 +1;		
@@ -286,18 +285,6 @@ species building schedules: []{
 	aspect scale{
 		draw shape color: color_map[scale];
 	}
-	aspect scaleRes{
-		if(usage = "R"){
-		  draw shape color: color_map[scale];
-		}
-		
-	}
-	aspect usageRes{
-		if(usage = "R"){
-		  draw shape color: color_map[usage];
-		}
-		
-	}
 	
 	aspect demoScreen{
 		if(toggle1=1){
@@ -315,14 +302,6 @@ species building schedules: []{
 			}
 		}
 	}
-	aspect demoTable{
-		if(toggle1=2){
-			draw shape color: color_map[usage];
-		}
-		if(toggle1=3){
-			draw shape color: color_map[scale];
-		}
-	}
 }
 
 species road  schedules: []{
@@ -330,10 +309,6 @@ species road  schedules: []{
 	aspect base {
 		draw shape color: rgb(125,125,125);
 	}
-	
-	aspect white {
-		draw shape color: #white ;
-	} 
 }
 
 species people skills:[moving]{
@@ -408,18 +383,17 @@ species people skills:[moving]{
 			curMovingMode <- "wandering";
 		}
 		if(curMovingMode = "wandering"){
-			do wander speed:(0.5) #km / #h;
+			do wander speed:(0.1) #km / #h;
 		}
 	}
 		
-	
 	aspect scale{
 	if(toggle1 !=1){
       if(!fromTheGrid){	
 		  draw circle(10#m) color: color_map[scale];
 		   
 	  }else{
-		  draw square(10#m*2) color: color_map[scale];  
+		  draw square(10#m) color: color_map[scale];  
 	  }
 	 } 
 	}
@@ -442,28 +416,10 @@ species amenity parent:building schedules:[]{
 	int y;
 	float size;
 	
-	aspect white{
-		if(fromGrid and id!=-2	){
-			draw shape rotated_by -angle color: #white;
-		}
-	}
-	
 	aspect scaleGrid{
 		if(fromGrid and id!=-2	){
 			draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue);
 		}
-	}
-	
-	aspect base{
-		if(fromGrid){
-			if(color!=nil){
-			draw shape rotated_by -angle color: rgb(color.red, color.green, color.blue,75);
-			}
-		}
-		else{
-			  draw circle(size) empty:true border:#white color: #white;
-		      draw circle(size) color: rgb(255,255,255,125);	
-		}	
 	}
 	
 	aspect realistic {	
@@ -479,7 +435,7 @@ species amenity parent:building schedules:[]{
 			}
 		}
 		else{
-			if (toggle1 =  6){
+			if (toggle1 = 6){
 			  draw circle(size) empty:true border:#white color: #white;
 		      draw circle(size) color: rgb(255,255,255,125);	
 			}
@@ -501,7 +457,6 @@ species table{
 		draw shape empty:true border:rgb(75,75,75) color: rgb(75,75,75) ;
 	}	
 }
-
 
 
 experiment CityScopeMainVirtual type: gui virtual:true{
