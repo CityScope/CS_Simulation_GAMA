@@ -98,55 +98,21 @@ global {
 		action initPop{
 		  ask people {do die;}
 		  int nbPeopleToCreatePerBuilding;
-		  ask building where  (each.usage="R"){  	
+		  ask building where  (each.usage="R"){ 
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
-		  	create people number: (nbPeopleToCreatePerBuilding/100) { 
-		  		living_place <- myself;
-				location <- any_location_in (living_place);
-				scale <- myself.scale;	
-				speed <- min_speed + rnd (max_speed - min_speed) ;
-				initialSpeed <-speed;
-				time_to_work <- min_work_start + rnd (max_work_start - min_work_start) ;
-				time_to_lunch <- min_lunch_start + rnd (max_lunch_start - min_lunch_start) ;
-				time_to_rework <- min_rework_start + rnd (max_rework_start - min_rework_start) ;
-				time_to_dinner <- min_dinner_start + rnd (max_dinner_start - min_dinner_start) ;
-				time_to_sleep <- min_work_end + rnd (max_work_end - min_work_end) ;
-				working_place <- one_of(building  where (each.usage="O" and each.scale=scale)) ;
-				eating_place <- one_of(amenity where (each.scale=scale )) ;
-				dining_place <- one_of(amenity where (each.scale=scale )) ;
-				objective <- "resting";
-				fromTheGrid<-false;  
-			}				
+		    do createPop(nbPeopleToCreatePerBuilding/100,false);			
 		  }
 		  if(length(density_array)>0){
-			  ask amenity where  (each.usage="R"){
-	
+			  ask amenity where  (each.usage="R"){	
 				  	float nb <- (self.scale ="L") ? density_array[0] : ((self.scale ="M") ? density_array[1] :density_array[2]);
-				  	create people number: 1+nb/3 { 
-						living_place <- myself;
-						location <- any_location_in (living_place);
-						scale <- myself.scale;	
-						speed <- min_speed + rnd (max_speed - min_speed) ;
-						initialSpeed <-speed;
-						time_to_work <- min_work_start + rnd (max_work_start - min_work_start) ;
-						time_to_lunch <- min_lunch_start + rnd (max_lunch_start - min_lunch_start) ;
-						time_to_rework <- min_rework_start + rnd (max_rework_start - min_rework_start) ;
-						time_to_dinner <- min_dinner_start + rnd (max_dinner_start - min_dinner_start) ;
-						time_to_sleep <- min_work_end + rnd (max_work_end - min_work_end) ;
-						working_place <- one_of(building  where (each.usage="O" and each.scale=scale)) ;
-						eating_place <- one_of(amenity where (each.scale=scale )) ;
-						dining_place <- one_of(amenity where (each.scale=scale )) ;
-						objective <- "resting";
-						fromTheGrid<-true; 
-					}
+				  	do createPop(1+nb/3,true);
 			  }
 			  write "initPop from density array" + density_array + " nb people: " + length(people); 
 		  }
 		  else{
 		  	write "density array is empty";
 		  }
-		  
-		 }
+		}
 	
 	action initGrid{
   		ask amenity where (each.fromGrid=true){
@@ -273,6 +239,27 @@ species building schedules: []{
 	int depth;	
 	float area;
 	float perimeter;
+	
+	action createPop (int nb, bool fromGrid){
+	  create people number: (nb) { 
+  		living_place <- myself;
+		location <- any_location_in (living_place);
+		scale <- myself.scale;	
+		speed <- min_speed + rnd (max_speed - min_speed) ;
+		initialSpeed <-speed;
+		time_to_work <- min_work_start + rnd (max_work_start - min_work_start) ;
+		time_to_lunch <- min_lunch_start + rnd (max_lunch_start - min_lunch_start) ;
+		time_to_rework <- min_rework_start + rnd (max_rework_start - min_rework_start) ;
+		time_to_dinner <- min_dinner_start + rnd (max_dinner_start - min_dinner_start) ;
+		time_to_sleep <- min_work_end + rnd (max_work_end - min_work_end) ;
+		working_place <- one_of(building  where (each.usage="O" and each.scale=scale)) ;
+		eating_place <- one_of(amenity where (each.scale=scale )) ;
+		dining_place <- one_of(amenity where (each.scale=scale )) ;
+		objective <- "resting";
+		fromTheGrid<-fromGrid;  
+	  }
+	}
+	
 	aspect base {	
      	draw shape color: rgb(50,50,50,125);
 	}
