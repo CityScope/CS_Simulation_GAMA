@@ -100,12 +100,12 @@ global {
 		  int nbPeopleToCreatePerBuilding;
 		  ask building where  (each.usage="R"){ 
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
-		    do createPop(nbPeopleToCreatePerBuilding/100,false);			
+		    do createPop(nbPeopleToCreatePerBuilding/100,self,false);			
 		  }
 		  if(length(density_array)>0){
 			  ask amenity where  (each.usage="R"){	
 				  	float nb <- (self.scale ="L") ? density_array[0] : ((self.scale ="M") ? density_array[1] :density_array[2]);
-				  	do createPop(1+nb/3,true);
+				  	do createPop(1+nb/3,self,true);
 			  }
 			  write "initPop from density array" + density_array + " nb people: " + length(people); 
 		  }
@@ -240,11 +240,11 @@ species building schedules: []{
 	float area;
 	float perimeter;
 	
-	action createPop (int nb, bool fromGrid){
-	  create people number: (nb) { 
-  		living_place <- myself;
+	action createPop (int nb, building bd,bool fromGrid){
+	  create people number: nb { 
+  		living_place <- bd;
 		location <- any_location_in (living_place);
-		scale <- myself.scale;	
+		scale <- bd.scale;	
 		speed <- min_speed + rnd (max_speed - min_speed) ;
 		initialSpeed <-speed;
 		time_to_work <- min_work_start + rnd (max_work_start - min_work_start) ;
