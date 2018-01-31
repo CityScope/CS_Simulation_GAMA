@@ -1,5 +1,4 @@
-ABM model running on the CityScope table using the GAMA Platform. This version is the one
-running on the physical table at the lab and synchronized with CityIOServer, Grasshopper and Unity.
+Agent-Based Model running on the Volpe CityScope in CityScience group at MIT MediaLab using GAMA Platform.
 
 <div style="text-align:center"><img src ="https://github.com/CityScope/CS_CityScope_GAMA/wiki/resources/images/CityScope_Volpe_Table.png" width="1000"/></div>
 
