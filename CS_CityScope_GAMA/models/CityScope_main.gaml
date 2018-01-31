@@ -7,14 +7,14 @@
 model CityScope
 
 global {
-	string cityScopeCity;
+	string cityGISFolder <- "./../includes/City/volpe";
 	// GIS FILE //	
-	file bound_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Bounds.shp");
-	file buildings_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Buildings.shp");
-	file roads_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Roads.shp");
-	file amenities_shapefile <- file("./../../includes/City/"+cityScopeCity+"/Amenities.shp");
-	file table_bound_shapefile <- file("./../../includes/City/"+cityScopeCity+"/table_bounds.shp");
-	file imageRaster <- file('./../../images/gama_black.png') ;
+	file bound_shapefile <- file(cityGISFolder+"/Bounds.shp");
+	file buildings_shapefile <- file(cityGISFolder+"/Buildings.shp");
+	file roads_shapefile <- file(cityGISFolder+"/Roads.shp");
+	file amenities_shapefile  <- file(cityGISFolder+"/Amenities.shp");
+	file table_bound_shapefile <- file(cityGISFolder+"/table_bounds.shp");
+	file imageRaster <- file('./../images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	graph road_graph;
 	graph<people, people> interaction_graph;
@@ -82,17 +82,16 @@ global {
 		    size<-10+rnd(20);
 		  }		
         }
-        if(cityScopeCity= "volpe"){ 
-        		angle <- -9.74;
-			center <-{1007,632};
-			brickSize <- 21.3;
-        }
-		cityIOUrl <- "https://cityio.media.mit.edu/api/table/citymatrix_"+cityScopeCity;	
+
+        angle <- -9.74;
+	    center <-{1007,632};
+	    brickSize <- 21.3;
+		cityIOUrl <- "https://cityio.media.mit.edu/api/table/citymatrix_volpe";	
 
 	    if(cityMatrix = true){
 	   		do initGrid;
 	    }	
-	    write cityScopeCity + " width: " + world.shape.width + " height: " + world.shape.height;
+	    write " width: " + world.shape.width + " height: " + world.shape.height;
 	}
 	
 		action initPop{
@@ -100,7 +99,7 @@ global {
 		  int nbPeopleToCreatePerBuilding;
 		  ask building where  (each.usage="R"){ 
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
-		    do createPop(nbPeopleToCreatePerBuilding/100,self,false);			
+		    do createPop(nbPeopleToCreatePerBuilding/10,self,false);			
 		  }
 		  if(length(density_array)>0){
 			  ask amenity where  (each.usage="R"){	
@@ -151,11 +150,6 @@ global {
         ask amenity{
           if ((x = 0 and y = 0) and fromGrid = true){
             do die;
-          }
-          if(cityScopeCity= "andorra"){
-          	if((y<3 or y>11) or x>14){
-          		do die;
-          	}
           }
         }
 		cityMatrixData <- json_file(cityIOUrl).contents;
@@ -377,10 +371,10 @@ species people skills:[moving]{
 	aspect scale{
 	if(toggle1 !=1){
       if(!fromTheGrid){	
-		  draw circle(10#m) color: color_map[scale];
+		  draw circle(4#m) color: color_map[scale];
 		   
 	  }else{
-		  draw square(10#m) color: color_map[scale];  
+		  draw square(8#m) color: color_map[scale];  
 	  }
 	 } 
 	}
@@ -446,11 +440,9 @@ species table{
 }
 
 
-experiment CityScopeMainVirtual type: gui virtual:true{
-	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];
-	
+experiment CityScopeMain type: gui {	
 	output {	
-		display CityScopeVirtual  type:opengl background:#black virtual:true toolbar:false{
+		display CityScopeVolpe  type:opengl background:#black {
 			species table aspect:base refresh:false;
 			species building aspect:base position:{0,0,-0.0015};	
 			species road aspect: base refresh:false;
@@ -485,3 +477,29 @@ experiment CityScopeMainVirtual type: gui virtual:true{
 		}			
 	}
 }
+
+experiment CityScopeVolpeDemo type: gui parent:CityScopeMain{
+	float minimum_cycle_duration <- 0.02;
+	output {		
+		
+        display CityScope type:opengl parent:CityScopeVolpe{}	
+        	
+		display CityScopeTable   type:opengl background:#black fullscreen:1 rotate:180 synchronized:true
+		camera_pos: {4414.559,3164.843,4508.27} camera_look_pos: {4415.792,3157.071,-0.06} camera_up_vector: {0.157,0.988,0.002}{	
+			species amenity aspect: onTable;
+			species people aspect: scale;
+			graphics "interaction_graph" {
+				if (interaction_graph != nil  and ( toggle1=7) ) {	
+					loop eg over: interaction_graph.edges {
+                        people src <- interaction_graph source_of eg;
+                        people target <- interaction_graph target_of eg;
+						geometry edge_geom <- geometry(eg);
+						draw line(edge_geom.points)  color:rgb(0,125,0,75);
+					}
+				} 
+				draw rectangle(900,700) rotated_by 9.74 color:#black	 at: {2500, 2000,10} ;	
+			}	
+		}
+	}
+}
+
