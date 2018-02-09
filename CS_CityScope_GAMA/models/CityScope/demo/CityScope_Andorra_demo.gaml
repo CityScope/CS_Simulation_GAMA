@@ -17,7 +17,7 @@ experiment CityScopeAndorraDemo type: gui parent:CityScopeMainVirtual{
 	float minimum_cycle_duration <- 0.02;
 
 	action _init_ {
-		create CityScope_Andorra_Demo_model with: [cityScopeCity::"andorra", angle :: 3.0,center ::{2550,895}, brickSize :: 37.5];	
+		create CityScope_Andorra_Demo_model with: [cityScopeCity::"Andorra", cityMatrix::false,angle :: 3.0,center ::{2550,895}, brickSize :: 37.5];	
 	}
 	
 	output {				
