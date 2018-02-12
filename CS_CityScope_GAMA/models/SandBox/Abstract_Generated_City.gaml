@@ -7,7 +7,10 @@
 model AbstractGeneratedCity
 
 global {
-	
+	float worldWidth<-1#km;
+	float worldHeight<-1#km;
+	geometry shape<-rectangle(worldWidth,worldHeight);
+	float blockSize<-100#m;
 	int nbCols<-10; 
 	int nbRows<-10;
 	list<string> usages<-["R","O"];
@@ -26,8 +29,8 @@ global {
 		loop i from: 0 to: nbCols-1 {
 			loop j from: 0 to: nbRows -1{
               create building{
-              	shape <- square(size*0.8);
-			    location <- {size*i+size/2,size*j+size/2};
+              	shape <- square(blockSize*0.8);
+			    location <- {blockSize*i+blockSize/2,blockSize*j+blockSize/2};
 			    usage<- usages[rnd(1)];
 			    scale<- scales[rnd(2)];
 			    create amenities{
@@ -41,13 +44,13 @@ global {
         }  
         loop i from: 0 to: nbCols {
 			create road{
-				shape<-line([{size*i,0},{size*i,size*nbRows}]);
+				shape<-line([{blockSize*i,0},{blockSize*i,blockSize*nbRows}]);
 			}
         } 
         
         loop j from: 0 to: nbRows {
 			create road{
-				shape<-line([{0,size*j},{size*nbCols,size*j}]);
+				shape<-line([{0,blockSize*j},{blockSize*nbCols,blockSize*j}]);
 			}
         } 
         
@@ -61,7 +64,7 @@ global {
   
 species building {
 	string type;
-	int size<-10;
+	float size<-blockSize;
 	string usage;
 	string scale;
 	aspect default {
@@ -72,7 +75,6 @@ species building {
 
 species road {
 	string type;
-	int size<-10;
 	aspect default {
 		draw shape color:#black;
 	}
@@ -80,7 +82,7 @@ species road {
 
 species amenities parent:building{
 	string type;
-	int size<-1;
+	float size<-blockSize*0.1;
 	aspect default {
 		draw shape color:#white;
 	}
@@ -102,9 +104,9 @@ species table_bounds{
 
 experiment main type: gui {
 	output {
-		display map type:opengl{
-			species bounds;
-			species table_bounds;
+		display map type:opengl draw_env:true{
+			//species bounds;
+			//species table_bounds;
 			species building;
 			species road;
 			species amenities;
