@@ -20,7 +20,7 @@ global {
 
         create bounds{
          	location<-{world.shape.width/2,world.shape.height/2};
-         	shape<-rectangle(world.shape.width,world.shape.height);
+         	shape<-rectangle(world.shape.width*1.5,world.shape.height*1.5);
         }
         create table_bounds{
          	location<-{world.shape.width/2,world.shape.height/2};
@@ -104,7 +104,7 @@ species table_bounds{
 
 experiment main type: gui {
 	output {
-		display map type:opengl draw_env:true{
+		display map type:opengl {
 			//species bounds;
 			//species table_bounds;
 			species building;
