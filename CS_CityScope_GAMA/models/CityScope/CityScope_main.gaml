@@ -29,7 +29,7 @@ global {
 	
 	//INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
-	bool cityMatrix <-true;
+	bool cityMatrix <-false;
 	bool onlineGrid <-true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <-true;
 	
@@ -319,6 +319,8 @@ species people skills:[moving]{
 	float radius;
 	bool moveOnRoad<-true;
 	bool fromTheGrid<-false;
+	list<point> trajectory <- list_with(24, {0,0});
+	bool drawTrajectory<-false;
 	
 	action travellingMode{
 		curMovingMode <- "travelling";
@@ -373,6 +375,14 @@ species people skills:[moving]{
 			do wander speed:(0.1) #km / #h;
 		}
 	}
+	
+	user_command "Show trajectory" action:showTrajectory;
+	action showTrajectory{
+		ask people{
+			drawTrajectory <-false;
+		}
+		drawTrajectory <- true;
+	}
 		
 	aspect scale{
 	if(toggle1 !=1){
@@ -392,6 +402,23 @@ species people skills:[moving]{
 		}
       
 	}
+	
+	aspect trajectory
+	{   if(drawTrajectory){
+			draw circle(10#m) color: color_map[scale];
+			draw living_place.shape color:color_map[living_place.usage];
+			draw working_place.shape color:color_map[working_place.usage];
+			draw circle(5#m) at: eating_place.location color:#white;
+			draw circle(5#m) at: dining_place.location color:#white;
+			//curve <- curve(pt1,mean([pt1,pt2]), pt2);
+			/*draw line([living_place,working_place]) color:#red;
+			draw line([working_place,eating_place]) color:#green;
+			draw line([eating_place,working_place]) color:#green;
+			draw line([working_place,dining_place]) color:#blue;
+			draw line([dining_place,living_place]) color:#blue;*/
+	    }
+	}
+	
 }
 
 species amenity parent:building schedules:[]{
@@ -446,15 +473,16 @@ species table{
 }
 
 
-experiment CityScopeMainVirtual type: gui virtual:true{
+experiment CityScopeMainVirtual type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];
 	
 	output {	
-		display CityScopeVirtual  type:opengl background:#black virtual:true toolbar:false{
+		display CityScopeVirtual  type:opengl background:#black toolbar:false{
 			species table aspect:base refresh:false;
 			species building aspect:base position:{0,0,-0.0015};	
 			species road aspect: base refresh:false;
 			species people aspect:scale;
+			species people aspect:trajectory;
 			species amenity aspect: onScreen ;
 			
 		    graphics "text" 
