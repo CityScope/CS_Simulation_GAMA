@@ -319,7 +319,6 @@ species people skills:[moving]{
 	float radius;
 	bool moveOnRoad<-true;
 	bool fromTheGrid<-false;
-	list<point> trajectory <- list_with(24, {0,0});
 	bool drawTrajectory<-false;
 	
 	action travellingMode{
@@ -411,11 +410,11 @@ species people skills:[moving]{
 			draw circle(5#m) at: eating_place.location color:#white;
 			draw circle(5#m) at: dining_place.location color:#white;
 			//curve <- curve(pt1,mean([pt1,pt2]), pt2);
-			/*draw line([living_place,working_place]) color:#red;
-			draw line([working_place,eating_place]) color:#green;
-			draw line([eating_place,working_place]) color:#green;
-			draw line([working_place,dining_place]) color:#blue;
-			draw line([dining_place,living_place]) color:#blue;*/
+			draw curve(living_place.location,working_place.location,0.5,true,100) color:#red;
+			draw curve(working_place.location,eating_place.location,0.5,true,100) color:#green;
+			draw curve(eating_place.location,working_place.location,0.5,true,100) color:#green;
+			draw curve(working_place.location,dining_place.location,0.5,true,100) color:#blue;
+			draw curve(dining_place.location,living_place.location,0.5,true,100) color:#blue;
 	    }
 	}
 	

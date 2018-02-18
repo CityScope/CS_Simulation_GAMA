@@ -10,18 +10,20 @@ global {
 	float worldWidth<-1#km;
 	float worldHeight<-1#km;
 	geometry shape<-rectangle(worldWidth,worldHeight);
-	float blockSize<-100#m;
-	int nbCols<-10; 
-	int nbRows<-10;
+	float blockSize<-125#m;
+	int nbCols<-8; 
+	int nbRows<-8;
 	list<string> usages<-["R","O"];
 	list<string> scales<-["S","M","L"];
 	bool saveGIS<-false;
+	graph road_graph;
+	graph<people, people> interaction_graph;
 
 	init {
 
         create bounds{
          	location<-{world.shape.width/2,world.shape.height/2};
-         	shape<-rectangle(world.shape.width*1.5,world.shape.height*1.5);
+         	shape<-rectangle(world.shape.width*4,world.shape.height*2);
         }
         create table_bounds{
          	location<-{world.shape.width/2,world.shape.height/2};
@@ -35,10 +37,11 @@ global {
 			    usage<- usages[rnd(1)];
 			    scale<- scales[rnd(2)];
 			    create amenities{
-			    	 shape<-circle(size/2);
+			    	 shape<-square(size);
 			    	 location <- myself.location;
 			    	 usage<-"A";
 			    	 scale<-myself.usage;
+			    	 myBuilding<-myself;
 			    }
               }
 			}
@@ -53,25 +56,38 @@ global {
 			create road{
 				shape<-line([{0,blockSize*j},{blockSize*nbCols,blockSize*j}]);
 			}
-        } 
-        if(saveGIS){
-        	save building to:"../SandBox/GeneratedGIS/buildings.shp" type:"shp" attributes: ["ID":: int(self), "Usage"::usage, "Scale"::scale];
-		save road to:"../SandBox/GeneratedGIS/roads.shp" type:"shp" attributes: ["ID":: int(self), "TYPE"::type];
-		save amenities to:"../SandBox/GeneratedGIS/amenities.shp" type:"shp" attributes: ["ID":: int(self),"Usage"::usage, "Scale"::scale];
-		save bounds to:"../SandBox/GeneratedGIS/bounds.shp" type:"shp" attributes: ["ID":: int(self)];
-		save table_bounds to:"../SandBox/GeneratedGIS/table_bounds.shp" type:"shp" attributes: ["ID":: int(self)];
         }
-		
+        road_graph <- as_edge_graph(road);
+        
+        create people number:100{
+        	  location<-any_location_in(one_of(amenities));
+        }
+	}
+
+}
+
+species macroBlock skills:[moving]{
+	point size;
+	list<building> buildings;
+	reflex move{
+	 	do wander;	
+	}
+
+	aspect default{
+		draw rectangle(size.x,size.y) color:#white border:#gray;
 	}
 }
   
-species building {
+species building skills:[moving]{
 	string type;
 	float size<-blockSize;
 	string usage;
 	string scale;
+	reflex move{
+		//do wander;
+	}
 	aspect default {
-		draw shape color:#black border:#white;
+		draw shape color:#black border:#black;
 	}
 }
 
@@ -83,11 +99,29 @@ species road {
 	}
 }
 
-species amenities parent:building{
+species amenities {
 	string type;
 	float size<-blockSize*0.1;
+	string usage;
+	string scale;
+	building myBuilding;
 	aspect default {
 		draw shape color:#white;
+	}
+}
+species people skills:[moving]{
+	list<point> targets;
+	point myTarget<-any_location_in(one_of(amenities));
+	
+	reflex move{
+			do goto (target:myTarget,recompute_path: false);
+	}
+	aspect base{
+		draw circle(2#m) color:#gamaorange;
+	}
+	
+	aspect trajectory{
+		draw curve(location,myTarget.location,rnd(0.5),true,100) color:#red;
 	}
 }
 
@@ -102,18 +136,19 @@ species table_bounds{
 		draw shape color:#black;
 	}
 }
-
-
+//grid cell width: 8 height: 8;
 
 experiment main type: gui {
 	output {
-		display map type:opengl {
+		display map type:opengl background:#white{
 			//species bounds;
-			//species table_bounds;
-			species building;
+			//grid cell lines: #black;
+			species macroBlock;
+			species building position:{0,0,0};
 			species road;
 			species amenities;
-			
+			species people aspect:base;
+			//species people aspect:trajectory;
 		}
 	}
 }
