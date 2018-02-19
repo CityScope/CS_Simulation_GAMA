@@ -87,9 +87,10 @@ global{
 			label_locations <- [];
 			list<int> pies_indexes <- [0];
 			if (sum(values) = 0) { // if all values are equal to 0
-				pies <- [calculate_slice(0,nb_points), [],[]];
-				label_lines <- [[location + {diameter/2,0},location + {diameter/1.3,0}],[location + {diameter/2,0},location + {diameter/1.3,0}],[location + {diameter/2,0},location + {diameter/1.3,0}]];
-				label_locations <- [location + {diameter/1.3,0},location + {diameter/1.3,0},location + {diameter/1.3,0}];	
+				pies <- list_with(nb_pies, []);
+				pies[0] <- calculate_slice(0,nb_points);
+				label_lines <- list_with(nb_pies, [location + {diameter/2,0},location + {diameter/1.3,0}]);
+				label_locations <- list_with(nb_pies,location + {diameter/1.3,0});	
 			}else{ // in the general case
 				list<float> cum_sum <- [0.0];
 				loop i from: 0 to: nb_pies-1{
