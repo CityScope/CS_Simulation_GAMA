@@ -7,7 +7,8 @@
 model CityScope
 
 global {
-	string cityGISFolder <- "./../includes/City/volpe";
+	string cityGISFolder <- "./../includes/City/GeneratedGIS";
+	//string cityGISFolder <- "./../includes/City/volpe";
 	// GIS FILE //	
 	file bound_shapefile <- file(cityGISFolder+"/Bounds.shp");
 	file buildings_shapefile <- file(cityGISFolder+"/Buildings.shp");
@@ -29,7 +30,7 @@ global {
 	
 	//INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
-	bool cityMatrix <-true;
+	bool cityMatrix <-false;
 	bool onlineGrid <-true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <-true;
 	
@@ -99,6 +100,7 @@ global {
 		  int nbPeopleToCreatePerBuilding;
 		  ask building where  (each.usage="R"){ 
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
+		    //do createPop(10,self,false);	
 		    do createPop(nbPeopleToCreatePerBuilding/10,self,false);			
 		  }
 		  if(length(density_array)>0){
@@ -386,6 +388,13 @@ species people skills:[moving]{
 		}
       
 	}
+	
+	aspect trajectory{
+		if(curMovingMode = "travelling"){
+			draw circle(4#m) color: color_map[scale];
+		}
+		
+	}
 }
 
 species amenity parent:building schedules:[]{
@@ -442,11 +451,12 @@ species table{
 
 experiment CityScopeMain type: gui {	
 	output {	
-		display CityScopeVolpe  type:opengl background:#black {
+		display CityScopeVolpe  type:opengl background:#black draw_env:true {
 			species table aspect:base refresh:false;
 			species building aspect:base position:{0,0,-0.0015};	
 			species road aspect: base refresh:false;
 			species people aspect:scale;
+			species people aspect:trajectory trace:true;
 			species amenity aspect: onScreen ;
 			
 		    graphics "text" 
