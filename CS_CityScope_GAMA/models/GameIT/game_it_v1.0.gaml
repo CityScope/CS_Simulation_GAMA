@@ -59,12 +59,12 @@ global {
 	
 	init {
 		gama.pref_display_flat_charts <- true;
+		do import_shapefiles;	
 		do profils_data_import;
 		do modes_data_import;
 		do activity_data_import;
 		do criteria_file_import;
 		do characteristic_file_import;
-		do import_shapefiles;			
 		do compute_graph;
 
 		create bus_stop number: 6 {
@@ -608,19 +608,18 @@ species externalCities parent:building{
 experiment gameit type: gui {
 	output {
 		display map type: opengl draw_env: false background: #black refresh_every:10{
-			//species gridHeatmaps aspect:density;
+			species gridHeatmaps aspect:pollution;
 			species pie;
 			species building aspect:depth refresh: false;
 			species road ;		
 			species people aspect:base ;
-			species people aspect:layer trace:true;
 			species externalCities aspect:base;
 
-			graphics "indicator" {
+			/*graphics "indicator" {
 				draw "Intersection per km2" + string(length(graph_per_mobility["car"].edges))  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*1.1,0};
 				draw "Buildings foot print" + "???"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*1.1,500*1};
 				draw "Roadways length" + "???"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*1.1,500*2};
-			}
+			}*/
 					
 			graphics "time" {
 				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.9,world.shape.height*0.55};
