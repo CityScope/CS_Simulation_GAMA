@@ -1,13 +1,11 @@
 /**
 * Name: gamit
-* Author: Arnaud Grignard, Tri Nguyne Huu, Patrick Taillandier, Benoit Gaudou
+* Author: Arnaud Grignard, Tri Nguyen Huu, Patrick Taillandier, Benoit Gaudou
 * Description: Describe here the model and its experiments
 * Tags: Tag1, Tag2, TagN
 */
 
 model gamit
-
-import "./../SandBox/data_viz/pie_charts.gaml"
 
 global {
 	
@@ -55,6 +53,8 @@ global {
 	// INDICATOR
 	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
+
+	
 	
 	
 	init {
@@ -87,63 +87,7 @@ global {
 			color <- color_per_type[type];
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 			do create_trip_objectives;
-		}
-		
-				
-		/*create externalCities{
-			id <-"boston";
-			real_location<-{world.shape.width*1.2,world.shape.height*0.375};
-			entry_location<-{3411,3906};
-			location<-entry_location;
-			shape<-circle(100);
-	        people_distribution <-[0.2,0.1,0.1,0.2,0.1,0.2,0.1];
-	        building_distribution <-[0.2,0.1,0.1,0.2,0.1,0.2,0.1];
-	        create people number: nb_people/4 {
-				type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
-				has_car <- flip(proba_car_per_type[type]);
-				has_bike <- flip(proba_bike_per_type[type]);
-				living_place <- myself;
-				current_place <- living_place;
-				location <- any_location_in(living_place);
-				color <- color_per_type[type];
-				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
-				do create_trip_objectives;
-		    }
-		}*/
-
-		
-		create pie{
-			id <- "transport";
-			labels <- transport_type_cumulative_usage.keys;
-			labels_h_offset <- [diameter*10,diameter*8,diameter*5,diameter*6];
-			labels_v_offset <- diameter ;
-			values <- transport_type_cumulative_usage.values;
-			colors <- color_per_mobility.values;
-			location <-{world.shape.width*0.9,world.shape.height*0.75};
-			diameter <- world.shape.width*0.10;
-			inner_diameter <- diameter*0.8;
-			type <- "ring";
-			line_width <- unitFactor*diameter / 400;
-			font_size <- (unitFactor*diameter/10);
-			do calculate_pies;
-		}
-		
-		create pie{
-			id <- "people";
-			labels <- proportion_per_type.keys;
-			labels_h_offset <- [diameter*10,diameter*10,diameter*10,diameter*10,diameter*23,diameter*13,diameter*10];
-			labels_v_offset <- diameter ;
-			values <- proportion_per_type.values;
-			colors <- color_per_type.values;
-			location <-{world.shape.width*0.9,world.shape.height*0.95};
-			diameter <- world.shape.width*0.10;
-			inner_diameter <- diameter*0.8;
-			type <- "pie";
-			line_width <- unitFactor*diameter / 400;
-			font_size <- unitFactor*diameter/10;
-			do calculate_pies;
-		}
-				
+		}				
 	}
 	
 	
@@ -262,17 +206,10 @@ global {
 			buildings_distribution[usage] <- buildings_distribution[usage]+1;
 		}
 	}
-	
-	reflex update_charts{
-		ask pie {
-			switch(self.id)
-			{
-				match "transport" {do update_values(transport_type_cumulative_usage.values);}
-				match "people" {do update_values(proportion_per_type.values);}
-				match "usage" {do update_values(buildings_distribution.values);}
-			}
-			do calculate_pies;
-		}
+		
+	reflex save_bug_attribute when: (cycle mod 100=0){
+		write "ok so here we can save maystuff such as:";
+		write "transport_type_cumulative_usage" + transport_type_cumulative_usage;
 	}
 	
 }
@@ -312,7 +249,6 @@ species bus skills: [moving] {
 				bus_status <- 2;
 			}
 			stop_passengers[my_target] <- [];
-			
 			/////////     get some people
 			loop p over: my_target.waiting_people {
 				bus_stop b <- bus_stop with_min_of(each distance_to(p.my_current_objective.place.location));
@@ -608,13 +544,12 @@ species externalCities parent:building{
 experiment gameit type: gui {
 	output {
 		display map type: opengl draw_env: false background: #black refresh_every:10{
-			species gridHeatmaps aspect:pollution;
-			species pie;
+			//species gridHeatmaps aspect:pollution;
 			species building aspect:depth refresh: false;
 			species road ;		
 			species people aspect:base ;
 			species externalCities aspect:base;
-
+			
 			/*graphics "indicator" {
 				draw "Intersection per km2" + string(length(graph_per_mobility["car"].edges))  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*1.1,0};
 				draw "Buildings foot print" + "???"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*1.1,500*1};
@@ -659,6 +594,24 @@ experiment gameit type: gui {
                 draw "Car" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold);       
             }
 		} 
+		
+		display Indicator type:opengl{
+			chart "Cumulative Trip" type: pie style:ring size: {0.5,0.5} position: {0, 0} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 32.0 
+			tick_font: 'Monospaced' tick_font_size: 14 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:
+			'Nice Ylabel'
+			{
+				loop i from: 0 to: length(transport_type_cumulative_usage.keys)-1	{
+				  data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color:color_per_mobility[transport_type_cumulative_usage.keys[i]];
+				}
+			}
+			chart "People Distribution" type: pie size: {0.5,0.5} position: {0, 0.5} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 32.0 
+			tick_font: 'Helvetica' tick_font_size: 14 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
+			{
+				loop i from: 0 to: length(proportion_per_type.keys)-1	{
+				  data proportion_per_type.keys[i] value: proportion_per_type.values[i] color:color_per_type[proportion_per_type.keys[i]];
+				}
+			}
+		}
 		
 	}
 }
