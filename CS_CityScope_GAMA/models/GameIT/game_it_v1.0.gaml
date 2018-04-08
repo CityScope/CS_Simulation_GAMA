@@ -19,7 +19,6 @@ global {
 	date starting_date <- date([2017,9,25,0,0]);
 	string case_study <- "volpe" ;
 	int nb_people <- 500;
-	float unitFactor<-0.3;
 
 	file<geometry> buildings_shapefile <- file<geometry>("../../includes/City/"+case_study+"/Buildings.shp");
 	file<geometry> roads_shapefile <- file<geometry>("../../includes/City/"+case_study+"/Roads.shp");
@@ -38,7 +37,6 @@ global {
 	map<string,rgb> color_per_type <- [ "High School Student"::#FFFFB2, "College student"::#FECC5C,"Young professional"::#FD8D3C,  "Mid-career workers"::#F03B20, "Executives"::#BD0026, "Home maker"::#0B5038, "Retirees"::#8CAB13];
 	
 	map<string,map<string,int>> activity_data;
-	
 	map<string, float> proportion_per_type;
 	map<string, float> proba_bike_per_type;
 	map<string, float> proba_car_per_type;	
@@ -54,9 +52,6 @@ global {
 	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
 
-	
-	
-	
 	init {
 		gama.pref_display_flat_charts <- true;
 		do import_shapefiles;	
@@ -210,7 +205,10 @@ global {
 	reflex save_bug_attribute when: (cycle mod 100=0){
 		write "ok so here we can save maystuff such as:";
 		write "transport_type_cumulative_usage" + transport_type_cumulative_usage;
+		save [transport_type_cumulative_usage.values[0] ,transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3]] rewrite:false to: "../results/mobility.csv" type:"csv";
 	}
+	
+
 	
 }
 
@@ -286,7 +284,7 @@ grid gridHeatmaps height: 50 width: 50 {
 species people skills: [moving]{
 	string type;
 	rgb color ;
-	float size<-30*unitFactor;
+	float size<-5#m;
 	building living_place;
 	list<trip_objective> objectives;
 	trip_objective my_current_objective;
@@ -595,7 +593,7 @@ experiment gameit type: gui {
             }
 		} 
 		
-		display Indicator type:opengl{
+		/*display Indicator type:opengl{
 			chart "Cumulative Trip" type: pie style:ring size: {0.5,0.5} position: {0, 0} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 32.0 
 			tick_font: 'Monospaced' tick_font_size: 14 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:
 			'Nice Ylabel'
@@ -611,7 +609,7 @@ experiment gameit type: gui {
 				  data proportion_per_type.keys[i] value: proportion_per_type.values[i] color:color_per_type[proportion_per_type.keys[i]];
 				}
 			}
-		}
+		}*/
 		
 	}
 }
