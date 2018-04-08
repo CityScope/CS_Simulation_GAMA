@@ -32,6 +32,7 @@ global {
 	bool cityMatrix <-false;
 	bool onlineGrid <-true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <-true;
+	float coeffPop<-0.1;
 	
 	/////////// CITYMATRIX   //////////////
 	map<string, unknown> cityMatrixData;
@@ -48,16 +49,7 @@ global {
 	float step <- 10 #sec;
 	int current_hour update: (time / #hour) mod 24  ;
 	int current_day<-0;
-	int min_work_start <-4 ;
-	int max_work_start <- 10;
-	int min_lunch_start <- 11;
-	int max_lunch_start <- 13;
-	int min_rework_start <- 14;
-	int max_rework_start <- 16;
-	int min_dinner_start <- 18;
-	int max_dinner_start <- 20;
-	int min_work_end <- 21; 
-	int max_work_end <- 22; 
+	list dailyHour<-[4,10,11,13,14,16,18,20,21,22];
 	float min_speed <- 4 #km / #h;
 	float max_speed <- 6 #km / #h; 
 	float angle<-0.0;
@@ -100,8 +92,9 @@ global {
 		  int nbPeopleToCreatePerBuilding;
 		  ask building where  (each.usage="R"){ 
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
-		    do createPop(nbPeopleToCreatePerBuilding/100,self,false);			
+		    do createPop(nbPeopleToCreatePerBuilding*coeffPop,self,false);			
 		  }
+		
 		  if(length(density_array)>0){
 			  ask amenity where  (each.usage="R"){	
 				  	float nb <- (self.scale ="L") ? density_array[0] : ((self.scale ="M") ? density_array[1] :density_array[2]);
@@ -143,7 +136,8 @@ global {
 				  scale <- citymatrix_map_settings[id][1];
 				  usage<-citymatrix_map_settings[id][0];
 				  color<-color_map[scale];
-				  if(id!=-1 and id!=-2 and id!=7){
+				  write id;
+				  if(id!=-1 and id!=-2 and id!=7 and id!=6){
 				  	density<-density_array[id];
 				  }
               }	        
@@ -162,41 +156,21 @@ global {
 		density_array <- cityMatrixData["objects"]["density"];
 		
 		if(cycle>10 and dynamicPop =true){
-		if(current_density_array[0] < density_array[0]){
-			float tmp<-length(people where each.fromTheGrid) * (density_array[0]/current_density_array[0] -1);
-			do generateSquarePop(tmp,"L");			
-		}
-		if(current_density_array[0] > density_array[0]){
-			float tmp<-length(people where (each.fromTheGrid))*(1-density_array[0]/current_density_array[0]);
-			ask tmp  among (people where (each.fromTheGrid and each.scale="L")){
-				do die;
-			}
-		}
-		if(current_density_array[1] < density_array[1]){
-			float tmp<-length(people where each.fromTheGrid) * (density_array[1]/current_density_array[1] -1);
-			do generateSquarePop(tmp,"M");	
-		}
-		if(current_density_array[1] > density_array[1]){
-			float tmp<-length(people where (each.fromTheGrid))*(1-density_array[1]/current_density_array[1]);
-			ask tmp  among (people where (each.fromTheGrid and each.scale="M")){
-				do die;
-			}
-		}
-		if(current_density_array[2] < density_array[2]){
-			float tmp<-length(people where each.fromTheGrid) * (density_array[2]/current_density_array[2] -1);
-			do generateSquarePop(tmp,"S");
-		}
-		if(current_density_array[2] > density_array[2]){
-			float tmp<-length(people where (each.fromTheGrid))*(1-density_array[2]/current_density_array[2]);
-			ask tmp  among (people where (each.fromTheGrid and each.scale="S")){
-				do die;
-			}
-		}
+			loop i from: 0 to: 2{
+				if(current_density_array[i] < density_array[i]){
+				  float tmp<-length(people where each.fromTheGrid) * (density_array[i]/current_density_array[i] -1);
+				  do generateSquarePop(tmp,"L");			
+			    }
+			    if(current_density_array[i] > density_array[i]){
+				  float tmp<-length(people where (each.fromTheGrid))*(1-density_array[i]/current_density_array[i]);
+				  ask tmp  among (people where (each.fromTheGrid and each.scale = (i=0) ? "L" : ((i=1) ? "M" :"S"))){
+					do die;
+				  } 
+			    }
+			}	
 		}
         current_density_array<-density_array;		
 	}
-	
-
 		
 	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix=true){		
 		do initGrid;
@@ -218,11 +192,11 @@ global {
 				scale <- _scale;	
 				speed <- min_speed + rnd (max_speed - min_speed) ;
 				initialSpeed <-speed;
-				time_to_work <- min_work_start + rnd (max_work_start - min_work_start) ;
-				time_to_lunch <- min_lunch_start + rnd (max_lunch_start - min_lunch_start) ;
-				time_to_rework <- min_rework_start + rnd (max_rework_start - min_rework_start) ;
-				time_to_dinner <- min_dinner_start + rnd (max_dinner_start - min_dinner_start) ;
-				time_to_sleep <- min_work_end + rnd (max_work_end - min_work_end) ;
+				time_to_work <- dailyHour[0] + rnd (dailyHour[1] - dailyHour[0]) ;
+				time_to_lunch <- dailyHour[2] + rnd (dailyHour[3] - dailyHour[2]) ;
+				time_to_rework <- dailyHour[4] + rnd (dailyHour[5] - dailyHour[4]) ;
+				time_to_dinner <- dailyHour[6] + rnd (dailyHour[7] - dailyHour[6]) ;
+				time_to_sleep <- dailyHour[8] + rnd (dailyHour[9] - dailyHour[8]) ;
 				working_place <- one_of(building  where (each.usage="O" and each.scale=scale)) ;
 				eating_place <- one_of(amenity where (each.scale=scale )) ;
 				dining_place <- one_of(amenity where (each.scale=scale )) ;
@@ -247,11 +221,11 @@ species building schedules: []{
 		scale <- bd.scale;	
 		speed <- min_speed + rnd (max_speed - min_speed) ;
 		initialSpeed <-speed;
-		time_to_work <- min_work_start + rnd (max_work_start - min_work_start) ;
-		time_to_lunch <- min_lunch_start + rnd (max_lunch_start - min_lunch_start) ;
-		time_to_rework <- min_rework_start + rnd (max_rework_start - min_rework_start) ;
-		time_to_dinner <- min_dinner_start + rnd (max_dinner_start - min_dinner_start) ;
-		time_to_sleep <- min_work_end + rnd (max_work_end - min_work_end) ;
+		time_to_work <- dailyHour[0] + rnd (dailyHour[1] - dailyHour[0]) ;
+		time_to_lunch <- dailyHour[2] + rnd (dailyHour[3] - dailyHour[2]) ;
+		time_to_rework <- dailyHour[4] + rnd (dailyHour[5] - dailyHour[4]) ;
+		time_to_dinner <- dailyHour[6] + rnd (dailyHour[7] - dailyHour[6]) ;
+		time_to_sleep <- dailyHour[8] + rnd (dailyHour[9] - dailyHour[8]) ;
 		working_place <- one_of(building  where (each.usage="O" and each.scale=scale)) ;
 		eating_place <- one_of(amenity where (each.scale=scale )) ;
 		dining_place <- one_of(amenity where (each.scale=scale )) ;
@@ -317,7 +291,6 @@ species people skills:[moving]{
 	point the_target <- nil ;
 	int degree;
 	float radius;
-	bool moveOnRoad<-true;
 	bool fromTheGrid<-false;
 	bool drawTrajectory<-false;
 	
@@ -360,19 +333,16 @@ species people skills:[moving]{
 	} 
 	 
 	reflex move {
-	    if(moveOnRoad = true and the_target !=nil){
-	      do goto target: the_target on: road_graph  ; 
-	    }else{
-	      do goto target: the_target;
-	    }
-		
-		if (the_target = location) {
+		  if(the_target !=nil){
+	        do goto target: the_target on: road_graph  ; 
+	      }
+		  if (the_target = location) {
 			the_target <- nil ;
 			curMovingMode <- "wandering";
-		}
-		if(curMovingMode = "wandering"){
+		  }
+		  if(curMovingMode = "wandering"){
 			do wander speed:(0.1) #km / #h;
-		}
+		  }	
 	}
 	
 	user_command "Show trajectory" action:showTrajectory;
