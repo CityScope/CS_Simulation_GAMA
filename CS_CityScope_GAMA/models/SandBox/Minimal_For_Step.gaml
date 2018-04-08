@@ -11,8 +11,8 @@ global {
 	float worldHeight<-1#km;
 	geometry shape<-rectangle(worldWidth,worldHeight);
 	float blockSize<-125#m;
-	int nbCols<-8; 
-	int nbRows<-8;
+	int nbCols<-20; 
+	int nbRows<-20;
 	list<string> usages<-["R","O"];
 	list<string> scales<-["S","M","L"];
 	bool saveGIS<-false;
@@ -36,13 +36,11 @@ global {
 			    location <- {blockSize*i+blockSize/2,blockSize*j+blockSize/2};
 			    usage<- usages[rnd(1)];
 			    scale<- scales[rnd(2)];
-			    create amenities{
-			    	 shape<-square(size);
-			    	 location <- myself.location;
-			    	 usage<-"A";
-			    	 scale<-myself.usage;
-			    	 myBuilding<-myself;
-			    }
+			    create TAZ number:1{
+        	  		  nbProducedTrip<-rnd(10);
+	      		  nbAttractedTrip<-rnd(5);
+        	  		  location<-myself.location;
+                }
               }
 			}
         }  
@@ -57,26 +55,21 @@ global {
 				shape<-line([{0,blockSize*j},{blockSize*nbCols,blockSize*j}]);
 			}
         }
-        road_graph <- as_edge_graph(road);
+        list<geometry> geoms <- split_lines(road);
+		create road from:geoms;
+		road_graph <- as_edge_graph(geoms);
         
-        create people number:1000{
-        	  location<-one_of(amenities);
+        ask TAZ{
+        	 loop i from:0 to:nbProducedTrip{
+        	 	point tg<-one_of(TAZ).location;
+        	 	trips<+ tg::path_between(road_graph,self.location, tg);
+        	 }
         }
 	}
 
 }
 
-species macroBlock skills:[moving]{
-	point size;
-	list<building> buildings;
-	reflex move{
-	 	do wander;	
-	}
 
-	aspect default{
-		draw rectangle(size.x,size.y) color:#white border:#gray;
-	}
-}
   
 species building skills:[moving]{
 	string type;
@@ -99,29 +92,51 @@ species road {
 	}
 }
 
-species amenities {
-	string type;
-	float size<-blockSize*0.1;
-	string usage;
-	string scale;
-	building myBuilding;
-	aspect default {
-		draw shape color:#white;
-	}
-}
+
 species people skills:[moving]{
-	list<point> targets;
-	point myTarget<-one_of(amenities);
-	
-	reflex move{
-			do goto (target:myTarget,recompute_path: false);
+	list<point> targets;		
+}
+
+species TAZ skills:[moving]{
+	int nbProducedTrip;
+	int nbAttractedTrip;
+	int nbResidential;
+	int nbOffice;
+	map<point,path> trips;
+	bool drawTrip<-false;
+	bool drawPath<-false;
+    user_command "showTrip" action:showTrip;
+	action showTrip{
+		ask TAZ{
+			drawTrip<-false;
+		}
+		self.drawTrip<-true;
 	}
+	user_command "showPath" action:showPath;
+	action showPath{
+		ask TAZ{
+			drawPath<-false;
+		}
+		self.drawPath<-true;
+	}
+
 	aspect base{
-		draw circle(3#m) color:#gamaorange;
-	}
-	
-	aspect trajectory{
-		draw curve(location,myTarget.location,0.1,true,100) color:#gamablue width:2;
+		draw circle(10#m) color:#orange;
+		//draw " " + nbProducedTrip +"/"+ nbAttractedTrip font: font("Helvetica", 12 + #zoom, #bold) color: #red at: location  perspective:false;
+		if(drawTrip){
+			loop i from:0 to:nbProducedTrip{
+			draw circle(10#m) color:#orange;
+			draw line([location,trips.keys[i]]) color:#gamablue width:2 end_arrow:10;
+		}
+		}
+		if(drawPath){
+			loop i from:0 to:nbProducedTrip{
+		    rgb color<-rnd_color(255);
+			loop seg over: trips.values[i].edges {
+	  		  draw seg color:color  width:3;
+	 	    }
+		}
+		}
 	}
 }
 
@@ -136,19 +151,14 @@ species table_bounds{
 		draw shape color:#black;
 	}
 }
-//grid cell width: 8 height: 8;
+
 
 experiment main type: gui {
 	output {
 		display map type:opengl background:#white{
-			//species bounds;
-			//grid cell lines: #black;
-			species macroBlock;
-			species building position:{0,0,0};
+			//species building position:{0,0,0};
 			species road;
-			species amenities;
-		    species people aspect:trajectory;
-			species people aspect:base;
+			species TAZ aspect:base;
 		}
 	}
 }
