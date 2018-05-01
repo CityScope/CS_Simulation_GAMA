@@ -7,6 +7,8 @@
 
 model gamit
 
+import "./../SandBox/data_viz/pie_charts.gaml"
+
 global {
 	
 	//PARAMETERS
@@ -17,8 +19,10 @@ global {
 	//ENVIRONMENT
 	float step <- 1 #mn;
 	date starting_date <- date([2017,9,25,0,0]);
-	string case_study <- "volpe" ;
+	string case_study <- "Volpe" ;
 	int nb_people <- 500;
+	float unitFactor<-1.0;
+	
 
 	file<geometry> buildings_shapefile <- file<geometry>("../../includes/City/"+case_study+"/Buildings.shp");
 	file<geometry> roads_shapefile <- file<geometry>("../../includes/City/"+case_study+"/Roads.shp");
@@ -34,6 +38,8 @@ global {
 		
 	
 	map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];
+	//map<string,rgb> color_per_category <- [ "Restaurant"::hsb(0,1.0,1.0), "Night"::hsb(0,2.0,1.0),"GP"::hsb(0,4.0,1.0), "Cultural"::hsb(0,5.0,1.0), "Shopping"::hsb(0,6.0,1.0), "HS"::hsb(0,8.0,1.0), "Uni"::hsb(0,9.0,1.0), "O"::#white, "R"::#222222, "Park"::#24461F];
+	
 	map<string,rgb> color_per_type <- [ "High School Student"::#FFFFB2, "College student"::#FECC5C,"Young professional"::#FD8D3C,  "Mid-career workers"::#F03B20, "Executives"::#BD0026, "Home maker"::#0B5038, "Retirees"::#8CAB13];
 	
 	map<string,map<string,int>> activity_data;
@@ -82,7 +88,40 @@ global {
 			color <- color_per_type[type];
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 			do create_trip_objectives;
-		}				
+		}
+		
+		
+		create pie{
+			id <- "transport";
+			labels <- transport_type_cumulative_usage.keys;
+			labels_h_offset <- [diameter*10,diameter*8,diameter*5,diameter*6];
+			labels_v_offset <- diameter ;
+			values <- transport_type_cumulative_usage.values;
+			colors <- color_per_mobility.values;
+			location <-{world.shape.width*0.9,world.shape.height*0.75};
+			diameter <- world.shape.width*0.10;
+			inner_diameter <- diameter*0.8;
+			type <- "ring";
+			line_width <- unitFactor*diameter / 400;
+			font_size <- (unitFactor*diameter/10);
+			do calculate_pies;
+		}
+		
+		create pie{
+			id <- "people";
+			labels <- proportion_per_type.keys;
+			labels_h_offset <- [diameter*10,diameter*10,diameter*10,diameter*10,diameter*23,diameter*13,diameter*10];
+			labels_v_offset <- diameter ;
+			values <- proportion_per_type.values;
+			colors <- color_per_type.values;
+			location <-{world.shape.width*0.9,world.shape.height*0.95};
+			diameter <- world.shape.width*0.10;
+			inner_diameter <- diameter*0.8;
+			type <- "pie";
+			line_width <- unitFactor*diameter / 400;
+			font_size <- unitFactor*diameter/10;
+			do calculate_pies;
+		}			
 	}
 	
 	
@@ -201,9 +240,20 @@ global {
 			buildings_distribution[usage] <- buildings_distribution[usage]+1;
 		}
 	}
+	
+	reflex update_charts{
+	  ask pie {
+	    switch(self.id)
+		  {
+		    match "transport" {do update_values(transport_type_cumulative_usage.values);}
+			match "people" {do update_values(proportion_per_type.values);}
+			match "usage" {do update_values(buildings_distribution.values);}
+		  }
+		do calculate_pies;
+	  }
+	}
 		
-	reflex save_bug_attribute when: (cycle mod 100=0){
-		write "ok so here we can save maystuff such as:";
+	reflex save_bug_attribute when: (false){
 		write "transport_type_cumulative_usage" + transport_type_cumulative_usage;
 		save [transport_type_cumulative_usage.values[0] ,transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3]] rewrite:false to: "../results/mobility.csv" type:"csv";
 	}
@@ -543,6 +593,7 @@ experiment gameit type: gui {
 	output {
 		display map type: opengl draw_env: false background: #black refresh_every:10{
 			//species gridHeatmaps aspect:pollution;
+			species pie;
 			species building aspect:depth refresh: false;
 			species road ;		
 			species people aspect:base ;
