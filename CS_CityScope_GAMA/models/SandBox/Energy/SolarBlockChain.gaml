@@ -43,6 +43,7 @@ global{
 	
 	init{
 		
+		create table from: table_bound_shapefile; 
 		create building from: buildings_shapefile with: 
 		[usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category")), nbFloors::1+float(read ("Floors"))]{
 
@@ -79,6 +80,14 @@ global{
 			}
 		}
 	}	
+}
+
+
+
+species table{
+	aspect base{
+		draw shape color:#black empty:true;
+	}
 }
 
 species building {
@@ -215,6 +224,7 @@ experiment start type: gui {
 			species building aspect:diff;
 		}*/	
 		display sharing type:opengl{
+			species table aspect:base;
 			species building aspect:status;
 			species building aspect:sales_network transparency: 0.5;
 		}
