@@ -95,7 +95,7 @@ global {
 			id <- "transport";
 			labels <- transport_type_cumulative_usage.keys;
 			labels_h_offset <- [diameter*10,diameter*8,diameter*5,diameter*6];
-			labels_v_offset <- diameter ;
+			labels_v_offset <- diameter / 3 ;
 			values <- transport_type_cumulative_usage.values;
 			colors <- color_per_mobility.values;
 			location <-{world.shape.width*0.9,world.shape.height*0.75};
@@ -110,8 +110,8 @@ global {
 		create pie{
 			id <- "people";
 			labels <- proportion_per_type.keys;
-			labels_h_offset <- [diameter*10,diameter*10,diameter*10,diameter*10,diameter*23,diameter*13,diameter*10];
-			labels_v_offset <- diameter ;
+			labels_h_offset <- [diameter*10,diameter*10,diameter*10,diameter*10,diameter*8.5,diameter*5,diameter*4];
+			labels_v_offset <-  diameter / 3;
 			values <- proportion_per_type.values;
 			colors <- color_per_type.values;
 			location <-{world.shape.width*0.9,world.shape.height*0.95};

@@ -9,8 +9,8 @@ model pie_charts
 
 /* Insert your model definition here */
 
-/* 
-global{
+
+/*global{
 	list<rgb> color_list <- [rgb(3,169,244),rgb(255,235,59),rgb(255,152,0),rgb(255,87,34)];
 	list<float> valeurs <- [4,7,22];
 	
@@ -23,7 +23,7 @@ global{
 			location <-{50,50};
 			diameter <- 50;
 			inner_diameter <- 40;
-			font_size <- round(diameter/30);
+			font_size <- 30;// round(diameter/30);
 			type <- "ring";
 		}
 	}
@@ -39,7 +39,7 @@ global{
 		
 	}	
 		
-}*/
+} */
 	
 	species pie{
 		/* general parameters that must be set by the user */
@@ -90,7 +90,7 @@ global{
 				pies <- list_with(nb_pies, []);
 				pies[0] <- calculate_slice(0,nb_points);
 				label_lines <- list_with(nb_pies, [location + {diameter/2,0},location + {diameter/1.3,0}]);
-				label_locations <- list_with(nb_pies,location + {diameter/1.3,0});	
+				label_locations <- list_with(nb_pies,location + {diameter/1.3,labels_v_offset});	
 			}else{ // in the general case
 				list<float> cum_sum <- [0.0];
 				loop i from: 0 to: nb_pies-1{
@@ -108,6 +108,7 @@ global{
 		}	
 		
 
+
 		aspect default{
 			loop i from:0 to: length(values)-1{ 
 				draw polygon(pies[i]) color: colors[i] ;
@@ -122,7 +123,7 @@ global{
 
 
 
-/* 
+/*
 experiment "Pie Charts" type: gui{
 	
 	output {
@@ -131,4 +132,6 @@ experiment "Pie Charts" type: gui{
 		}		
 	
 	}
-}*/
+}
+
+*/
