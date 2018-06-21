@@ -75,7 +75,8 @@ species pev skills: [moving]{
 	}
 	
 	aspect body {
-		draw triangle(10) rotate:90 + heading color: #black;
+		//draw triangle(10) rotate:90 + heading color: #black;
+		draw obj_file("./MIT/pev.obj",-90::{1,0,0})  color:#gray size:10 rotate:heading;
 	}
 	aspect perception {
 		if (perceived_area != nil) {
