@@ -29,7 +29,7 @@ global {
 	
 	//INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
-	bool cityMatrix <-false;
+	bool cityMatrix <-true;
 	bool onlineGrid <-true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <-true;
 	
@@ -143,7 +143,7 @@ global {
 				  scale <- citymatrix_map_settings[id][1];
 				  usage<-citymatrix_map_settings[id][0];
 				  color<-color_map[scale];
-				  if(id!=-1 and id!=-2 and id!=7){
+				  if(id!=-1 and id!=-2 and id!=7 and id!=6){			  	
 				  	density<-density_array[id];
 				  }
               }	        
@@ -464,7 +464,7 @@ experiment CityScopeMain type: gui {
                draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
             }
             graphics "density"{
-            	    if(length(density_array)>0){
+            	   if(length(density_array)>0){
 		            	    	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
 		             	int barW<-20;
 		             	int factor<-10;
