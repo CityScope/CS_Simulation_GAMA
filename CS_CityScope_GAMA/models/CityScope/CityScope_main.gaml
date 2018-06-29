@@ -29,7 +29,7 @@ global {
 	
 	//INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
-	bool cityMatrix <-false;
+	bool cityMatrix <-true;
 	bool onlineGrid <-true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <-true;
 	float coeffPop<-0.1;
@@ -47,7 +47,7 @@ global {
 	list density_map<- [89,55,15,30,18,5]; //Use for Volpe Site (Could be change for each city)
 	
 	float step <- 10 #sec;
-	int current_hour update: (time / #hour) mod 24  ;
+	int current_hour update: 6 + (time / #hour) mod 24  ;
 	int current_day<-0;
 	list dailyHour<-[4,10,11,13,14,16,18,20,21,22];
 	float min_speed <- 4 #km / #h;
@@ -62,7 +62,10 @@ global {
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),nbFloors::1+float(read ("Floors"))]{
 			area <-shape.area;
 			perimeter<-shape.perimeter;
-			depth<-50+rnd(50);
+			depth<-10+rnd(30);
+		}
+		create pev number:50{
+			destination<-one_of(building).location;
 		}
 		create road from: roads_shapefile ;
 		road_graph <- as_edge_graph(road);
@@ -272,6 +275,19 @@ species road  schedules: []{
 	}
 }
 
+
+species pev skills:[moving]{
+	point destination;
+	reflex move{
+		//do goto target:destination on:road_graph;
+		do wander on:road_graph;
+	}
+	aspect base{
+		draw obj_file("./../../includes/pev.obj",-90::{1,0,0})  color:#gray size:10 rotate:heading;
+	}
+	
+}
+
 species people skills:[moving]{
 	rgb color <- #yellow ; 
 	float initialSpeed;
@@ -367,9 +383,25 @@ species people skills:[moving]{
 	aspect scaleTable{
 		if(toggle1 >4)
 		{
-		  draw circle(4#m) color: color_map[scale];	
+		  if (flip(0.9)){
+		  	draw circle(4#m) color: color_map[scale];
+		  }else{
+		  	draw obj_file("./../../includes/pev.obj",-90::{1,0,0})  color:#gray size:10 rotate:heading;
+		  }	
+		  
 		}
       
+	}
+	
+	aspect real{
+		
+		if(scale = "S" and curMovingMode = "travelling"){
+		  draw obj_file("./../../includes/pev.obj",-90::{1,0,0})  color:#gray size:2 rotate:heading;
+		}
+		else{
+		  draw circle(1#m) color: color_map[scale];	
+		}
+		
 	}
 	
 	aspect trajectory
@@ -442,6 +474,41 @@ species table{
 }
 
 
+experiment CityScopeMainwithPEV type: gui{
+	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];	
+	output{
+		display CityScope  type:opengl background:#black toolbar:false{
+			species table aspect:base refresh:false;
+			species building aspect:base position:{0,0,-0.0015};	
+			species road aspect: base refresh:false;
+			species people aspect:real;
+			species pev aspect:base;
+	    }
+	    /*display FirstPerson  type:opengl background:#black camera_interaction:false camera_pos:{int(first(pev).location.x),int(first(pev).location.y),10} 
+			camera_look_pos:{cos(first(pev).heading)*first(pev).speed+int(first(pev).location.x),
+			sin(first(pev).heading)*first(pev).speed+int(first(pev).location.y),10} {
+			species table aspect:base refresh:false;
+			species building aspect:realistic position:{0,0,-0.0015};	
+			species road aspect: base refresh:false;
+			species people aspect:real;
+			species pev aspect:base;
+				
+		}
+		
+		display ThirdPersonn  type:opengl background:#black camera_interaction:false camera_pos:{int(first(pev).location.x),int(first(pev).location.y),250} 
+		camera_look_pos:{int(first(pev).location.x),(first(pev).location.y),0} camera_up_vector:{0.0,-1.0,0.0} {
+			species table aspect:base refresh:false;
+			species building aspect:realistic position:{0,0,-0.0015};	
+			species road aspect: base refresh:false;
+			species people aspect:real;
+			species pev aspect:base;
+		}*/
+		
+	}
+	
+}
+
+
 experiment CityScopeMainVirtual type: gui {
 	parameter 'CityScope:' var: cityScopeCity category: 'GIS' <-"volpe" among:["volpe", "andorra","San_Francisco","Taipei_MainStation","Shanghai"];
 	
@@ -450,7 +517,7 @@ experiment CityScopeMainVirtual type: gui {
 			species table aspect:base refresh:false;
 			species building aspect:base position:{0,0,-0.0015};	
 			species road aspect: base refresh:false;
-			species people aspect:scale;
+			species people aspect:scaleTable;
 			species people aspect:trajectory;
 			species amenity aspect: onScreen ;
 			

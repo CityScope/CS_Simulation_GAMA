@@ -17,7 +17,7 @@ global {
 	//precision used for the masked_by operator (default value: 120): the higher the most accurate the perception will be, but it will require more computation
 	int precision <- 120 parameter: true;
 	
-	int nb_pev <- 10 parameter: true;
+	int nb_pev <- 20 parameter: true;
 	geometry shape <- envelope(obstacle_shapefile);
 	
 	//space where the agent can move.
@@ -89,10 +89,28 @@ species pev skills: [moving]{
 experiment fieldofvision type: gui {
 	float minimum_cycle_duration <- 0.05;
 	output {
-		display view type:opengl{
+		display view type:opengl background:#black{
 			species obstacle;
-			species pev aspect: perception transparency: 0.5;
+			//species pev aspect: perception transparency: 0.5;
 			species pev aspect: body;
 		}
+		
+		display FirstPerson  type:opengl camera_interaction:false camera_pos:{int(first(pev).location.x),int(first(pev).location.y),10} 
+			camera_look_pos:{cos(first(pev).heading)*first(pev).speed+int(first(pev).location.x),
+			sin(first(pev).heading)*first(pev).speed+int(first(pev).location.y),10} {
+			species obstacle;
+			//species pev aspect: perception transparency: 0.5;
+			species pev aspect: body;
+				
+		}
+		
+		display ThirdPersonn  type:opengl camera_interaction:false camera_pos:{int(first(pev).location.x),int(first(pev).location.y),250} 
+		camera_look_pos:{int(first(pev).location.x),(first(pev).location.y),0} camera_up_vector:{0.0,-1.0,0.0} {
+			species obstacle;
+			//species pev aspect: perception transparency: 0.5;
+			species pev aspect: body;	
+		}
+		
+		
 	}
 }

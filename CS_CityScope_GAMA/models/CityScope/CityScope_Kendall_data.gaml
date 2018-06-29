@@ -135,7 +135,7 @@ experiment CityScopeDev type: gui {
 		display CityScope  type:opengl background:whiteBackground ? #black : #white {
 			species road aspect: base;
 			species mobileData aspect:circle;
-			/*graphics "interaction_graph" {
+			graphics "interaction_graph" {
 				if (interaction_graph != nil  and (drawInteraction = true) ) {	
 					loop eg over: interaction_graph.edges {
                         mobileData src <- interaction_graph source_of eg;
@@ -144,10 +144,10 @@ experiment CityScopeDev type: gui {
 						draw line(edge_geom.points)  color:#gray;//(src.color = target.color) ? color_map[src.scale] : #green;
 					}
 				} 	
-		    }*/
+		    }
 		}
 		
-		/*display CityScopeDuration  type:opengl background:whiteBackground ? #black : #white {
+		display CityScopeDuration  type:opengl background:whiteBackground ? #black : #white {
 			species road aspect: base refresh:false;
 			species mobileData aspect:duration;	
 		}
@@ -174,7 +174,7 @@ experiment CityScopeDev type: gui {
 		display CityScopeKMeans  type:opengl background:whiteBackground ? #black : #white {
 			species road aspect: base refresh:false;
 			species mobileData aspect:kmeans_aspect;	
-		}*/
+		}
 	}
 }
 
