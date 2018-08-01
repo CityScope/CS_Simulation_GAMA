@@ -2,6 +2,8 @@
 
 Agent Based Model running on the CityScope Volpe table using the GAMA Platform. 
 
+*Alonso, Luis, et al. "Cityscope: a data-driven interactive simulation tool for urban design. Use case volpe." International Conference on Complex Systems. Springer, Cham, 2018.*
+
 <div style="text-align:center"><img src ="https://github.com/CityScope/CS_CityScope_GAMA/wiki/resources/images/CityScope_Volpe_Table.png" width="1000"/></div>
 
 # [Game IT](https://github.com/mitmedialab/CityScope_GAMA/wiki/Game-IT)
