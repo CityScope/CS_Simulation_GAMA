@@ -560,37 +560,37 @@ experiment gameit type: gui {
             {
                 rgb text_color<-#white;
                 float y <- 30#px;
-  				draw "Building Usage" at: { 40#px, y } color: text_color font: font("Helvetica", 20#px, #bold);
+  				draw "Building Usage" at: { 40#px, y } color: text_color font: font("Helvetica", 20#px, #bold) bitmap:false;
                 y <- y + 30 #px;
                 loop type over: color_per_category.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_category[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18#px, #bold);
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18#px, #bold) bitmap:false;
                     y <- y + 25#px;
                 }
                  y <- y + 30 #px;     
-                draw "People Type" at: { 40#px, y } color: text_color font: font("Helvetica", 20#px, #bold);
+                draw "People Type" at: { 40#px, y } color: text_color font: font("Helvetica", 20#px, #bold) bitmap:false;
                 y <- y + 30 #px;
                 loop type over: color_per_type.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_type[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18#px, #bold);
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18#px, #bold) bitmap:false;
                     y <- y + 25#px;
                 }
 				 y <- y + 30 #px;
-                draw "Mobility Mode" at: { 40#px, y } color: text_color font: font("Helvetica", 20#px, #bold);
+                draw "Mobility Mode" at: { 40#px, y } color: text_color font: font("Helvetica", 20#px, #bold) bitmap:false;
                 y <- y + 30 #px;
                 draw circle(10#px) at: { 20#px, y } color:#green border: #black;
-                draw "Walking" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 16#px, #bold);
+                draw "Walking" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 16#px, #bold) bitmap:false;
                 y <- y + 25#px;
                 draw triangle(15#px) at: { 20#px, y } color:#yellow  border: #black;
-                draw "Bike" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18#px, #bold);
+                draw "Bike" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18#px, #bold) bitmap:false;
                 y <- y + 25#px;
                 draw square(20#px) at: { 20#px, y } color:#red border: #black;
-                draw "Car" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18#px, #bold);   
+                draw "Car" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18#px, #bold) bitmap:false;   
                 y <- y + 25#px;
                 draw square(20#px) at: { 20#px, y } color:#blue border: #blue;
-                draw "Bus" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18#px, #bold);     
+                draw "Bus" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18#px, #bold) bitmap:false;     
             }
             
             chart "Cumulative Trip" background:#black type: pie style:ring size: {0.5,0.5} position: {world.shape.width*1.1,world.shape.height*0} color: #white axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
