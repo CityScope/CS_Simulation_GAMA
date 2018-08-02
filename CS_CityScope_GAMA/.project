@@ -15,4 +15,11 @@
 		<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
 		<nature>msi.gama.application.gamaNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>external/virtual_table</name>
+			<type>1</type>
+			<location>/Users/Arno/Projects/Gama/MIT/Gama1.8_August_2018_Doc/.cache/cityio.media.mit.edu+_++_+api+_+table+_+virtual_table</location>
+		</link>
+	</linkedResources>
 </projectDescription>
