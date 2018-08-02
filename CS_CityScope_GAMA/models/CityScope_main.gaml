@@ -29,7 +29,7 @@ global {
 	
 	//INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
-	bool cityMatrix <-true;
+	bool cityMatrix <-false;
 	bool onlineGrid <-true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <-true;
 	
@@ -450,7 +450,7 @@ species table{
 
 experiment CityScopeMain type: gui {	
 	output {	
-		display CityScopeVolpe  type:opengl background:#black draw_env:true {
+		display CityScopeVolpe  type:opengl background:#black draw_env:false {
 			species table aspect:base refresh:false;
 			species building aspect:base position:{0,0,-0.0015};	
 			species road aspect: base refresh:false;
@@ -458,7 +458,7 @@ experiment CityScopeMain type: gui {
 			species people aspect:trajectory trace:true;
 			species amenity aspect: onScreen ;
 			
-		    graphics "text" 
+		    /*graphics "text" 
 			{
                draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
                draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
@@ -482,7 +482,7 @@ experiment CityScopeMain type: gui {
 						draw line(edge_geom.points)  color:(src.scale = target.scale) ? color_map[src.scale] : #green;
 					}
 				} 	
-			}
+			}*/
 		}			
 	}
 }
