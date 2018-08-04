@@ -29,7 +29,7 @@ global {
 	
 	//INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
-	bool cityMatrix <-false;
+	bool cityMatrix <-true;
 	bool onlineGrid <-true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <-true;
 	
@@ -448,17 +448,17 @@ species table{
 }
 
 
-experiment CityScopeMain type: gui {	
+experiment CityScopeMain type: gui virtual:true{	
 	output {	
-		display CityScopeVolpe  type:opengl background:#black draw_env:false {
+		display CityScope  type:opengl background:#black draw_env:false virtual:true{
 			species table aspect:base refresh:false;
 			species building aspect:base position:{0,0,-0.0015};	
 			species road aspect: base refresh:false;
 			species people aspect:scale;
 			species people aspect:trajectory trace:true;
 			species amenity aspect: onScreen ;
-			
-		    /*graphics "text" 
+		
+		    graphics "text" 
 			{
                draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
                draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
@@ -482,8 +482,33 @@ experiment CityScopeMain type: gui {
 						draw line(edge_geom.points)  color:(src.scale = target.scale) ? color_map[src.scale] : #green;
 					}
 				} 	
-			}*/
+			}
 		}			
+	}
+}
+
+experiment CityScopeVolpeDemo type: gui parent:CityScopeMain{
+    float minimum_cycle_duration <- 0.02;
+	output {		
+		
+        display CityScope1 type:opengl parent:CityScope{}	
+        	
+		display CityScopeTable   type:opengl background:#black fullscreen:1 rotate:180 synchronized:true{
+		//camera_pos: {4414.559,3164.843,4508.27} camera_look_pos: {4415.792,3157.071,-0.06} camera_up_vector: {0.157,0.988,0.002}{	
+			species amenity aspect: onTable;
+			species people aspect: scale;
+			graphics "interaction_graph" {
+				if (interaction_graph != nil  and ( toggle1=7) ) {	
+					loop eg over: interaction_graph.edges {
+                        people src <- interaction_graph source_of eg;
+                        people target <- interaction_graph target_of eg;
+						geometry edge_geom <- geometry(eg);
+						draw line(edge_geom.points)  color:rgb(0,125,0,75);
+					}
+				} 
+				draw rectangle(900,700) rotated_by 9.74 color:#black	 at: {2500, 2000,10} ;	
+			}	
+		}
 	}
 }
 
