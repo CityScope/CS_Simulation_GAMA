@@ -29,7 +29,7 @@ global {
 	
 	//INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
-	bool cityMatrix <-true;
+	bool cityMatrix <-false;
 	bool onlineGrid <-true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <-true;
 	
@@ -372,13 +372,19 @@ species people skills:[moving]{
 	aspect scale{
 	if(toggle1 !=1){
       if(!fromTheGrid){	
-		  draw circle(4#m) color: color_map[scale];
+		  draw circle(2#m) color: color_map[scale];
+		  if(toggle1=9 and curMovingMode = "travelling" and scale="S"){
+		  	/*if (showPEV){
+		      draw obj_file("../includes/"+cityScopeCity+"/pev.obj",-90::{1,0,0}) color:#gamablue size:100 rotate:heading;
+		  	}*/
+		  }
 		   
 	  }else{
-		  draw square(8#m) color: color_map[scale];  
+		  draw square(2#m) color: color_map[scale];  
 	  }
 	 } 
 	}
+	
 	
 	aspect scaleTable{
 		if(toggle1 >4)
@@ -450,12 +456,11 @@ species table{
 
 experiment CityScopeMain type: gui virtual:true{	
 	output {	
-		display CityScope  type:opengl background:#black draw_env:false virtual:true{
+		display CityScopeVirtual  type:opengl background:#black draw_env:false virtual:true{
 			species table aspect:base refresh:false;
 			species building aspect:base position:{0,0,-0.0015};	
 			species road aspect: base refresh:false;
-			species people aspect:scale;
-			species people aspect:trajectory trace:true;
+			species people aspect:scale;			
 			species amenity aspect: onScreen ;
 		
 		    graphics "text" 
@@ -491,10 +496,12 @@ experiment CityScopeVolpeDemo type: gui parent:CityScopeMain{
     float minimum_cycle_duration <- 0.02;
 	output {		
 		
-        display CityScope1 type:opengl parent:CityScope{}	
+        display CityScope type:opengl parent:CityScopeVirtual toolbar:false{}	
         	
-		display CityScopeTable   type:opengl background:#black fullscreen:1 rotate:180 synchronized:true{
-		//camera_pos: {4414.559,3164.843,4508.27} camera_look_pos: {4415.792,3157.071,-0.06} camera_up_vector: {0.157,0.988,0.002}{	
+		display CityScopeTable   type:opengl background:#black fullscreen:1 toolbar:false rotate:180 synchronized:true
+		camera_pos: {1369.1261241323866,939.6915242287623,1345.1870238795268} camera_look_pos: {1369.1293916321506,939.6682747598774,-6.435029977022782E-4} camera_up_vector: {0.13917310095974558,0.9902680685878096,1.7453299527680555E-5}{
+			
+			
 			species amenity aspect: onTable;
 			species people aspect: scale;
 			graphics "interaction_graph" {
@@ -506,7 +513,7 @@ experiment CityScopeVolpeDemo type: gui parent:CityScopeMain{
 						draw line(edge_geom.points)  color:rgb(0,125,0,75);
 					}
 				} 
-				draw rectangle(900,700) rotated_by 9.74 color:#black	 at: {2500, 2000,10} ;	
+				draw rectangle(300,225) rotated_by 9.74 color:#black	 at: {725, 625,10} ;	
 			}	
 		}
 	}
