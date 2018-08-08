@@ -17,6 +17,9 @@ An open source, multi-level agent-based model simulating real life traffic flow 
 ## References
 *Grignard, Arnaud, et al. "The Impact of New Mobility Modes on a City: A Generic Approach Using ABM." International Conference on Complex Systems. Springer, Cham, 2018.*
 
+
+# [Custom](https://github.com/mitmedialab/CityScope_GAMA/wiki/Customization)
+
 ---
 
 Contacts: [Arnaud Grignard](https://github.com/agrignard)
