@@ -1,5 +1,5 @@
 /**
-* Name: CityScope Kendall
+* Name: CityScope Volpe
 * Author: Arnaud Grignard
 * Description: Agent-based model running on the CityScope Platform. 
 */
