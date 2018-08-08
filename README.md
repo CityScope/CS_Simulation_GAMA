@@ -1,3 +1,9 @@
+This the official repository for the Agent-Based Model developped with CityScope using [Gama Platform](https://gama-platform.github.io/).
+
+Let us know [here](https://github.com/CityScope/CS_Simulation_GAMA/issues)if you foudn a bug or if yoi have any request for improvement or new ideas.
+
+For more information about this project please refere to the [wiki](https://github.com/CityScope/CS_Simulation_GAMA/wiki)
+
 # [CityScope](https://github.com/mitmedialab/CityScope_GAMA/wiki/CityScope)
 
 Agent Based Model running on the CityScope Volpe table using the GAMA Platform. 
