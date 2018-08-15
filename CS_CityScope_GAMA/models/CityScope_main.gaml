@@ -26,6 +26,7 @@ global {
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Grid";
 	bool dynamicPop <-false parameter: "Dynamic Population:" category: "Population";
 	int refreshPop <- 100 min: 1 max:1000 parameter: "Pop Refresh rate (cycle):" category: "Population";
+	int traceTime <- 100 min:1 max:500 parameter: "Trace:" category: "Visualization";
 	
 	//INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
@@ -408,17 +409,20 @@ species people skills:[moving]{
 	aspect scaleTable{
 		if(toggle1 >4)
 		{
-		  draw circle(4#m) color: color_map[scale];	
+		  draw circle(2#m) color: color_map[scale];	
 		}
       
 	}
 	
 	aspect trajectory{
 		if(curMovingMode = "travelling"){
-			draw circle(4#m) color: color_map[scale];
+			draw circle(2#m) color: color_map[scale];
 		}
-		
 	}
+	aspect timespace{
+      draw circle(2#m) color: color_map[scale] at: {location.x ,location.y,location.z+cycle mod 50};	
+	}
+			
 }
 
 species amenity parent:building schedules:[]{
@@ -511,17 +515,8 @@ experiment CityScopeMain type: gui virtual:true{
 		display CityScopeVirtualExperimental  type:opengl background:#black draw_env:false virtual:true{
 			species table aspect:base refresh:false;	
 			species road aspect: base refresh:false;
-			//species people aspect:scale;
-			species people trace:50 fading:true{
-			    draw circle(2) rotate: 90 + heading color: color_map[scale] at: {location.x ,location.y,location.z+cycle mod 50};	
-			}			
+			species people aspect:timespace trace:traceTime fading:true;		
 			species amenity aspect: onScreen ;
-		
-		    graphics "text" 
-			{
-              // draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
-               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
-            }
             species building aspect:realistic position:{0,0,-0.0015} transparency:0.5;
 		}			
 	}
@@ -555,7 +550,7 @@ experiment CityScopeVolpeDemo type: gui parent:CityScopeMain{
 }
 
 experiment CityScopeVolpeDemoExpe type: gui parent:CityScopeMain{
-    //float minimum_cycle_duration <- 0.02;
+    float minimum_cycle_duration <- 0.02;
 	output {		
 		
         display CityScope type:opengl parent:CityScopeVirtualExperimental toolbar:false synchronized:true{}	
