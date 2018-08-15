@@ -23,13 +23,13 @@ global {
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Interaction";
 	int distance parameter: 'distance ' category: "Interaction" min: 1 max:200 <- 100;
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Grid";
-	bool dynamicGrid <-false parameter: "Update Grid:" category: "Grid";
+	bool dynamicGrid <-true parameter: "Update Grid:" category: "Grid";
 	bool dynamicPop <-false parameter: "Dynamic Population:" category: "Population";
 	int refreshPop <- 100 min: 1 max:1000 parameter: "Pop Refresh rate (cycle):" category: "Population";
 	
 	//INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
-	bool cityMatrix <-false;
+	bool cityMatrix <-true;
 	bool onlineGrid <-true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <-true;
 	
@@ -128,7 +128,12 @@ global {
   			do die;
   		}
 		if(onlineGrid = true){
-		  cityMatrixData <- json_file(cityIOUrl).contents;
+			try {
+			cityMatrixData <- json_file(cityIOUrl).contents;
+		} catch {
+			write #current_error + "Connection to Internet lost or cityIO is offline";
+		}
+		  
 		  if (length(list(cityMatrixData["grid"])) = nil){
 		  	cityMatrixData <- json_file("https://cityio.media.mit.edu/api/table/citymatrix_volpe").contents;
 		  }
@@ -162,7 +167,12 @@ global {
             do die;
           }
         }
-		cityMatrixData <- json_file(cityIOUrl).contents;
+        try{
+        	cityMatrixData <- json_file(cityIOUrl).contents;
+        } catch {
+			write #current_error + "Connection to Internet lost or cityIO is offline";
+		}
+		
 		density_array <- cityMatrixData["objects"]["density"];
 		
 		if(cycle>10 and dynamicPop =true){
