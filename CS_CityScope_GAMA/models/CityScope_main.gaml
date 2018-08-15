@@ -515,7 +515,14 @@ experiment CityScopeMain type: gui virtual:true{
 		display CityScopeVirtualExperimental  type:opengl background:#black draw_env:false virtual:true{
 			species table aspect:base refresh:false;	
 			species road aspect: base refresh:false;
+<<<<<<< HEAD
 			species people aspect:timespace trace:traceTime fading:true;		
+=======
+			//species people aspect:scale;
+			species people trace:100 fading:false{
+			    draw circle(2) rotate: 90 + heading color: color_map[scale] at: {location.x ,location.y,location.z+cycle mod 100};	
+			}			
+>>>>>>> origin/master
 			species amenity aspect: onScreen ;
             species building aspect:realistic position:{0,0,-0.0015} transparency:0.5;
 		}			
@@ -553,7 +560,7 @@ experiment CityScopeVolpeDemoExpe type: gui parent:CityScopeMain{
     float minimum_cycle_duration <- 0.02;
 	output {		
 		
-        display CityScope type:opengl parent:CityScopeVirtualExperimental toolbar:false synchronized:true{}	
+        display CityScope type:opengl parent:CityScopeVirtualExperimental toolbar:false{}	
         	
 		display CityScopeTable   type:opengl background:#black fullscreen:1 toolbar:false rotate:180 synchronized:true
 		camera_pos: {1369.1261241323866,939.6915242287623,1345.1870238795268} camera_look_pos: {1369.1293916321506,939.6682747598774,-6.435029977022782E-4} camera_up_vector: {0.13917310095974558,0.9902680685878096,1.7453299527680555E-5}{
