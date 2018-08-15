@@ -46,7 +46,7 @@ global {
 	list density_map<- [89,55,15,30,18,5]; //Use for Volpe Site (Could be change for each city)
 	
 	float step <- 10 #sec;
-	int current_hour update: (time / #hour) mod 24  ;
+	int current_hour update: 6+(time / #hour) mod 24  ;
 	int current_day<-0;
 	int min_work_start <-4 ;
 	int max_work_start <- 10;
@@ -489,7 +489,7 @@ experiment CityScopeMain type: gui virtual:true{
             }
             graphics "density"{
             	   if(length(density_array)>0){
-		            	    	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
+		            	point hpos<-{world.shape.width*0.85,world.shape.height*0.675};
 		             	int barW<-20;
 		             	int factor<-10;
 		             	loop i from: 0 to: length(density_array) -1{
@@ -507,6 +507,22 @@ experiment CityScopeMain type: gui virtual:true{
 					}
 				} 	
 			}
+		}
+		display CityScopeVirtualExperimental  type:opengl background:#black draw_env:false virtual:true{
+			species table aspect:base refresh:false;	
+			species road aspect: base refresh:false;
+			//species people aspect:scale;
+			species people trace:50 fading:true{
+			    draw circle(2) rotate: 90 + heading color: color_map[scale] at: {location.x ,location.y,location.z+cycle mod 50};	
+			}			
+			species amenity aspect: onScreen ;
+		
+		    graphics "text" 
+			{
+              // draw "day" +  string(current_day) + " - " + string(current_hour) + "h"  color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.8,world.shape.height*0.975};
+               draw imageRaster size:40#px at:{world.shape.width*0.95, world.shape.height*0.95};
+            }
+            species building aspect:realistic position:{0,0,-0.0015} transparency:0.5;
 		}			
 	}
 }
@@ -516,6 +532,33 @@ experiment CityScopeVolpeDemo type: gui parent:CityScopeMain{
 	output {		
 		
         display CityScope type:opengl parent:CityScopeVirtual toolbar:false{}	
+        	
+		display CityScopeTable   type:opengl background:#black fullscreen:1 toolbar:false rotate:180 synchronized:true
+		camera_pos: {1369.1261241323866,939.6915242287623,1345.1870238795268} camera_look_pos: {1369.1293916321506,939.6682747598774,-6.435029977022782E-4} camera_up_vector: {0.13917310095974558,0.9902680685878096,1.7453299527680555E-5}{
+			
+			
+			species amenity aspect: onTable;
+			species people aspect: scale;
+			graphics "interaction_graph" {
+				if (interaction_graph != nil  and ( toggle1=7) ) {	
+					loop eg over: interaction_graph.edges {
+                        people src <- interaction_graph source_of eg;
+                        people target <- interaction_graph target_of eg;
+						geometry edge_geom <- geometry(eg);
+						draw line(edge_geom.points)  color:rgb(0,125,0,75);
+					}
+				} 
+				draw rectangle(300,225) rotated_by 9.74 color:#black	 at: {725, 625,10} ;	
+			}	
+		}
+	}
+}
+
+experiment CityScopeVolpeDemoExpe type: gui parent:CityScopeMain{
+    //float minimum_cycle_duration <- 0.02;
+	output {		
+		
+        display CityScope type:opengl parent:CityScopeVirtualExperimental toolbar:false synchronized:true{}	
         	
 		display CityScopeTable   type:opengl background:#black fullscreen:1 toolbar:false rotate:180 synchronized:true
 		camera_pos: {1369.1261241323866,939.6915242287623,1345.1870238795268} camera_look_pos: {1369.1293916321506,939.6682747598774,-6.435029977022782E-4} camera_up_vector: {0.13917310095974558,0.9902680685878096,1.7453299527680555E-5}{
