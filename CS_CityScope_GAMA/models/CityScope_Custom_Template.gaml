@@ -30,7 +30,7 @@ species CustomSpecies skills:[moving]{
 	}
 }
 
-experiment customizedExperiment type:gui parent:CityScopeMain{
+experiment CustomizedExperiment type:gui parent:CityScopeMain{
 	output{
 		display CityScopeAndCustomSpecies type:opengl parent:CityScopeVirtual{
 			species CustomSpecies aspect:base;

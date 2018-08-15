@@ -64,8 +64,16 @@ global {
 	point center;
 	float brickSize;
 	string cityIOUrl;
+	
+	init{
+		do initModel();
+	}
+	action initModel{
+      do coreInit();
+      do customInit();
+    }
 		
-	init {
+	action coreInit {
 		create table from: table_bound_shapefile;
 		create building from: buildings_shapefile with: [usage::string(read ("Usage")),scale::string(read ("Scale")),nbFloors::1+float(read ("Floors"))]{
 			area <-shape.area;
@@ -93,8 +101,9 @@ global {
 	    }	
 	    write " width: " + world.shape.width + " height: " + world.shape.height;
 	}
+	action customInit{}
 	
-		action initPop{
+	action initPop{
 		  ask people {do die;}
 		  int nbPeopleToCreatePerBuilding;
 		  ask building where  (each.usage="R"){ 
