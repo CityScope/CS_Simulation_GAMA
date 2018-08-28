@@ -21,7 +21,7 @@ global {
 	
 	//ONLINE PARAMETERS
 	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Interaction";
-	int distance parameter: 'distance ' category: "Interaction" min: 1 max:200 <- 100;
+	int distance parameter: 'distance ' category: "Interaction" min: 1 max:100 <- 20;
 	int refresh <- 50 min: 1 max:1000 parameter: "Refresh rate (cycle):" category: "Grid";
 	bool dynamicGrid <-true parameter: "Update Grid:" category: "Grid";
 	bool dynamicPop <-false parameter: "Dynamic Population:" category: "Population";
@@ -40,6 +40,7 @@ global {
 	list<float> density_array;
 	list<float> current_density_array;
 	int toggle1;
+	int slider1;
 	map<int,list> citymatrix_map_settings<- [-1::["Green","Green"],0::["R","L"],1::["R","M"],2::["R","S"],3::["O","L"],4::["O","M"],5::["O","S"],6::["A","Road"],7::["A","Plaza"],8::["Pa","Park"],9::["P","Parking"]];	
 	map<string,rgb> color_map<- ["R"::#white, "O"::#gray,"S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#white, "Road"::#black,"Park"::#black,"Parking"::rgb(50,50,50)]; 
 	list scale_string<- ["S", "M", "L"];
@@ -109,7 +110,6 @@ global {
 		  int nbPeopleToCreatePerBuilding;
 		  ask building where  (each.usage="R"){ 
 		    nbPeopleToCreatePerBuilding <- int((self.scale="S") ? (area/density_map[2])*nbFloors: ((self.scale="M") ? (area/density_map[1])*nbFloors:(area/density_map[0])*nbFloors));
-		    //do createPop(10,self,false);	
 		    do createPop(nbPeopleToCreatePerBuilding/10,self,false);			
 		  }
 		  if(length(density_array)>0){
@@ -128,23 +128,16 @@ global {
   		ask amenity where (each.fromGrid=true){
   			do die;
   		}
-		if(onlineGrid = true){
-			try {
+		try {
 			cityMatrixData <- json_file(cityIOUrl).contents;
 		} catch {
-			write #current_error + "Connection to Internet lost or cityIO is offline";
+			cityMatrixData <- json_file("../includes/cityIO_Kendall.json").contents;
+			write #current_error + "Connection to Internet lost or cityIO is offline - CityMatrix is a local version from cityIO_Kendall.json";
 		}
-		  
-		  if (length(list(cityMatrixData["grid"])) = nil){
-		  	cityMatrixData <- json_file("https://cityio.media.mit.edu/api/table/citymatrix_volpe").contents;
-		  }
-	    }
-	    else{
-	      cityMatrixData <- json_file("../includes/cityIO_Kendall.json").contents;
-	    }	
 		cityMatrixCell <- cityMatrixData["grid"];
 		density_array <- cityMatrixData["objects"]["density"];
-		toggle1 <- int(cityMatrixData["objects"]["toggle1"]);	
+		toggle1 <- int(cityMatrixData["objects"]["toggle1"]);
+		slider1 <- int(cityMatrixData["objects"]["slider1"]);	
 		loop l over: cityMatrixCell { 
 		      create amenity {
 		      	  id <-int(l["type"]);
@@ -168,45 +161,41 @@ global {
             do die;
           }
         }
-        try{
-        	cityMatrixData <- json_file(cityIOUrl).contents;
-        } catch {
-			write #current_error + "Connection to Internet lost or cityIO is offline";
-		}
 		
 		density_array <- cityMatrixData["objects"]["density"];
 		
+		//UPDATE POP AT RUNTIME DEPENDING ON DENSITY VALUE
 		if(cycle>10 and dynamicPop =true){
-		if(current_density_array[0] < density_array[0]){
-			float tmp<-length(people where each.fromTheGrid) * (density_array[0]/current_density_array[0] -1);
-			do generateSquarePop(tmp,"L");			
-		}
-		if(current_density_array[0] > density_array[0]){
-			float tmp<-length(people where (each.fromTheGrid))*(1-density_array[0]/current_density_array[0]);
-			ask tmp  among (people where (each.fromTheGrid and each.scale="L")){
-				do die;
+			if(current_density_array[0] < density_array[0]){
+				float tmp<-length(people where each.fromTheGrid) * (density_array[0]/current_density_array[0] -1);
+				do generateSquarePop(tmp,"L");			
 			}
-		}
-		if(current_density_array[1] < density_array[1]){
-			float tmp<-length(people where each.fromTheGrid) * (density_array[1]/current_density_array[1] -1);
-			do generateSquarePop(tmp,"M");	
-		}
-		if(current_density_array[1] > density_array[1]){
-			float tmp<-length(people where (each.fromTheGrid))*(1-density_array[1]/current_density_array[1]);
-			ask tmp  among (people where (each.fromTheGrid and each.scale="M")){
-				do die;
+			if(current_density_array[0] > density_array[0]){
+				float tmp<-length(people where (each.fromTheGrid))*(1-density_array[0]/current_density_array[0]);
+				ask tmp  among (people where (each.fromTheGrid and each.scale="L")){
+					do die;
+				}
 			}
-		}
-		if(current_density_array[2] < density_array[2]){
-			float tmp<-length(people where each.fromTheGrid) * (density_array[2]/current_density_array[2] -1);
-			do generateSquarePop(tmp,"S");
-		}
-		if(current_density_array[2] > density_array[2]){
-			float tmp<-length(people where (each.fromTheGrid))*(1-density_array[2]/current_density_array[2]);
-			ask tmp  among (people where (each.fromTheGrid and each.scale="S")){
-				do die;
+			if(current_density_array[1] < density_array[1]){
+				float tmp<-length(people where each.fromTheGrid) * (density_array[1]/current_density_array[1] -1);
+				do generateSquarePop(tmp,"M");	
 			}
-		}
+			if(current_density_array[1] > density_array[1]){
+				float tmp<-length(people where (each.fromTheGrid))*(1-density_array[1]/current_density_array[1]);
+				ask tmp  among (people where (each.fromTheGrid and each.scale="M")){
+					do die;
+				}
+			}
+			if(current_density_array[2] < density_array[2]){
+				float tmp<-length(people where each.fromTheGrid) * (density_array[2]/current_density_array[2] -1);
+				do generateSquarePop(tmp,"S");
+			}
+			if(current_density_array[2] > density_array[2]){
+				float tmp<-length(people where (each.fromTheGrid))*(1-density_array[2]/current_density_array[2]);
+				ask tmp  among (people where (each.fromTheGrid and each.scale="S")){
+					do die;
+				}
+			}
 		}
         current_density_array<-density_array;		
 	}
@@ -217,8 +206,8 @@ global {
 		do initGrid;
 	}
 	
-	reflex updateGraph when:(drawInteraction = true){// or toggle1 = 7){
-		interaction_graph <- graph<people, people>(people as_distance_graph(distance));
+	reflex updateGraph when:(drawInteraction = true or toggle1 = 7){
+		interaction_graph <- graph<people, people>(people as_distance_graph(distance + distance *slider1));
 	}
 		
 	reflex initSim when: ((cycle mod 8640) = 0){
@@ -535,7 +524,7 @@ experiment CityScopeVolpeDemo type: gui parent:CityScopeMain{
 			species amenity aspect: onTable;
 			species people aspect: scale;
 			graphics "interaction_graph" {
-				if (interaction_graph != nil  and ( toggle1=7) ) {	
+				if (interaction_graph != nil  and ( drawInteraction = true or toggle1=7) ) {	
 					loop eg over: interaction_graph.edges {
                         people src <- interaction_graph source_of eg;
                         people target <- interaction_graph target_of eg;
