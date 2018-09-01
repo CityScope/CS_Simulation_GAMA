@@ -107,13 +107,13 @@ global {
 	}
 	
 	action modes_data_import {
-		matrix mode_matrix <- matrix(dataOnMobilityMode_file);
+		matrix mode_matrix <- matrix(modeCharacteristics_file);
 		loop i from: 0 to:  mode_matrix.rows - 1 {
 			string type <- mode_matrix[0,i];
 			if(type != "") {
-				color_per_mobility[type] <- rgb(mode_matrix[1,i]);
-				width_per_mobility[type] <- float(mode_matrix[2,i]);
-				speed_per_mobility[type] <- float(mode_matrix[3,i]);
+				color_per_mobility[type] <- rgb(mode_matrix[7,i]);
+				width_per_mobility[type] <- float(mode_matrix[8,i]);
+				speed_per_mobility[type] <- float(mode_matrix[9,i]);
 			}
 		}
 	}
