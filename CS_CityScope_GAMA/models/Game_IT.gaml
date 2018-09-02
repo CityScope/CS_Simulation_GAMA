@@ -10,16 +10,14 @@ model gamit
 global {
 	
 	//PARAMETERS
-	int timelapse <-0 min:0 max:1000 parameter: "TimeLapse Length:" category: "Visualization";
 	bool updatePollution <-false parameter: "Pollution:" category: "Simulation";
-	bool updateDensity <-false parameter: "DEnsity:" category: "Simulation";
+	bool updateDensity <-false parameter: "Density:" category: "Simulation";
 		
 	//ENVIRONMENT
 	float step <- 1 #mn;
 	date starting_date <- date([2017,9,25,0,0]);
 	string case_study <- "Volpe" ;
 	int nb_people <- 500;
-	float unitFactor<-1.0;
 	
     string cityGISFolder <- "./../includes/City/"+case_study;
 	file<geometry> buildings_shapefile <- file<geometry>(cityGISFolder+"/Buildings.shp");
@@ -30,17 +28,11 @@ global {
 	list<string> mobility_list <- ["walking", "bike","car","bus"];
 	file activity_file <- file("./../includes/game_IT/ActivityTablePerProfile.csv");
 	file criteria_file <- file("./../includes/game_IT/CriteriaFile.csv");
-	file dataOnProfile_file <- file("./../includes/game_IT/DataOnProfiles.csv");
-	file dataOnMode_file <- file("./../includes/game_IT/ModeCharacteristics.csv");
+	file profile_file <- file("./../includes/game_IT/DataOnProfiles.csv");
+	file mode_file <- file("./../includes/game_IT/ModeCharacteristics.csv");
 		
 	
-	//map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];
-	//map<string,rgb> color_per_category <- [ "Restaurant"::hsb(0,1.0,1.0), "Night"::hsb(0,2.0,1.0),"GP"::hsb(0,4.0,1.0), "Cultural"::hsb(0,5.0,1.0), "Shopping"::hsb(0,6.0,1.0), "HS"::hsb(0,8.0,1.0), "Uni"::hsb(0,9.0,1.0), "O"::#white, "R"::#222222, "Park"::#24461F];
-	map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#0099FF, "Uni"::#00FFD5, "O"::#00FFFF, "R"::#FF00FF, "Park"::#00DD00];
-	
-	//colorMap.put("RS",#ff00ff);colorMap.put("RM",#b802ff);colorMap.put("RL",#a200ff);
-    //colorMap.put("OS",#00ffff);colorMap.put( "OM",#0099ff);colorMap.put("OL",#00ffd5);
-	
+	map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];	
 	map<string,rgb> color_per_type <- [ "High School Student"::#FFFFB2, "College student"::#FECC5C,"Young professional"::#FD8D3C,  "Mid-career workers"::#F03B20, "Executives"::#BD0026, "Home maker"::#0B5038, "Retirees"::#8CAB13];
 	
 	map<string,map<string,int>> activity_data;
@@ -93,7 +85,7 @@ global {
 	
 	
 	action profils_data_import {
-		matrix profile_matrix <- matrix(dataOnProfile_file);
+		matrix profile_matrix <- matrix(profile_file);
 		loop i from: 0 to:  profile_matrix.rows - 1 {
 			string profil_type <- profile_matrix[0,i];
 			if(profil_type != "") {
@@ -153,7 +145,7 @@ global {
 	}
 	
 	action characteristic_file_import {
-		matrix mode_matrix <- matrix (dataOnMode_file);
+		matrix mode_matrix <- matrix (mode_file);
 		loop i from: 0 to:  mode_matrix.rows - 1 {
 			string mobility_type <- mode_matrix[0,i];
 			if(mobility_type != "") {
@@ -472,9 +464,6 @@ species people skills: [moving]{
 	aspect base{
 	  draw circle(size) at: location + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
 	}
-	aspect timelapse {
-      draw circle(size) at: {location.x,location.y,cycle} + {0,0,(current_place != nil ?current_place.height : 0.0) + 4}  color: color ;
-	}
 	aspect layer {
 		if(cycle mod 180 = 0){
 			draw sphere(size) at: {location.x,location.y,cycle*2} color: color ;
@@ -553,6 +542,7 @@ experiment gameit type: gui {
 			
 			overlay position: { 5, 5 } size: { 240 #px, 680 #px } background: # black transparency: 1.0 border: #black 
             {
+            	
                 rgb text_color<-#white;
                 float y <- 30#px;
   				draw "Building Usage" at: { 40#px, y } color: text_color font: font("Helvetica", 20, #bold) perspective:false;
@@ -560,7 +550,7 @@ experiment gameit type: gui {
                 loop type over: color_per_category.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_category[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold) perspective:false;
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #plain) perspective:false;
                     y <- y + 25#px;
                 }
                  y <- y + 30 #px;     
@@ -569,28 +559,22 @@ experiment gameit type: gui {
                 loop type over: color_per_type.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_type[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold) perspective:false;
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #plain) perspective:false;
                     y <- y + 25#px;
                 }
-				 y <- y + 30 #px;
-                draw "Mobility Mode" at: { 40#px, y } color: text_color font: font("Helvetica", 20, #bold) perspective:false;
+				y <- y + 30 #px;
+                draw "Mobility Mode" at: { 40#px, 600#px } color: text_color font: font("Helvetica", 20, #bold) perspective:false;
+                map<string,rgb> list_of_existing_mobility <- map<string,rgb>(["Walking"::#green,"Bike"::#yellow,"Car"::#red,"Bus"::#blue]);
                 y <- y + 30 #px;
-                draw circle(10#px) at: { 20#px, y } color:#green border: #black;
-                draw "Walking" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 16, #bold) perspective:false;
-                y <- y + 25#px;
-                draw triangle(15#px) at: { 20#px, y } color:#yellow  border: #black;
-                draw "Bike" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold) perspective:false;
-                y <- y + 25#px;
-                draw square(20#px) at: { 20#px, y } color:#red border: #black;
-                draw "Car" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold) perspective:false;   
-                y <- y + 25#px;
-                draw square(20#px) at: { 20#px, y } color:#blue border: #blue;
-                draw "Bus" at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #bold) perspective:false;     
+                
+                loop i from: 0 to: length(list_of_existing_mobility) -1 {    
+                  // draw circle(10#px) at: { 20#px, 600#px + (i+1)*25#px } color: list_of_existing_mobility.values[i]  border: #white;
+                   draw list_of_existing_mobility.keys[i] at: { 40#px, 610#px + (i+1)*20#px } color: list_of_existing_mobility.values[i] font: font("Helvetica", 18, #plain) perspective:false; 			
+		        }     
             }
             
             chart "Cumulative Trip" background:#black type: pie style:ring size: {0.5,0.5} position: {world.shape.width*1.1,world.shape.height*0} color: #white axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
-			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:
-			'Nice Ylabel'
+			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{
 				loop i from: 0 to: length(transport_type_cumulative_usage.keys)-1	{
 				  data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color:color_per_mobility[transport_type_cumulative_usage.keys[i]];
