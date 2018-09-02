@@ -26,10 +26,10 @@ global {
 	
 	// MOBILITY DATA
 	list<string> mobility_list <- ["walking", "bike","car","bus"];
-	file activity_file <- file("./../includes/game_IT/ActivityTablePerProfile.csv");
+	file activity_file <- file("./../includes/game_IT/ActivityPerProfile.csv");
 	file criteria_file <- file("./../includes/game_IT/CriteriaFile.csv");
-	file profile_file <- file("./../includes/game_IT/DataOnProfiles.csv");
-	file mode_file <- file("./../includes/game_IT/ModeCharacteristics.csv");
+	file profile_file <- file("./../includes/game_IT/Profiles.csv");
+	file mode_file <- file("./../includes/game_IT/Modes.csv");
 		
 	
 	map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];	
