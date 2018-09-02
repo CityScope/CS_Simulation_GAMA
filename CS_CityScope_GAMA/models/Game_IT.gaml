@@ -30,9 +30,8 @@ global {
 	list<string> mobility_list <- ["walking", "bike","car","bus"];
 	file activity_file <- file("./../includes/game_IT/ActivityTablePerProfile.csv");
 	file criteria_file <- file("./../includes/game_IT/CriteriaFile.csv");
-	file dataOnProfils_file <- file("./../includes/game_IT/DataOnProfiles.csv");
-	file modeCharacteristics_file <- file("./../includes/game_IT/ModeCharacteristics.csv");
-	file dataOnMobilityMode_file <- file("./../includes/game_IT/DataOnModes.csv");
+	file dataOnProfile_file <- file("./../includes/game_IT/DataOnProfiles.csv");
+	file dataOnMode_file <- file("./../includes/game_IT/ModeCharacteristics.csv");
 		
 	
 	//map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];
@@ -64,7 +63,6 @@ global {
 		gama.pref_display_flat_charts <- true;
 		do import_shapefiles;	
 		do profils_data_import;
-		do modes_data_import;
 		do activity_data_import;
 		do criteria_file_import;
 		do characteristic_file_import;
@@ -95,28 +93,18 @@ global {
 	
 	
 	action profils_data_import {
-		matrix profil_matrix <- matrix(dataOnProfils_file);
-		loop i from: 0 to:  profil_matrix.rows - 1 {
-			string profil_type <- profil_matrix[0,i];
+		matrix profile_matrix <- matrix(dataOnProfile_file);
+		loop i from: 0 to:  profile_matrix.rows - 1 {
+			string profil_type <- profile_matrix[0,i];
 			if(profil_type != "") {
-				proba_car_per_type[profil_type] <- float(profil_matrix[2,i]);
-				proba_bike_per_type[profil_type] <- float(profil_matrix[3,i]);
-				proportion_per_type[profil_type] <- float(profil_matrix[4,i]);
+				proba_car_per_type[profil_type] <- float(profile_matrix[2,i]);
+				proba_bike_per_type[profil_type] <- float(profile_matrix[3,i]);
+				proportion_per_type[profil_type] <- float(profile_matrix[4,i]);
 			}
 		}
 	}
 	
-	action modes_data_import {
-		matrix mode_matrix <- matrix(modeCharacteristics_file);
-		loop i from: 0 to:  mode_matrix.rows - 1 {
-			string type <- mode_matrix[0,i];
-			if(type != "") {
-				color_per_mobility[type] <- rgb(mode_matrix[7,i]);
-				width_per_mobility[type] <- float(mode_matrix[8,i]);
-				speed_per_mobility[type] <- float(mode_matrix[9,i]);
-			}
-		}
-	}
+
 	
 	action activity_data_import {
 		matrix activity_matrix <- matrix (activity_file);
@@ -165,19 +153,22 @@ global {
 	}
 	
 	action characteristic_file_import {
-		matrix criteria_matrix <- matrix (modeCharacteristics_file);
-		loop i from: 0 to:  criteria_matrix.rows - 1 {
-			string mobility_type <- criteria_matrix[0,i];
+		matrix mode_matrix <- matrix (dataOnMode_file);
+		loop i from: 0 to:  mode_matrix.rows - 1 {
+			string mobility_type <- mode_matrix[0,i];
 			if(mobility_type != "") {
 				list<float> vals <- [];
-				loop j from: 1 to:  criteria_matrix.columns - 1 {
-					vals << float(criteria_matrix[j,i]);	
+				loop j from: 1 to:  mode_matrix.columns - 1 {
+					vals << float(mode_matrix[j,i]);	
 				}
 				charact_per_mobility[mobility_type] <- vals;
+				color_per_mobility[mobility_type] <- rgb(mode_matrix[7,i]);
+				width_per_mobility[mobility_type] <- float(mode_matrix[8,i]);
+				speed_per_mobility[mobility_type] <- float(mode_matrix[9,i]);
 			}
 		}
 	}
-	
+		
 	action import_shapefiles {
 		create road from: roads_shapefile {
 			mobility_allowed <-["walking","bike","car","bus"];
