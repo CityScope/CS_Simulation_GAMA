@@ -511,7 +511,7 @@ experiment CityScopeMain type: gui virtual:true{
 	}
 }
 
-experiment CityScopeVolpeDemo type: gui parent:CityScopeMain{
+experiment CityScopeVolpeDemo type: gui parent:CityScopeMain autorun:true{
     float minimum_cycle_duration <- 0.02;
 	output {		
 		
@@ -538,7 +538,7 @@ experiment CityScopeVolpeDemo type: gui parent:CityScopeMain{
 	}
 }
 
-experiment CityScopeVolpeDemoExpe type: gui parent:CityScopeMain{
+experiment CityScopeVolpeDemoExpe type: gui parent:CityScopeMain autorun:true{
     float minimum_cycle_duration <- 0.02;
 	output {		
 		
