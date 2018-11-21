@@ -80,7 +80,15 @@ global {
 			color <- color_per_type[type];
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 			do create_trip_objectives;
-		}		
+		}	
+		save "cycle,walking,bike,car,bus" to: "../results/mobility.csv";	
+	}
+	
+    reflex save_simu_attribute when: (cycle mod 100 = 0){
+		save [cycle,transport_type_cumulative_usage.values[0] ,transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3]] rewrite:false to: "../results/mobility.csv" type:"csv";
+	    if(cycle = 1500){
+	    	do pause;
+	    }
 	}
 	
 	
@@ -193,10 +201,7 @@ global {
 		}
 	}
 			
-	reflex save_bug_attribute when: (false){
-		write "transport_type_cumulative_usage" + transport_type_cumulative_usage;
-		save [transport_type_cumulative_usage.values[0] ,transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3]] rewrite:false to: "../results/mobility.csv" type:"csv";
-	}
+
 	
 
 	
