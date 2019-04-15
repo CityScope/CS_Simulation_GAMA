@@ -81,11 +81,11 @@ global {
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 			do create_trip_objectives;
 		}	
-		save "cycle,walking,bike,car,bus" to: "../results/mobility.csv";	
+		save "cycle,walking,bike,car,bus,average_speed" to: "../results/mobility.csv";	
 	}
 	
     reflex save_simu_attribute when: (cycle mod 100 = 0){
-		save [cycle,transport_type_cumulative_usage.values[0] ,transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3]] rewrite:false to: "../results/mobility.csv" type:"csv";
+		save [cycle,transport_type_cumulative_usage.values[0] ,transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3], mean (people collect (each.speed))] rewrite:false to: "../results/mobility.csv" type:"csv";
 	    if(cycle = 1500){
 	    	do pause;
 	    }
@@ -555,7 +555,7 @@ experiment gameit type: gui {
                 loop type over: color_per_category.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_category[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #plain) perspective:false;
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 16, #plain) perspective:false;
                     y <- y + 25#px;
                 }
                  y <- y + 30 #px;     
@@ -564,7 +564,7 @@ experiment gameit type: gui {
                 loop type over: color_per_type.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_type[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #plain) perspective:false;
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 16, #plain) perspective:false;
                     y <- y + 25#px;
                 }
 				y <- y + 30 #px;
