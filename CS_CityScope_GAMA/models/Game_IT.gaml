@@ -49,6 +49,8 @@ global {
 	
 	// INDICATOR
 	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
+	map<string,int> transport_type_usage <- map(mobility_list collect (each::0));
+	map<string,float> transport_type_distance <- map(mobility_list collect (each::0.0));
 	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
 
 	init {
@@ -81,11 +83,14 @@ global {
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 			do create_trip_objectives;
 		}	
-		save "cycle,walking,bike,car,bus,average_speed" to: "../results/mobility.csv";	
+		save "cycle,walking,bike,car,bus,average_speed,walk_distance,bike_distance,car_distance,bus_distance" to: "../results/mobility.csv";
 	}
 	
     reflex save_simu_attribute when: (cycle mod 100 = 0){
-		save [cycle,transport_type_cumulative_usage.values[0] ,transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3], mean (people collect (each.speed))] rewrite:false to: "../results/mobility.csv" type:"csv";
+		save [cycle,transport_type_usage.values[0] ,transport_type_usage.values[1], transport_type_usage.values[2], transport_type_usage.values[3], mean (people collect (each.speed)), transport_type_distance.values[0],transport_type_distance.values[1],transport_type_distance.values[2],transport_type_distance.values[3]] rewrite:false to: "../results/mobility.csv" type:"csv";
+	    // Reset value
+	    transport_type_usage <- map(mobility_list collect (each::0));
+	    transport_type_distance <- map(mobility_list collect (each::0));
 	    if(cycle = 1500){
 	    	do pause;
 	    }
@@ -279,7 +284,7 @@ grid gridHeatmaps height: 50 width: 50 {
 species people skills: [moving]{
 	string type;
 	rgb color ;
-	float size<-5#m;
+	float size<-5#m;	
 	building living_place;
 	list<trip_objective> objectives;
 	trip_objective my_current_objective;
@@ -349,6 +354,7 @@ species people skills: [moving]{
 			mobility_mode <- one_of(possible_mobility_modes);
 		}
 		transport_type_cumulative_usage[mobility_mode] <- transport_type_cumulative_usage[mobility_mode] + 1;
+		transport_type_usage[mobility_mode] <-transport_type_usage[mobility_mode]+1;
 		speed <- speed_per_mobility[mobility_mode];
 	}
 	
@@ -410,6 +416,7 @@ species people skills: [moving]{
 		}
 	}
 	reflex move when: (my_current_objective != nil) and (mobility_mode != "bus") {
+		transport_type_distance[mobility_mode] <- transport_type_distance[mobility_mode] + speed/step;
 		if ((current_edge != nil) and (mobility_mode in ["car"])) {road(current_edge).current_concentration <- max([0,road(current_edge).current_concentration - 1]); }
 		if (mobility_mode in ["car"]) {
 			do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode] move_weights: congestion_map ;
