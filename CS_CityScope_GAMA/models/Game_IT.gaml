@@ -50,7 +50,7 @@ global {
 	// INDICATOR
 	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 	map<string,int> transport_type_usage <- map(mobility_list collect (each::0));
-	map<string,float> transport_type_distance <- map(mobility_list collect (each::0.0));
+	map<string,float> transport_type_distance <- map(mobility_list collect (each::0.0)) + ["bus_people"::0.0];
 	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
 
 	init {
@@ -83,14 +83,17 @@ global {
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 			do create_trip_objectives;
 		}	
-		save "cycle,walking,bike,car,bus,average_speed,walk_distance,bike_distance,car_distance,bus_distance" to: "../results/mobility.csv";
+		save "cycle,walking,bike,car,bus,average_speed,walk_distance,bike_distance,car_distance,bus_distance, bus_people_distance" to: "../results/mobility.csv";
+		
+		
 	}
 	
     reflex save_simu_attribute when: (cycle mod 100 = 0){
-		save [cycle,transport_type_usage.values[0] ,transport_type_usage.values[1], transport_type_usage.values[2], transport_type_usage.values[3], mean (people collect (each.speed)), transport_type_distance.values[0],transport_type_distance.values[1],transport_type_distance.values[2],transport_type_distance.values[3]] rewrite:false to: "../results/mobility.csv" type:"csv";
+    	write transport_type_distance;
+    	save [cycle,transport_type_usage.values[0] ,transport_type_usage.values[1], transport_type_usage.values[2], transport_type_usage.values[3], mean (people collect (each.speed)), transport_type_distance.values[0],transport_type_distance.values[1],transport_type_distance.values[2],transport_type_distance.values[3],transport_type_distance.values[4]] rewrite:false to: "../results/mobility.csv" type:"csv";
 	    // Reset value
 	    transport_type_usage <- map(mobility_list collect (each::0));
-	    transport_type_distance <- map(mobility_list collect (each::0.0));
+	    transport_type_distance <- map(mobility_list collect (each::0.0)) + ["bus_people"::0.0];
 	    if(cycle = 1500){
 	    	do pause;
 	    }
@@ -240,6 +243,12 @@ species bus skills: [moving] {
 	
 	reflex r {
 		do goto target: my_target.location on: graph_per_mobility["car"] speed:speed_per_mobility["bus"];
+		int nb_passengers <- stop_passengers.values sum_of (length(each));
+		if (nb_passengers > 0) {
+				transport_type_distance["bus"] <- transport_type_distance["bus"] + speed/step;
+				transport_type_distance["bus_people"] <- transport_type_distance["bus_people"] + speed/step * nb_passengers;
+		} 
+			
 		if(location = my_target.location) {
 			////////      release some people
 			ask stop_passengers[my_target] {
@@ -439,6 +448,7 @@ species people skills: [moving]{
 
 		if (bus_status = 0){
 			do goto target: closest_bus_stop.location on: graph_per_mobility["walking"];
+			transport_type_distance["walking"] <- transport_type_distance["walking"] + speed/step;
 			
 			if(location = closest_bus_stop.location) {
 				add self to: closest_bus_stop.waiting_people;
@@ -446,7 +456,8 @@ species people skills: [moving]{
 			}
 		} else if (bus_status = 2){
 			do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];		
-		
+			transport_type_distance["walking"] <- transport_type_distance["walking"] + speed/step;
+			
 			if (location = my_current_objective.place.location) {
 				current_place <- my_current_objective.place;
 				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
