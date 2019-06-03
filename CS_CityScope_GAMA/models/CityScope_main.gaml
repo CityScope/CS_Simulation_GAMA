@@ -103,7 +103,7 @@ global {
 			create amenity from: amenities_shapefile {
 				scale <- scale_string[rnd(2)];
 				fromGrid <- false;
-				size <- 10 + rnd(20);
+				size <- 10.0 + rnd(20);
 			}
 
 		}
@@ -126,14 +126,14 @@ global {
 		int nbPeopleToCreatePerBuilding;
 		ask building where (each.usage = "R") {
 			int peoplePerBuildingFloor <- int(area / density_map[self.scale]);
-			nbPeopleToCreatePerBuilding <- peoplePerBuildingFloor * nbFloors;
-			do createPop(nbPeopleToCreatePerBuilding / 10, self, false);
+			nbPeopleToCreatePerBuilding <- int(peoplePerBuildingFloor * nbFloors);
+			do createPop(int(nbPeopleToCreatePerBuilding / 10), self, false);
 		}
 
 		if (length(density_array) > 0) {
 			ask amenity where (each.usage = "R") {
 				float nb <- (self.scale = "L") ? density_array[0] : ((self.scale = "M") ? density_array[1] : density_array[2]);
-				do createPop(1 + nb / 3, self, true);
+				do createPop(1 + int(nb / 3), self, true);
 			}
 
 			write "initPop from density array" + density_array + " nb people: " + length(people);
@@ -174,7 +174,7 @@ global {
 				location <- {center.x + (13 - l["x"]) * brickSize, center.y + l["y"] * brickSize};
 				location <- {(location.x * cos(angle) + location.y * sin(angle)), -location.x * sin(angle) + location.y * cos(angle)};
 				shape <- square(brickSize * 0.9) at_location location;
-				size <- 10 + rnd(10);
+				size <- 10.0 + rnd(10);
 				fromGrid <- true;
 				scale <- citymatrix_map_settings[id][1];
 				usage <- citymatrix_map_settings[id][0];
@@ -200,7 +200,7 @@ global {
 		if (cycle > 10 and dynamicPop = true) {
 			if (current_density_array[0] < density_array[0]) {
 				float tmp <- length(people where each.fromTheGrid) * (density_array[0] / current_density_array[0] - 1);
-				do generateSquarePop(tmp, "L");
+				do generateSquarePop(int(tmp), "L");
 			}
 
 			if (current_density_array[0] > density_array[0]) {
@@ -213,7 +213,7 @@ global {
 
 			if (current_density_array[1] < density_array[1]) {
 				float tmp <- length(people where each.fromTheGrid) * (density_array[1] / current_density_array[1] - 1);
-				do generateSquarePop(tmp, "M");
+				do generateSquarePop(int(tmp), "M");
 			}
 
 			if (current_density_array[1] > density_array[1]) {
@@ -226,7 +226,7 @@ global {
 
 			if (current_density_array[2] < density_array[2]) {
 				float tmp <- length(people where each.fromTheGrid) * (density_array[2] / current_density_array[2] - 1);
-				do generateSquarePop(tmp, "S");
+				do generateSquarePop(int(tmp), "S");
 			}
 
 			if (current_density_array[2] > density_array[2]) {
