@@ -89,7 +89,6 @@ global {
 	}
 	
     reflex save_simu_attribute when: (cycle mod 100 = 0){
-    	write transport_type_distance;
     	save [cycle,transport_type_usage.values[0] ,transport_type_usage.values[1], transport_type_usage.values[2], transport_type_usage.values[3], mean (people collect (each.speed)), transport_type_distance.values[0],transport_type_distance.values[1],transport_type_distance.values[2],transport_type_distance.values[3],transport_type_distance.values[4]] rewrite:false to: "../results/mobility.csv" type:"csv";
 	    // Reset value
 	    transport_type_usage <- map(mobility_list collect (each::0));
