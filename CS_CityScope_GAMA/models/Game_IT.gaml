@@ -540,7 +540,7 @@ species externalCities parent:building{
 
 experiment gameit type: gui {
 	output {
-		display map type: opengl draw_env: false background: #black refresh_every:10{
+		display map type: opengl draw_env: false background: #black refresh:every(10#cycle){
 			//species gridHeatmaps aspect:pollution;
 			//species pie;
 			species building aspect:depth refresh: false;
