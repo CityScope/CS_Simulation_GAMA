@@ -12,10 +12,11 @@ global {
 	//PARAMETERS
 	bool updatePollution <-false parameter: "Pollution:" category: "Simulation";
 	bool updateDensity <-false parameter: "Density:" category: "Simulation";
+	bool weatherImpact <-true parameter: "Weather impact:" category: "Simulation";
 		
 	//ENVIRONMENT
 	float step <- 1 #mn;
-	date starting_date <- date([2017,9,25,0,0]);
+	date starting_date <-date([2017,9,25,0,0]);
 	string case_study <- "volpe" ;
 	int nb_people <- 500;
 	
@@ -30,7 +31,7 @@ global {
 	file criteria_file <- file("./../includes/Game_IT/CriteriaFile.csv");
 	file profile_file <- file("./../includes/Game_IT/Profiles.csv");
 	file mode_file <- file("./../includes/Game_IT/Modes.csv");
-		
+	file weather_coeff <- file("../includes/Game_IT/weather_coeff_per_month.csv");
 	
 	map<string,rgb> color_per_category <- [ "Restaurant"::rgb("#2B6A89"), "Night"::rgb("#1B2D36"),"GP"::rgb("#244251"), "Cultural"::rgb("#2A7EA6"), "Shopping"::rgb("#1D223A"), "HS"::rgb("#FFFC2F"), "Uni"::rgb("#807F30"), "O"::rgb("#545425"), "R"::rgb("#222222"), "Park"::rgb("#24461F")];	
 	map<string,rgb> color_per_type <- [ "High School Student"::rgb("#FFFFB2"), "College student"::rgb("#FECC5C"),"Young professional"::rgb("#FD8D3C"),  "Mid-career workers"::rgb("#F03B20"), "Executives"::rgb("#BD0026"), "Home maker"::rgb("#0B5038"), "Retirees"::rgb("#8CAB13")];
@@ -43,15 +44,19 @@ global {
 	map<string,float> width_per_mobility ;
 	map<string,float> speed_per_mobility;
 	map<string,graph> graph_per_mobility;
+	map<string,float> weather_coeff_per_mobility;
 	map<string,list<float>> charact_per_mobility;
 	map<road,float> congestion_map;  
 	map<string,map<string,list<float>>> weights_map <- map([]);
+	list<list<float>> weather_of_month;
 	
 	// INDICATOR
 	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 	map<string,int> transport_type_usage <- map(mobility_list collect (each::0));
 	map<string,float> transport_type_distance <- map(mobility_list collect (each::0.0)) + ["bus_people"::0.0];
 	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
+	
+	float weather_of_day min: 0.0 max: 1.0;	
 
 	init {
 		gama.pref_display_flat_charts <- true;
@@ -60,6 +65,7 @@ global {
 		do activity_data_import;
 		do criteria_file_import;
 		do characteristic_file_import;
+		do import_weather_data;
 		do compute_graph;
 
 		create bus_stop number: 6 {
@@ -93,12 +99,18 @@ global {
 	    // Reset value
 	    transport_type_usage <- map(mobility_list collect (each::0));
 	    transport_type_distance <- map(mobility_list collect (each::0.0)) + ["bus_people"::0.0];
-	    if(cycle = 1500){
+	    if(cycle = 5000){
 	    	do pause;
 	    }
 	}
 	
 	
+	action import_weather_data {
+		matrix weather_matrix <- matrix(weather_coeff);
+		loop i from: 0 to:  weather_matrix.rows - 1 {
+			weather_of_month << [float(weather_matrix[1,i]), float(weather_matrix[2,i])];
+		}
+	}
 	action profils_data_import {
 		matrix profile_matrix <- matrix(profile_file);
 		loop i from: 0 to:  profile_matrix.rows - 1 {
@@ -165,13 +177,14 @@ global {
 			string mobility_type <- mode_matrix[0,i];
 			if(mobility_type != "") {
 				list<float> vals <- [];
-				loop j from: 1 to:  mode_matrix.columns - 1 {
+				loop j from: 1 to:  mode_matrix.columns - 2 {
 					vals << float(mode_matrix[j,i]);	
 				}
 				charact_per_mobility[mobility_type] <- vals;
 				color_per_mobility[mobility_type] <- rgb(mode_matrix[7,i]);
 				width_per_mobility[mobility_type] <- float(mode_matrix[8,i]);
 				speed_per_mobility[mobility_type] <- float(mode_matrix[9,i]);
+				weather_coeff_per_mobility[mobility_type] <- float(mode_matrix[10,i]);
 			}
 		}
 	}
@@ -207,7 +220,11 @@ global {
 			buildings_distribution[usage] <- buildings_distribution[usage]+1;
 		}
 	}
-			
+	
+	reflex update_weather when: weatherImpact and every(#day){
+		list<float> weather_m <- weather_of_month[current_date.month - 1];
+		weather_of_day <- gauss(weather_m[0], weather_m[1]);
+	}		
 
 	
 
@@ -378,7 +395,8 @@ species people skills: [moving]{
 			cand << characteristic[0] + characteristic[1]*distance;
 			cand << characteristic[2] #mn +  distance / speed_per_mobility[mode];
 			cand << characteristic[4];
-			cand << characteristic[5];
+		
+			cand << characteristic[5] * (weatherImpact ?(1.0 + weather_of_day * weather_coeff_per_mobility[mode]  ) : 1.0);
 			add cand to: candidates;
 		}
 		
