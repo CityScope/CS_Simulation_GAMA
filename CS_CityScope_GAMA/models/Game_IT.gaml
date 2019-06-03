@@ -90,7 +90,7 @@ global {
 		save [cycle,transport_type_usage.values[0] ,transport_type_usage.values[1], transport_type_usage.values[2], transport_type_usage.values[3], mean (people collect (each.speed)), transport_type_distance.values[0],transport_type_distance.values[1],transport_type_distance.values[2],transport_type_distance.values[3]] rewrite:false to: "../results/mobility.csv" type:"csv";
 	    // Reset value
 	    transport_type_usage <- map(mobility_list collect (each::0));
-	    transport_type_distance <- map(mobility_list collect (each::0));
+	    transport_type_distance <- map(mobility_list collect (each::0.0));
 	    if(cycle = 1500){
 	    	do pause;
 	    }
@@ -514,7 +514,7 @@ species building {
 	string scale;
 	string category;
 	rgb color <- #grey;
-	float height <- 0;//50.0 + rnd(50);
+	float height <- 0.0;//50.0 + rnd(50);
 	aspect default {
 		draw shape color: color ;
 	}
