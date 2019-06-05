@@ -43,9 +43,9 @@ global {
 	int toggle1;
 	int slider1;
 	map<int, list>
-	citymatrix_map_settings <- [-2::["Green", "Green"],-1::["Green", "Green"], 0::["R", "L"], 1::["R", "M"], 2::["R", "S"], 3::["O", "L"], 4::["O", "M"], 5::["O", "S"], 6::["A", "Road"], 7::["A", "Plaza"], 8::["Pa", "Park"], 9::["P", "Parking"]];
+	citymatrix_map_settings <- [-2::["DarkGreen", "DarkGreen"],-1::["Green", "Green"], 0::["R", "L"], 1::["R", "M"], 2::["R", "S"], 3::["O", "L"], 4::["O", "M"], 5::["O", "S"], 6::["A", "Road"], 7::["A", "Plaza"], 8::["Pa", "Park"], 9::["P", "Parking"]];
 	map<string, rgb>
-	color_map <- ["R"::#white, "O"::#gray, "S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#white, "Road"::#black, "Park"::#black, "Parking"::rgb(50, 50, 50)];
+	color_map <- ["R"::#white, "O"::#gray, "S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "DarkGreen"::#darkgreen,"Green"::#green, "Plaza"::#white, "Road"::#black, "Park"::#black, "Parking"::rgb(50, 50, 50)];
 	list scale_string <- ["S", "M", "L"];
 	list usage_string <- ["R", "O"];
 	// Use for Volpe Site (Could be changed for each city).
@@ -143,25 +143,7 @@ global {
 
 	}
 
-	action initGrid {
-	/* 
-		 * initGrid queries the cityIO server for data from the table,
-		 * and sets up the model accordingly.
-		 * If online data is not available, it uses preset data.
-		 */
-		ask amenity where (each.fromGrid = true) {
-			do die;
-		}
-
-		try {
-			cityMatrixData <- json_file(CITY_IO_URL).contents;
-		}
-
-		catch {
-			cityMatrixData <- json_file(KENDALL_DATA).contents;
-			write #current_error + "Connection to Internet lost or cityIO is offline - CityMatrix is a local version from cityIO_Kendall.json";
-		}
-
+	action createAmenityv1{
 		cityMatrixCell <- cityMatrixData["grid"];
 		density_array <- cityMatrixData["objects"]["density"];
 		toggle1 <- int(cityMatrixData["objects"]["toggle1"]);
@@ -186,14 +168,38 @@ global {
 			}
 
 		}
+		
+	}
+		
+	action createAmenityv2{
+		list<int> gridCells <- cityMatrixData["grid"];
+		int nrows<-int(cityMatrixData['header']['spatial']['nrows']);
+		int ncols<-int(cityMatrixData['header']['spatial']['ncols']);
+		brickSize<- float(cityMatrixData['header']['spatial']['cellsize']);
 
-		ask amenity {
-			if ((x = 0 and y = 0) and fromGrid = true) {
-				do die;
-			}
-
+		loop i from: 0 to: ncols-1 {
+			loop j from: 0 to: nrows -1{
+				create amenity {					
+					id <- int(gridCells[j*ncols+i]);
+					x<-int(center.x + i * brickSize);
+					y<-int(center.y + j * brickSize);
+					location <- {x,y};
+					location <- {(location.x * cos(angle) + location.y * sin(angle)), -location.x * sin(angle) + location.y * cos(angle)};
+					shape <- square(brickSize * 0.9) at_location location;
+					size <- float(10 + rnd(10));
+					fromGrid <- true;
+					scale <- citymatrix_map_settings[id][1];
+					usage <- citymatrix_map_settings[id][0];
+					color <- color_map[scale];
+					if (id != -1 and id != -2 and id != 7 and id != 6) {
+						density <- density_array[id];
+					}
+				}
+			}			
 		}
-
+	}
+	
+	action updateDynamicGridAccordingToDensityArray{
 		density_array <- cityMatrixData["objects"]["density"];
 
 		//UPDATE POP AT RUNTIME DEPENDING ON DENSITY VALUE
@@ -238,8 +244,37 @@ global {
 			}
 
 		}
-
 		current_density_array <- density_array;
+		
+	}
+	action initGrid{
+	/* 
+		 * initGrid queries the cityIO server for data from the table,
+		 * and sets up the model accordingly.
+		 * If online data is not available, it uses preset data.
+		 */
+		ask amenity where (each.fromGrid = true) {
+			do die;
+		}
+
+		try {
+			cityMatrixData <- json_file(CITY_IO_URL).contents;
+		}
+
+		catch {
+			cityMatrixData <- json_file(KENDALL_DATA).contents;
+			write #current_error + "Connection to Internet lost or cityIO is offline - CityMatrix is a local version from cityIO_Kendall.json";
+		}
+
+		do createAmenityv1;
+
+		ask amenity {
+			if ((x = 0 and y = 0) and fromGrid = true) {
+				do die;
+			}
+		}
+
+        do updateDynamicGridAccordingToDensityArray;
 	}
 
 	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix = true) {
