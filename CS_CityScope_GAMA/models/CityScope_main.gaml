@@ -76,20 +76,21 @@ global {
 	point center <- {1007, 632};
 	float brickSize <- 21.3;
 	// Online City IO server to query data from.
+	float cityIOVersion<-1.0;
 	string CITY_IO_URL <- "https://cityio.media.mit.edu/api/table/citymatrix_volpe";
 	// Offline backup data to use when server data unavailable.
-	string KENDALL_DATA <- "../includes/cityIO_Kendall.json";
+	string BACKUP_DATA <- "../includes/cityIO_Kendall.json";
 
 	init {
-		do initModel();
+		do initModel(cityIOVersion);
 	}
 
-	action initModel {
-		do coreInit();
-		do customInit();
+	action initModel(float _version) {
+		do coreInit(_version);
+		do customInit(_version);
 	}
 
-	action coreInit {
+	action coreInit (float _version) {
 		create table from: table_bound_shapefile;
 		create building from: buildings_shapefile with: [usage::string(read("Usage")), scale::string(read("Scale")), nbFloors::1 + float(read("Floors"))] {
 			area <- shape.area;
@@ -109,13 +110,13 @@ global {
 		}
 
 		if (cityMatrix = true) {
-			do initGrid;
+			do initGrid(_version);
 		}
 
 		write " width: " + world.shape.width + " height: " + world.shape.height;
 	}
 
-	action customInit {
+	action customInit (float _version){
 	}
 
 	action initPop {
@@ -247,7 +248,7 @@ global {
 		current_density_array <- density_array;
 		
 	}
-	action initGrid{
+	action initGrid (float _version){
 	/* 
 		 * initGrid queries the cityIO server for data from the table,
 		 * and sets up the model accordingly.
@@ -262,23 +263,28 @@ global {
 		}
 
 		catch {
-			cityMatrixData <- json_file(KENDALL_DATA).contents;
-			write #current_error + "Connection to Internet lost or cityIO is offline - CityMatrix is a local version from cityIO_Kendall.json";
+			cityMatrixData <- json_file(BACKUP_DATA).contents;
+			write #current_error + "Connection to Internet lost or cityIO is offline - CityMatrix is a local version";
 		}
-
-		do createAmenityv1;
-
-		ask amenity {
+		if(_version=1.0){
+			do createAmenityv1;	
+		}
+		if(_version=2.1){
+			do createAmenityv2;
+		}
+		// The dynamic slider is for now only used with the 1.0 scanner (grasshopper volpe)
+		if(_version=1.0){
+			ask amenity {
 			if ((x = 0 and y = 0) and fromGrid = true) {
 				do die;
 			}
 		}
-
         do updateDynamicGridAccordingToDensityArray;
+		}
 	}
 
 	reflex updateGrid when: ((cycle mod refresh) = 0) and (dynamicGrid = true) and (cityMatrix = true) {
-		do initGrid;
+		do initGrid(cityIOVersion);
 	}
 
 	reflex updateGraph when: (drawInteraction = true or toggle1 = 7) {
