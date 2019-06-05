@@ -43,7 +43,7 @@ global {
 	int toggle1;
 	int slider1;
 	map<int, list>
-	citymatrix_map_settings <- [-1::["Green", "Green"], 0::["R", "L"], 1::["R", "M"], 2::["R", "S"], 3::["O", "L"], 4::["O", "M"], 5::["O", "S"], 6::["A", "Road"], 7::["A", "Plaza"], 8::["Pa", "Park"], 9::["P", "Parking"]];
+	citymatrix_map_settings <- [-2::["Green", "Green"],-1::["Green", "Green"], 0::["R", "L"], 1::["R", "M"], 2::["R", "S"], 3::["O", "L"], 4::["O", "M"], 5::["O", "S"], 6::["A", "Road"], 7::["A", "Plaza"], 8::["Pa", "Park"], 9::["P", "Parking"]];
 	map<string, rgb>
 	color_map <- ["R"::#white, "O"::#gray, "S"::#gamablue, "M"::#gamaorange, "L"::#gamared, "Green"::#green, "Plaza"::#white, "Road"::#black, "Park"::#black, "Parking"::rgb(50, 50, 50)];
 	list scale_string <- ["S", "M", "L"];
