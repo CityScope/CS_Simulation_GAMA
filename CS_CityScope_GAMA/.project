@@ -15,4 +15,11 @@
 		<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
 		<nature>msi.gama.application.gamaNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>external/citymatrix_volpe</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+citymatrix_volpe</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>

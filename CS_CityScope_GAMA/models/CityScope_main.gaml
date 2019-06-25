@@ -1,4 +1,4 @@
-/**
+	/**
 * Name: CityScope Volpe
 * Author: Arnaud Grignard
 * Description: Agent-based model running on the CityScope Platform. 
@@ -147,7 +147,7 @@ global {
 				  location<- {(location.x * cos(angle) + location.y * sin(angle)),-location.x * sin(angle) + location.y * cos(angle)};
 				  shape <- square(brickSize*0.9) at_location location;	
 				  size<-10+rnd(10);
-				  fromGrid<-true;  
+				  fromGrid<-true; 
 				  scale <- citymatrix_map_settings[id][1];
 				  usage<-citymatrix_map_settings[id][0];
 				  color<-color_map[scale];
@@ -468,7 +468,7 @@ species table{
 
 experiment CityScopeMain type: gui virtual:true{	
 	output {	
-		display CityScopeVirtual  type:opengl background:#black draw_env:false virtual:true{
+		display CityScopeVirtual  type:opengl background:#black fullscreen:2 draw_env:false virtual:true{
 			species table aspect:base refresh:false;
 			species building aspect:base position:{0,0,-0.0015};	
 			species road aspect: base refresh:false;
@@ -517,12 +517,15 @@ experiment CityScopeVolpeDemo type: gui parent:CityScopeMain autorun:true{
 		
         display CityScope type:opengl parent:CityScopeVirtual toolbar:false{}	
         	
-		display CityScopeTable   type:opengl background:#black fullscreen:1 toolbar:false rotate:180 synchronized:true
-		camera_pos: {1369.1261241323866,939.6915242287623,1345.1870238795268} camera_look_pos: {1369.1293916321506,939.6682747598774,-6.435029977022782E-4} camera_up_vector: {0.13917310095974558,0.9902680685878096,1.7453299527680555E-5}{
+		display CityScopeTable   type:opengl background:#black fullscreen:2 toolbar:false rotate:0 synchronized:true
+		camera_pos: {1153.2363,1038.0652,1210.9433} camera_look_pos: {1153.2392,1038.0443,-0.0028} camera_up_vector: {0.1381,0.9904,0.0}{
+		//camera_pos: {1369.1261241323866,939.6915242287623,1345.1870238795268} camera_look_pos: {1369.1293916321506,939.6682747598774,-6.435029977022782E-4} camera_up_vector: {0.13917310095974558,0.9902680685878096,1.7453299527680555E-5}{
 			
-			
+			//species table aspect:base refresh:false;	
 			species amenity aspect: onTable;
 			species people aspect: scale;
+			//species road aspect: base refresh:false;
+			//species building aspect:realistic position:{0,0,-0.0015} transparency:0.5;
 			graphics "interaction_graph" {
 				if (interaction_graph != nil  and ( drawInteraction = true or toggle1=7) ) {	
 					loop eg over: interaction_graph.edges {
@@ -544,7 +547,7 @@ experiment CityScopeVolpeDemoExpe type: gui parent:CityScopeMain autorun:true{
 		
         display CityScope type:opengl parent:CityScopeVirtualExperimental toolbar:false{}	
         	
-		display CityScopeTable   type:opengl background:#black fullscreen:1 toolbar:false rotate:180 synchronized:true
+		display CityScopeTable   type:opengl background:#black fullscreen:2 toolbar:false rotate:180 synchronized:true
 		camera_pos: {1369.1261241323866,939.6915242287623,1345.1870238795268} camera_look_pos: {1369.1293916321506,939.6682747598774,-6.435029977022782E-4} camera_up_vector: {0.13917310095974558,0.9902680685878096,1.7453299527680555E-5}{
 			
 			
