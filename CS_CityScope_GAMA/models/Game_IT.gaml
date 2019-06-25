@@ -12,11 +12,12 @@ global {
 	//PARAMETERS
 	bool updatePollution <-false parameter: "Pollution:" category: "Simulation";
 	bool updateDensity <-false parameter: "Density:" category: "Simulation";
+	bool weatherImpact <-true parameter: "Weather impact:" category: "Simulation";
 		
 	//ENVIRONMENT
 	float step <- 1 #mn;
-	date starting_date <- date([2017,9,25,0,0]);
-	string case_study <- "Volpe" ;
+	date starting_date <-date([2017,9,25,0,0]);
+	string case_study <- "volpe" ;
 	int nb_people <- 500;
 	
     string cityGISFolder <- "./../includes/City/"+case_study;
@@ -26,14 +27,14 @@ global {
 	
 	// MOBILITY DATA
 	list<string> mobility_list <- ["walking", "bike","car","bus"];
-	file activity_file <- file("./../includes/game_IT/ActivityPerProfile.csv");
-	file criteria_file <- file("./../includes/game_IT/CriteriaFile.csv");
-	file profile_file <- file("./../includes/game_IT/Profiles.csv");
-	file mode_file <- file("./../includes/game_IT/Modes.csv");
-		
+	file activity_file <- file("./../includes/Game_IT/ActivityPerProfile.csv");
+	file criteria_file <- file("./../includes/Game_IT/CriteriaFile.csv");
+	file profile_file <- file("./../includes/Game_IT/Profiles.csv");
+	file mode_file <- file("./../includes/Game_IT/Modes.csv");
+	file weather_coeff <- file("../includes/Game_IT/weather_coeff_per_month.csv");
 	
-	map<string,rgb> color_per_category <- [ "Restaurant"::#2B6A89, "Night"::#1B2D36,"GP"::#244251, "Cultural"::#2A7EA6, "Shopping"::#1D223A, "HS"::#FFFC2F, "Uni"::#807F30, "O"::#545425, "R"::#222222, "Park"::#24461F];	
-	map<string,rgb> color_per_type <- [ "High School Student"::#FFFFB2, "College student"::#FECC5C,"Young professional"::#FD8D3C,  "Mid-career workers"::#F03B20, "Executives"::#BD0026, "Home maker"::#0B5038, "Retirees"::#8CAB13];
+	map<string,rgb> color_per_category <- [ "Restaurant"::rgb("#2B6A89"), "Night"::rgb("#1B2D36"),"GP"::rgb("#244251"), "Cultural"::rgb("#2A7EA6"), "Shopping"::rgb("#1D223A"), "HS"::rgb("#FFFC2F"), "Uni"::rgb("#807F30"), "O"::rgb("#545425"), "R"::rgb("#222222"), "Park"::rgb("#24461F")];	
+	map<string,rgb> color_per_type <- [ "High School Student"::rgb("#FFFFB2"), "College student"::rgb("#FECC5C"),"Young professional"::rgb("#FD8D3C"),  "Mid-career workers"::rgb("#F03B20"), "Executives"::rgb("#BD0026"), "Home maker"::rgb("#0B5038"), "Retirees"::rgb("#8CAB13")];
 	
 	map<string,map<string,int>> activity_data;
 	map<string, float> proportion_per_type;
@@ -43,13 +44,19 @@ global {
 	map<string,float> width_per_mobility ;
 	map<string,float> speed_per_mobility;
 	map<string,graph> graph_per_mobility;
+	map<string,float> weather_coeff_per_mobility;
 	map<string,list<float>> charact_per_mobility;
 	map<road,float> congestion_map;  
 	map<string,map<string,list<float>>> weights_map <- map([]);
+	list<list<float>> weather_of_month;
 	
 	// INDICATOR
 	map<string,int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
+	map<string,int> transport_type_usage <- map(mobility_list collect (each::0));
+	map<string,float> transport_type_distance <- map(mobility_list collect (each::0.0)) + ["bus_people"::0.0];
 	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
+	
+	float weather_of_day min: 0.0 max: 1.0;	
 
 	init {
 		gama.pref_display_flat_charts <- true;
@@ -58,6 +65,7 @@ global {
 		do activity_data_import;
 		do criteria_file_import;
 		do characteristic_file_import;
+		do import_weather_data;
 		do compute_graph;
 
 		create bus_stop number: 6 {
@@ -80,10 +88,29 @@ global {
 			color <- color_per_type[type];
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 			do create_trip_objectives;
-		}		
+		}	
+		save "cycle,walking,bike,car,bus,average_speed,walk_distance,bike_distance,car_distance,bus_distance, bus_people_distance" to: "../results/mobility.csv";
+		
+		
+	}
+	
+    reflex save_simu_attribute when: (cycle mod 100 = 0){
+    	save [cycle,transport_type_usage.values[0] ,transport_type_usage.values[1], transport_type_usage.values[2], transport_type_usage.values[3], mean (people collect (each.speed)), transport_type_distance.values[0],transport_type_distance.values[1],transport_type_distance.values[2],transport_type_distance.values[3],transport_type_distance.values[4]] rewrite:false to: "../results/mobility.csv" type:"csv";
+	    // Reset value
+	    transport_type_usage <- map(mobility_list collect (each::0));
+	    transport_type_distance <- map(mobility_list collect (each::0.0)) + ["bus_people"::0.0];
+	    if(cycle = 5000){
+	    	do pause;
+	    }
 	}
 	
 	
+	action import_weather_data {
+		matrix weather_matrix <- matrix(weather_coeff);
+		loop i from: 0 to:  weather_matrix.rows - 1 {
+			weather_of_month << [float(weather_matrix[1,i]), float(weather_matrix[2,i])];
+		}
+	}
 	action profils_data_import {
 		matrix profile_matrix <- matrix(profile_file);
 		loop i from: 0 to:  profile_matrix.rows - 1 {
@@ -150,13 +177,14 @@ global {
 			string mobility_type <- mode_matrix[0,i];
 			if(mobility_type != "") {
 				list<float> vals <- [];
-				loop j from: 1 to:  mode_matrix.columns - 1 {
+				loop j from: 1 to:  mode_matrix.columns - 2 {
 					vals << float(mode_matrix[j,i]);	
 				}
 				charact_per_mobility[mobility_type] <- vals;
 				color_per_mobility[mobility_type] <- rgb(mode_matrix[7,i]);
 				width_per_mobility[mobility_type] <- float(mode_matrix[8,i]);
 				speed_per_mobility[mobility_type] <- float(mode_matrix[9,i]);
+				weather_coeff_per_mobility[mobility_type] <- float(mode_matrix[10,i]);
 			}
 		}
 	}
@@ -192,11 +220,12 @@ global {
 			buildings_distribution[usage] <- buildings_distribution[usage]+1;
 		}
 	}
-			
-	reflex save_bug_attribute when: (false){
-		write "transport_type_cumulative_usage" + transport_type_cumulative_usage;
-		save [transport_type_cumulative_usage.values[0] ,transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3]] rewrite:false to: "../results/mobility.csv" type:"csv";
-	}
+	
+	reflex update_weather when: weatherImpact and every(#day){
+		list<float> weather_m <- weather_of_month[current_date.month - 1];
+		weather_of_day <- gauss(weather_m[0], weather_m[1]);
+	}		
+
 	
 
 	
@@ -230,6 +259,12 @@ species bus skills: [moving] {
 	
 	reflex r {
 		do goto target: my_target.location on: graph_per_mobility["car"] speed:speed_per_mobility["bus"];
+		int nb_passengers <- stop_passengers.values sum_of (length(each));
+		if (nb_passengers > 0) {
+				transport_type_distance["bus"] <- transport_type_distance["bus"] + speed/step;
+				transport_type_distance["bus_people"] <- transport_type_distance["bus_people"] + speed/step * nb_passengers;
+		} 
+			
 		if(location = my_target.location) {
 			////////      release some people
 			ask stop_passengers[my_target] {
@@ -274,7 +309,7 @@ grid gridHeatmaps height: 50 width: 50 {
 species people skills: [moving]{
 	string type;
 	rgb color ;
-	float size<-5#m;
+	float size<-5#m;	
 	building living_place;
 	list<trip_objective> objectives;
 	trip_objective my_current_objective;
@@ -344,6 +379,7 @@ species people skills: [moving]{
 			mobility_mode <- one_of(possible_mobility_modes);
 		}
 		transport_type_cumulative_usage[mobility_mode] <- transport_type_cumulative_usage[mobility_mode] + 1;
+		transport_type_usage[mobility_mode] <-transport_type_usage[mobility_mode]+1;
 		speed <- speed_per_mobility[mobility_mode];
 	}
 	
@@ -359,7 +395,8 @@ species people skills: [moving]{
 			cand << characteristic[0] + characteristic[1]*distance;
 			cand << characteristic[2] #mn +  distance / speed_per_mobility[mode];
 			cand << characteristic[4];
-			cand << characteristic[5];
+		
+			cand << characteristic[5] * (weatherImpact ?(1.0 + weather_of_day * weather_coeff_per_mobility[mode]  ) : 1.0);
 			add cand to: candidates;
 		}
 		
@@ -405,6 +442,7 @@ species people skills: [moving]{
 		}
 	}
 	reflex move when: (my_current_objective != nil) and (mobility_mode != "bus") {
+		transport_type_distance[mobility_mode] <- transport_type_distance[mobility_mode] + speed/step;
 		if ((current_edge != nil) and (mobility_mode in ["car"])) {road(current_edge).current_concentration <- max([0,road(current_edge).current_concentration - 1]); }
 		if (mobility_mode in ["car"]) {
 			do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode] move_weights: congestion_map ;
@@ -427,6 +465,7 @@ species people skills: [moving]{
 
 		if (bus_status = 0){
 			do goto target: closest_bus_stop.location on: graph_per_mobility["walking"];
+			transport_type_distance["walking"] <- transport_type_distance["walking"] + speed/step;
 			
 			if(location = closest_bus_stop.location) {
 				add self to: closest_bus_stop.waiting_people;
@@ -434,7 +473,8 @@ species people skills: [moving]{
 			}
 		} else if (bus_status = 2){
 			do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];		
-		
+			transport_type_distance["walking"] <- transport_type_distance["walking"] + speed/step;
+			
 			if (location = my_current_objective.place.location) {
 				current_place <- my_current_objective.place;
 				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
@@ -502,7 +542,7 @@ species building {
 	string scale;
 	string category;
 	rgb color <- #grey;
-	float height <- 0;//50.0 + rnd(50);
+	float height <- 0.0;//50.0 + rnd(50);
 	aspect default {
 		draw shape color: color ;
 	}
@@ -528,7 +568,7 @@ species externalCities parent:building{
 
 experiment gameit type: gui {
 	output {
-		display map type: opengl draw_env: false background: #black refresh_every:10{
+		display map type: opengl draw_env: false background: #black refresh:every(10#cycle){
 			//species gridHeatmaps aspect:pollution;
 			//species pie;
 			species building aspect:depth refresh: false;
@@ -550,7 +590,7 @@ experiment gameit type: gui {
                 loop type over: color_per_category.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_category[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #plain) perspective:false;
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 16, #plain) perspective:false;
                     y <- y + 25#px;
                 }
                  y <- y + 30 #px;     
@@ -559,7 +599,7 @@ experiment gameit type: gui {
                 loop type over: color_per_type.keys
                 {
                     draw square(10#px) at: { 20#px, y } color: color_per_type[type] border: #white;
-                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 18, #plain) perspective:false;
+                    draw type at: { 40#px, y + 4#px } color: text_color font: font("Helvetica", 16, #plain) perspective:false;
                     y <- y + 25#px;
                 }
 				y <- y + 30 #px;
