@@ -63,7 +63,7 @@ global{
 		create parking from: parking_footprint_shapefile with: [ID::int(read("Parking_ID")),capacity::int(read("capacity")),total_capacity::int(read("capacity")), excess_time::int(read("time"))];
 		create Aalto_buildings from: buildings_shapefile with: [usage::string(read("Usage")), scale::string(read("Scale"))]{
 			if usage = "O"{
-				color <- #lightgray;
+				color <- #orange;
 			}
 		}
 		create car_road from: roads_shapefile;
@@ -104,15 +104,17 @@ species parking {
 	int excess_time;
 	float vacancy <-(capacity/total_capacity) update: (capacity/total_capacity);
 	aspect test {
-		draw circle(15) color: rgb(255 , 255, 255 *vacancy);
+		draw shape color: rgb(200 , 200 * vacancy, 200 * vacancy);
 	}
 	
 }
+
 species parked_car {
 	aspect base {
 		draw square(5) color:#black;
 	}
 }
+
 species aalto_people parent:people skills: [moving] {
 	
 	bool driving_car <- true;
@@ -181,18 +183,18 @@ species aalto_people parent:people skills: [moving] {
 	reflex move when: the_target != nil {
 		if (driving_car = true){
 			if (objective = "working"){
-				do goto target: the_target_parking on: car_road speed: (1.0 + rnd(0,5)) #km / #h;
+				do goto target: the_target_parking   speed: (2.0 + rnd(0,5));
 			}
-			else {
-				do goto target: the_target  speed: (0.1 + rnd(0,5)) #km / #h;
+			else{
+				do goto target: the_target  speed: (2.0 + rnd(0,5));
 			}
 		}
 		else {
 			if (objective = "working"){
-				do goto target: the_target on: car_road speed: (1.0 + rnd(0,5)) #km / #h;
+				do goto target: the_target speed: (0.5 + rnd(0,5));
 			}
 			else {
-				do goto target: the_target_parking speed: (0.1 + rnd(0,5)) #km / #h;
+				do goto target: the_target_parking speed: (0.5 + rnd(0,5));
 			}
 		}
 		
@@ -202,7 +204,7 @@ species aalto_people parent:people skills: [moving] {
 	}
 	
 	aspect base {
-		draw circle(5) color:#red;
+		draw circle(2) color:#red;
 	}
 }
 
@@ -228,7 +230,7 @@ experiment test type: gui {
 	output {
 		display test type:opengl{
 			species car_road aspect: base ;
-			species pedestrian_road aspect: base ;
+			// species pedestrian_road aspect: base ;
 			species parking aspect: test ;
 			species Aalto_buildings aspect:base;
 			species aalto_people aspect:base;
