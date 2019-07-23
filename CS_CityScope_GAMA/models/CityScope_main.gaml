@@ -325,7 +325,7 @@ species building schedules: [] {
 	int depth;
 	float area;
 	float perimeter;
-
+	
 	action createPop (int nb, building bd, bool fromGrid) {
 		create people number: nb {
 			living_place <- bd;

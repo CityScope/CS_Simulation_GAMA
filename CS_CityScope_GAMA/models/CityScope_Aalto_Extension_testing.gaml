@@ -11,7 +11,7 @@ import "CityScope_main.gaml"
 
 global{
 	//GIS folder of the CITY	
-	string cityGISFolder <- "./../includes/City/otaniemi";	
+	string cityGISFolder <- "./../includes/City/Testing_parking_choice";	
 	
 	// Variables used to initialize the table's grid position.
 	float angle <- -9.74;
@@ -38,8 +38,8 @@ global{
 
 	// Babak dev:
 	int max_walking_distance <- 300 	min:0 max:3000	parameter: "maximum walking distance form parking:" category: "people settings";
-	int number_of_people <- 2000 min:0 max: 2000 parameter:"number of people in the simulation" category: "people settings";
-	int min_work_start <- 8;
+	int number_of_people <- 1 min:0 max: 2000 parameter:"number of people in the simulation" category: "people settings";
+	int min_work_start <- 4;
 	int max_work_start <- 10;
 	int min_work_end <- 17;
 	int max_work_end <- 18;
@@ -47,12 +47,12 @@ global{
 	graph car_road_graph;
 	graph pedestrian_road_graph;
 	
-	file parking_footprint_shapefile <- file(cityGISFolder + "/parking_footprint.shp");
-	file roads_shapefile <- file(cityGISFolder + "/car_network.shp");
-	file pedestrian_road_shapefile <- file(cityGISFolder + "/pedestrian_network.shp");
+	file parking_footprint_shapefile <- file(cityGISFolder + "/Parkings.shp");
+	//file roads_shapefile <- file(cityGISFolder + "/car_network.shp");
+	file Origin_shapefile <- file(cityGISFolder + "/Origin.shp");
+	file Destination_shapefile <- file(cityGISFolder + "/destination.shp");
 	
-	
-	float step <- 5 #mn;
+	float step <- 2 #mn;
 	int current_hour update: 6 + (time / #hour) mod 24;
 	
 	// reflex clock_ when:0=0 {write(current_hour);}
@@ -60,24 +60,15 @@ global{
 	
 	
 	init {
-		create parking from: parking_footprint_shapefile with: [ID::int(read("Parking_ID")),capacity::int(read("capacity")),total_capacity::int(read("capacity")), excess_time::int(read("time"))];
-		create Aalto_buildings from: buildings_shapefile with: [usage::string(read("Usage")), scale::string(read("Scale"))]{
-			if usage = "O"{
-				color <- #lightgray;
-			}
-		}
-		create car_road from: roads_shapefile;
-		car_road_graph <- as_edge_graph(car_road);
-		
-		create pedestrian_road from: pedestrian_road_shapefile;
-		pedestrian_road_graph <- as_edge_graph(pedestrian_road);
-		
+		create parking from: parking_footprint_shapefile with: [capacity::int(read("Capacity")),total_capacity::int(read("Capacity")), excess_time::int(read("excess"))];
+		create origin from: Origin_shapefile;
+		create destination from: Destination_shapefile;
 		create aalto_people number: number_of_people {
-			working_place <- one_of(Aalto_buildings where (each.usage = "O" ));
-			living_place <- one_of(Aalto_buildings where (each.usage = "R" ));
+			working_place <- one_of(destination);
+			living_place_ <- one_of(origin);
 			location <- any_location_in(living_place);
-			time_to_work <- min_work_start + rnd(max_work_start - min_work_start);
-			time_to_sleep <- min_work_end + rnd(max_work_end - min_work_end);
+			time_to_work <-8 ; //min_work_start + rnd(max_work_start - min_work_start);
+			time_to_sleep <-16; // min_work_end + rnd(max_work_end - min_work_end);
 			objective <- "resting";
 			}
 		
@@ -87,34 +78,31 @@ global{
 	
 }
 
-species Aalto_buildings parent:building schedules:[] {
-	string usage;
-	string scale;
-	rgb color <- #gray;
-	aspect base {
-		draw shape color: color;
+
+species origin  parent:building{
+	aspect base{
+		draw circle(10) color: #blue;
 	}
 }
-
-
-species parking {
+species destination  parent:building{
+	aspect base {
+		draw circle(10) color: #orange;
+	}
+}
+species parking schedules:[] {
 	int capacity;
-	int ID;
 	int total_capacity;
 	int excess_time;
-	float vacancy <-(capacity/total_capacity) update: (capacity/total_capacity);
-	aspect test {
-		draw circle(15) color: rgb(255 , 255, 255 *vacancy);
-	}
-	
-}
-species parked_car {
+	//float vacancy <-(capacity/total_capacity) update: (capacity/total_capacity);
+	//rgb color <- rgb(240 , 240*vacancy ,  240*vacancy ,255) update: rgb(240 , 240*vacancy ,  240*vacancy ,255);
 	aspect base {
-		draw square(5) color:#black;
+		draw shape color: #yellow ;
 	}
-}
-species aalto_people parent:people skills: [moving] {
 	
+}
+
+species aalto_people parent:people skills: [moving] {
+	origin living_place_ ;
 	bool driving_car <- true;
 	bool mode_of_transportation_is_car <- true;
 	
@@ -181,18 +169,18 @@ species aalto_people parent:people skills: [moving] {
 	reflex move when: the_target != nil {
 		if (driving_car = true){
 			if (objective = "working"){
-				do goto target: the_target_parking on: car_road speed: (1.0 + rnd(0,5)) #km / #h;
+				do goto target: the_target_parking speed: (1.0 + rnd(0,5));
 			}
 			else {
-				do goto target: the_target  speed: (0.1 + rnd(0,5)) #km / #h;
+				do goto target: the_target speed: (0.1 + rnd(0,5));
 			}
 		}
 		else {
 			if (objective = "working"){
-				do goto target: the_target on: car_road speed: (1.0 + rnd(0,5)) #km / #h;
+				do goto target: the_target speed: (1.0 + rnd(0,5));
 			}
 			else {
-				do goto target: the_target_parking speed: (0.1 + rnd(0,5)) #km / #h;
+				do goto target: the_target_parking speed: (0.1 + rnd(0,5));
 			}
 		}
 		
@@ -208,31 +196,14 @@ species aalto_people parent:people skills: [moving] {
 
 
 
-// ----------------- ROADS SPECIES ---------------------
-
-species car_road schedules:[]{
-	aspect base{
-		draw shape color: #lightblue width:2;
-	}
-}
-
-species pedestrian_road schedules:[]{
-	aspect base{
-		draw shape color: #lightgreen;
-	}
-}
-
-
 // ----------------- EXPREIMENTS -----------------
 experiment test type: gui {
 	output {
 		display test type:opengl{
-			species car_road aspect: base ;
-			species pedestrian_road aspect: base ;
-			species parking aspect: test ;
-			species Aalto_buildings aspect:base;
+			species parking aspect: base ;
 			species aalto_people aspect:base;
-
+			species origin aspect:base;
+			species destination aspect:base;
 			}
 			
 		}

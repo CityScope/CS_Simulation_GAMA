@@ -37,9 +37,9 @@ global{
 	
 
 	// Babak dev:
-	int max_walking_distance <- 300 	min:0 max:3000	parameter: "maximum walking distance form parking:" category: "people settings";
-	int number_of_people <- 2000 min:0 max: 2000 parameter:"number of people in the simulation" category: "people settings";
-	int min_work_start <- 8;
+	int max_walking_distance <- 2000 	min:0 max:3000	parameter: "maximum walking distance form parking:" category: "people settings";
+	int number_of_people <- 1 min:0 max: 2000 parameter:"number of people in the simulation" category: "people settings";
+	int min_work_start <- 4;
 	int max_work_start <- 10;
 	int min_work_end <- 17;
 	int max_work_end <- 18;
@@ -51,19 +51,16 @@ global{
 	file roads_shapefile <- file(cityGISFolder + "/car_network.shp");
 	file pedestrian_road_shapefile <- file(cityGISFolder + "/pedestrian_network.shp");
 	
+	int current_hour update: (time / #hour) mod 24;
 	
-	float step <- 5 #mn;
-	int current_hour update: 6 + (time / #hour) mod 24;
-	
-	// reflex clock_ when:0=0 {write(current_hour);}
 	geometry shape <- envelope(bound_shapefile);
 	
 	
 	init {
-		create parking from: parking_footprint_shapefile with: [ID::int(read("Parking_ID")),capacity::int(read("capacity")),total_capacity::int(read("capacity")), excess_time::int(read("time"))];
+		create parking from: parking_footprint_shapefile with: [capacity::int(read("capacity")), excess_time::int(read("time"))];
 		create Aalto_buildings from: buildings_shapefile with: [usage::string(read("Usage")), scale::string(read("Scale"))]{
 			if usage = "O"{
-				color <- #lightgray;
+				color <- #orange;
 			}
 		}
 		create car_road from: roads_shapefile;
@@ -72,7 +69,7 @@ global{
 		create pedestrian_road from: pedestrian_road_shapefile;
 		pedestrian_road_graph <- as_edge_graph(pedestrian_road);
 		
-		create aalto_people number: number_of_people {
+		create aalto_people number: number_of_people{
 			working_place <- one_of(Aalto_buildings where (each.usage = "O" ));
 			living_place <- one_of(Aalto_buildings where (each.usage = "R" ));
 			location <- any_location_in(living_place);
@@ -87,7 +84,7 @@ global{
 	
 }
 
-species Aalto_buildings parent:building schedules:[] {
+species Aalto_buildings schedules:[] {
 	string usage;
 	string scale;
 	rgb color <- #gray;
@@ -97,71 +94,54 @@ species Aalto_buildings parent:building schedules:[] {
 }
 
 
-species parking {
+species parking schedules:[] {
 	int capacity;
-	int ID;
-	int total_capacity;
 	int excess_time;
-	float vacancy <-(capacity/total_capacity) update: (capacity/total_capacity);
-	aspect test {
-		draw circle(15) color: rgb(255 , 255, 255 *vacancy);
-	}
 	
-}
-species parked_car {
 	aspect base {
-		draw square(5) color:#black;
+		draw shape color: #lightgray ;
 	}
-}
-species aalto_people parent:people skills: [moving] {
 	
+}
+
+species aalto_people skills: [moving] {
+	rgb color <- #red ;
 	bool driving_car <- true;
-	bool mode_of_transportation_is_car <- true;
+	Aalto_buildings living_place;
+	Aalto_buildings working_place;
 	
 	int time_to_work;
 	int time_to_sleep;
 	
-	list<parking> list_of_available_parking -> sort_by(parking where (distance_to(each.location, working_place) < max_walking_distance  ),distance_to(each.location, working_place));
-
+	
+//	list<parking> list_of_available_parking <- parking where (distance_to(each.location, working_place) < max_walking_distance  );
+	bool mode_of_transportation_is_car <- true;
 	point the_target_parking;
-	parking chosen_parking;
+	
 	string objective;
 	point the_target <- nil;
-	
-	rgb color <- #red ;
-	
-	// ----- ACTIONS
-	
-	action park_the_car(parking target_parking) {
-		target_parking.capacity <- target_parking.capacity -1;
-	}
-	
-	action take_the_car(parking target_parking) {
-		target_parking.capacity <- target_parking.capacity +1;
-	}
-	
 	
 	// ----- REFLEXES 
 
 
 	
+	
 	reflex time_to_go_to_work when: current_hour = time_to_work and objective = "resting" {
 		
+		objective <- "working";
 		if (mode_of_transportation_is_car = true) {
-			chosen_parking <- one_of(list_of_available_parking where (each.capacity > 0));
-			the_target_parking <- any_location_in(chosen_parking);
+			the_target_parking <- any_location_in(one_of(parking where (each.capacity > 0)));
 			the_target <- any_location_in(working_place);
-			objective <- "working";
 		}	
 		
 		else {
 			the_target <- any_location_in(working_place);
-			objective <- "working";
 		}
 	}
 	
 	
 	
+//	reflex time_to_go_home when: current_hour = time_to_sleep and location = point(working_place) and objective = "working" {
 	reflex time_to_go_home when: current_hour = time_to_sleep and objective = "working" {
 		objective <- "resting";
 		the_target <- any_location_in(living_place);
@@ -170,29 +150,28 @@ species aalto_people parent:people skills: [moving] {
 	reflex change_mode_of_transportation when: location = the_target_parking {
 		if (driving_car = true){
 			driving_car <- false;
-			do park_the_car(chosen_parking);
+			
 		}
 		else {
 			driving_car <- true;
-			do take_the_car(chosen_parking);
 		}
 	}
 
 	reflex move when: the_target != nil {
 		if (driving_car = true){
 			if (objective = "working"){
-				do goto target: the_target_parking on: car_road speed: (1.0 + rnd(0,5)) #km / #h;
+				do goto target: the_target_parking on: car_road_graph speed: (8.0 + rnd(0,5));
 			}
-			else {
-				do goto target: the_target  speed: (0.1 + rnd(0,5)) #km / #h;
+			else{
+				do goto target: the_target on: car_road_graph speed: (2.0 + rnd(0,5));
 			}
 		}
 		else {
 			if (objective = "working"){
-				do goto target: the_target on: car_road speed: (1.0 + rnd(0,5)) #km / #h;
+				do goto target: the_target on: pedestrian_road_graph speed: (8.0 + rnd(0,5));
 			}
 			else {
-				do goto target: the_target_parking speed: (0.1 + rnd(0,5)) #km / #h;
+				do goto target: the_target_parking on: pedestrian_road_graph speed: (2.0 + rnd(0,5));
 			}
 		}
 		
@@ -202,7 +181,7 @@ species aalto_people parent:people skills: [moving] {
 	}
 	
 	aspect base {
-		draw circle(5) color:#red;
+		draw circle(50) color:#red;
 	}
 }
 
@@ -210,13 +189,13 @@ species aalto_people parent:people skills: [moving] {
 
 // ----------------- ROADS SPECIES ---------------------
 
-species car_road schedules:[]{
+species car_road {
 	aspect base{
 		draw shape color: #lightblue width:2;
 	}
 }
 
-species pedestrian_road schedules:[]{
+species pedestrian_road {
 	aspect base{
 		draw shape color: #lightgreen;
 	}
@@ -226,10 +205,10 @@ species pedestrian_road schedules:[]{
 // ----------------- EXPREIMENTS -----------------
 experiment test type: gui {
 	output {
-		display test type:opengl{
+		display test type: opengl  {
 			species car_road aspect: base ;
 			species pedestrian_road aspect: base ;
-			species parking aspect: test ;
+			species parking aspect: base ;
 			species Aalto_buildings aspect:base;
 			species aalto_people aspect:base;
 
