@@ -32,6 +32,7 @@ global {
 	bool cityMatrix <- true;
 	bool onlineGrid <- true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <- true;
+	bool initpop<-true;
 
 	/////////// CITYMATRIX   //////////////
 	map<string, unknown> cityMatrixData;
@@ -292,7 +293,9 @@ global {
 	}
 
 	reflex initSim when: ((cycle mod seconds_per_day) = 0) {
-		do initPop;
+		if(initpop){
+		  do initPop;	
+		}
 		current_day <- current_day mod 6 + 1;
 	}
 
@@ -325,7 +328,7 @@ species building schedules: [] {
 	int depth;
 	float area;
 	float perimeter;
-
+	
 	action createPop (int nb, building bd, bool fromGrid) {
 		create people number: nb {
 			living_place <- bd;
