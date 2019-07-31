@@ -77,7 +77,7 @@ global{
 			time_to_work <- min_work_start + rnd(max_work_start - min_work_start);
 			time_to_sleep <- min_work_end + rnd(max_work_end - min_work_end);
 			objective <- "resting";
-			}
+		}
 	}
 	
 }
