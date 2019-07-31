@@ -18,6 +18,7 @@ global{
 	point center <- {1600, 1000};
 	float brickSize <- 24.0;
 	float cityIOVersion<-2.1;
+	bool initpop <-false;
 	
 	//	city_io
 	string CITY_IO_URL <- "https://cityio.media.mit.edu/api/table/cs_aalto_2";
