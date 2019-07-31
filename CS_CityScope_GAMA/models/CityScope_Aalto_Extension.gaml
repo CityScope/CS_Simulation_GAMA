@@ -60,7 +60,7 @@ global{
 	
 	
 	init {
-		create parking from: parking_footprint_shapefile with: [ID::int(read("Parking_ID")),capacity::int(read("capacity")),total_capacity::int(read("capacity")), excess_time::int(read("time"))];
+		create parking from: parking_footprint_shapefile with: [ID::int(read("Parking_ID")),capacity::int(read("capacity")),total_capacity::int(read("Capacity")), excess_time::int(read("time"))];
 		create Aalto_buildings from: buildings_shapefile with: [usage::string(read("Usage")), scale::string(read("Scale"))]{
 			if usage = "O"{
 				color <- #orange;
