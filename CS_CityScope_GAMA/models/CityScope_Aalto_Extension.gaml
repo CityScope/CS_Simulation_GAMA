@@ -49,13 +49,12 @@ global{
 	
 	file parking_footprint_shapefile <- file(cityGISFolder + "/parking_footprint.shp");
 	file roads_shapefile <- file(cityGISFolder + "/car_network.shp");
-	file pedestrian_road_shapefile <- file(cityGISFolder + "/pedestrian_network.shp");
 	
 	
-	float step <- 5 #mn;
-	int current_hour update: 6 + (time / #hour) mod 24;
+	float step <- 60 #mn;
+	int current_hour update: (6 + time / #hour) mod 24;
 	
-	// reflex clock_ when:0=0 {write(current_hour);}
+	reflex clock_ when:0=0 {write(current_hour);}
 	geometry shape <- envelope(bound_shapefile);
 	
 	
@@ -68,21 +67,16 @@ global{
 		}
 		create car_road from: roads_shapefile;
 		car_road_graph <- as_edge_graph(car_road);
-		
-		create pedestrian_road from: pedestrian_road_shapefile;
-		pedestrian_road_graph <- as_edge_graph(pedestrian_road);
+
 		
 		create aalto_people number: number_of_people {
-			working_place <- one_of(Aalto_buildings where (each.usage = "O" ));
-			living_place <- one_of(Aalto_buildings where (each.usage = "R" ));
+			working_place <- one_of(shuffle(Aalto_buildings where (each.usage = "O" )));
+			living_place <- one_of(shuffle(Aalto_buildings where (each.usage = "R" )));
 			location <- any_location_in(living_place);
 			time_to_work <- min_work_start + rnd(max_work_start - min_work_start);
 			time_to_sleep <- min_work_end + rnd(max_work_end - min_work_end);
 			objective <- "resting";
 			}
-		
-		
-		
 	}
 	
 }
