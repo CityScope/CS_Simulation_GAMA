@@ -49,18 +49,18 @@ global{
 	graph pedestrian_road_graph;
 	
 	file parking_footprint_shapefile <- file(cityGISFolder + "/parking_footprint.shp");
-	file roads_shapefile <- file(cityGISFolder + "/car_network.shp");
+	file roads_shapefile <- file(cityGISFolder + "/roads.shp");
 	
 	
-	float step <- 60 #mn;
-	int current_hour update: (6 + time / #hour) mod 24;
+	float step <- 30 #mn;
+	int current_hour update: (6.0 + time / #hour) mod 24.0;
 	
 	reflex clock_ when:0=0 {write(current_hour);}
 	geometry shape <- envelope(bound_shapefile);
 	
 	
 	init {
-		create parking from: parking_footprint_shapefile with: [ID::int(read("Parking_ID")),capacity::int(read("capacity")),total_capacity::int(read("Capacity")), excess_time::int(read("time"))];
+		create parking from: parking_footprint_shapefile with: [ID::int(read("Parking_ID")),capacity::int(read("Capacity")),total_capacity::int(read("Capacity")), excess_time::int(read("time"))];
 		create Aalto_buildings from: buildings_shapefile with: [usage::string(read("Usage")), scale::string(read("Scale"))]{
 			if usage = "O"{
 				color <- #orange;
@@ -178,18 +178,18 @@ species aalto_people parent:people skills: [moving] {
 	reflex move when: the_target != nil {
 		if (driving_car = true){
 			if (objective = "working"){
-				do goto target: the_target_parking   speed: (2.0 + rnd(0,5));
+				do goto target: the_target_parking on: car_road_graph  speed: (2.0 + rnd(0,5)#km / #h);
 			}
 			else{
-				do goto target: the_target  speed: (2.0 + rnd(0,5));
+				do goto target: the_target on: car_road_graph speed: (2.0 + rnd(0,5)#km / #h);
 			}
 		}
 		else {
 			if (objective = "working"){
-				do goto target: the_target speed: (0.5 + rnd(0,5));
+				do goto target: the_target speed: (0.5 + rnd(0,5) #km / #h);
 			}
 			else {
-				do goto target: the_target_parking speed: (0.5 + rnd(0,5));
+				do goto target: the_target_parking speed: (0.5 + rnd(0,5)#km / #h);
 			}
 		}
 		
