@@ -104,6 +104,8 @@ global{
 		
 
 	}
+
+
 	
 	int day_counter <- 1;
 	string pressure_csv_path <- "../results/";
@@ -118,39 +120,42 @@ global{
 		loop a from: 0 to: length(list_of_parkings)-1	 { 
 			recording_parking_sample <-list_of_parkings[a];
 			pressure_record <- pressure_record + list_of_parkings[a].pressure + "," ;
-			capacity_record <- pressure_record + list_of_parkings[a].vacancy + "," ;
+			capacity_record <- capacity_record + list_of_parkings[a].vacancy + "," ;
 		}	
 		pressure_record <- pressure_record + char(10);
 		capacity_record <- capacity_record + char(10);
 	}
-	
+
 	action creat_headings_for_csv {
 		
 		
-		loop a from: 0 to: length(list_of_parkings)-1	 { 
-			write(list_of_parkings[a].vacancy);
-			pressure_record <- pressure_record + list_of_parkings[a].ID + "," ;
-			capacity_record <- pressure_record + list_of_parkings[a].ID + "," ;
+		loop b from: 0 to: length(list_of_parkings)-1	 { 
+			pressure_record <- pressure_record + list_of_parkings[b].ID + "," ;
+			capacity_record <- capacity_record + list_of_parkings[b].ID + "," ;
 		}		
 		
 		pressure_record <- pressure_record + char(10);
 		capacity_record <- capacity_record + char(10);
 	}
-	
-	
-	
+
+
+
+
+
 	reflex save_the_csv when: current_time = 0{
-		do pause; // just for testing, it should be removed later
+		// TODO: just for testing, it should be removed later
+		do pause; 
 		
 		save string(pressure_record) to: pressure_csv_path + string(#now, 'yyyyMMdd- H-mm - ') + "pressure" + day_counter + ".csv"  type:text ;
 		save string(capacity_record) to: pressure_csv_path + string(#now, 'yyyyMMdd- H-mm - ') + "capacity" + day_counter + ".csv"  type:text ;
-		write("data RECORDED!");
 	}
-	reflex time_to_record_stuff when: current_time mod 30 = 0 {
-		write("data recorded");
+	reflex time_to_record_stuff when: current_time mod 1 = 0{
 		do record_parking_attribute;
 	}
 }
+
+
+
 
 species Aalto_buildings parent:building schedules:[] {
 	string usage;
