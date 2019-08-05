@@ -19,13 +19,13 @@ global {
 	
 	init {
 		create areas from: geo_file;
-		create road from: walk_network{
+		create road from: car_network{
 			type<-0;
 		}
 		create road from: cycling_network{
 			type<-1;
 		}
-		create road from: car_network{
+		create road from: walk_network{
 			type<-2;
 		}
 		create road from: pt_network{
