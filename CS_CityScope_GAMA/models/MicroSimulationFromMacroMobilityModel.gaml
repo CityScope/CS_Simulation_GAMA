@@ -3,6 +3,15 @@ model microFromMacro
 global {
 	file JsonFile <- json_file("https://cityio.media.mit.edu/api/table/grasbrook/od");	
 	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/sim_area.geojson");
+	
+	file walk_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/walking_net.geojson");
+	file cycling_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/cycling_net.geojson");
+	file car_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/driving_net.geojson");
+	file pt_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/pt_net.geojson");
+	graph walk_graph;
+	graph cycling_graph;
+	graph car_graph;
+	graph pt_graph;
 	geometry shape <- envelope(geo_file);
 	map<int, rgb> color_map <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
 	
@@ -10,6 +19,23 @@ global {
 	
 	init {
 		create areas from: geo_file;
+		create road from: walk_network{
+			type<-0;
+		}
+		create road from: cycling_network{
+			type<-1;
+		}
+		create road from: car_network{
+			type<-2;
+		}
+		create road from: pt_network{
+			type<-3;
+		}
+		walk_graph <- as_edge_graph(road where (each.type=0));
+		cycling_graph <- as_edge_graph(road where (each.type=1));
+		car_graph <- as_edge_graph(road where (each.type=2));
+		pt_graph <- as_edge_graph(road where (each.type=3));
+		
 		loop lo over: JsonFile {
 			loop l over: list(lo) {
 				map m <- map(l);
@@ -66,7 +92,7 @@ species areas {
 	rgb text_color <- (color.brighter);
 	
 	aspect default {
-		draw shape color: #gray;
+		draw shape color: #white;
 	}
 }
 
@@ -92,15 +118,23 @@ species people skills:[moving]{
 	}
 
 	aspect default {
-		draw circle(10#m) color: color_map[mode];
+		draw circle(10#m) color: color_map[mode] border:color_map[mode]-50;
+	}
+}
+
+species road schedules: [] {
+	int type;
+	aspect default {
+		draw shape color: color_map[type];
 	}
 
 }
 
 experiment Display type: gui {
 	output {
-		display map type:opengl{
+		display map type:opengl background:#black{
 			species areas;
+			species road;
 			species people;
 		}
 
