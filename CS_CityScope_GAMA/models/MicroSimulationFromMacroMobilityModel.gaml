@@ -4,6 +4,8 @@ global {
 	file JsonFile <- json_file("https://cityio.media.mit.edu/api/table/grasbrook/od");	
 	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/sim_area.geojson");
 	geometry shape <- envelope(geo_file);
+	map<int, rgb> color_map <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
+	
 	
 	
 	init {
@@ -22,7 +24,7 @@ global {
 		}
 	}
 	
-	reflex save_results when: (cycle = 10)  {
+	reflex save_results when: (cycle = 1000)  {
 		string t;
 		save "[" to: "result.json";
 		ask people {
@@ -90,7 +92,7 @@ species people skills:[moving]{
 	}
 
 	aspect default {
-		draw circle(10#m) color: color;
+		draw circle(10#m) color: color_map[mode];
 	}
 
 }
