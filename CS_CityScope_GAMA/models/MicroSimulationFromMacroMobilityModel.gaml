@@ -12,9 +12,9 @@ global {
 	graph cycling_graph;
 	graph car_graph;
 	graph pt_graph;
+	map<int, graph> graph_map <-[0::car_graph, 1::cycling_graph, 2::walk_graph, 3::pt_graph];
 	geometry shape <- envelope(geo_file);
 	map<int, rgb> color_map <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
-	
 	
 	
 	init {
@@ -48,13 +48,19 @@ global {
 			}
 
 		}
+		
+		ask people{
+			if flip(0.8){
+				do die;
+			}
+		}
 	}
 	
 	reflex save_results when: (cycle = 1000)  {
 		string t;
 		save "[" to: "result.json";
 		ask people {
-			t <- "{\n\"vendor\": 1,\n\"segments\": [";
+			t <- "{\n\"profile\": "+mode+",\n\"segments\": [";
 			int curLoc<-0;
 			loop l over: locs {
 				
@@ -102,16 +108,12 @@ species people skills:[moving]{
 	point home;
 	point work;
 	rgb color <- rnd_color(255);
-	list<point> locs ;
-	
-	init {
-		locs << location;
-	}
-	
+	list<point> locs;
+		
 	reflex move{
 		do goto target:work;
-		do wander;
-		if(cycle mod 50 = 0){
+		//do wander speed:5.0;
+		if(cycle mod 50 = 0 and cycle>1){
 			locs << {location.x,location.y,cycle};
 		}
 		
