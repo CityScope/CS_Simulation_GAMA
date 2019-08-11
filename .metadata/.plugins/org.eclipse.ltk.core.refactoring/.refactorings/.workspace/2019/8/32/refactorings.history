@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Delete resource &apos;CS_CityScope_GAMA/models/CityScope_Aalto_extension.gaml&apos;" deleteContents="false" description="Delete resource &apos;CS_CityScope_GAMA/models/CityScope_Aalto_extension.gaml&apos;" element1="/CS_CityScope_GAMA/models/CityScope_Aalto_extension.gaml" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1565521680215"/>
+</session>

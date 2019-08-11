@@ -82,7 +82,7 @@ global{
 
 		create Aalto_buildings from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight"))]{
 			if usage = "O"{
-				color <- #orange;
+				color <- 	rgb(200,140,0,70);
 			}
 			capacity <- int (weight * number_of_people) +1 ;
 		}
@@ -101,7 +101,7 @@ global{
 		}
 		
 		do creat_headings_for_csv;
-		
+
 
 	}
 
@@ -160,9 +160,9 @@ global{
 species Aalto_buildings parent:building schedules:[] {
 	string usage;
 	string scale;
-	rgb color <- #gray;
+	rgb color <- rgb(150,150,150,50);
 	aspect base {
-		draw shape color: color;
+		draw shape color: color empty: true depth:  weight * 100;
 	}
 	int capacity;
 	float weight;
@@ -173,11 +173,11 @@ species parking {
 	int capacity;
 	int ID;
 	int total_capacity;
-	int excess_time;
+	int excess_time <- 600;
 	int pressure <- 0 ;
 	float vacancy <-(capacity/total_capacity) update: (capacity/total_capacity);
 	aspect test {
-		draw shape color: rgb(200 , 200 * vacancy, 200 * vacancy) border: #black;
+		draw shape color: rgb(200 , 200 * vacancy, 200 * vacancy) depth: (1-vacancy) * total_capacity / 10;
 	}
 	
 	reflex reset_the_pressure when: current_hour = max_work_start * 60{
@@ -227,7 +227,11 @@ species aalto_people parent:people skills: [moving] {
 	}
 	
 	action Choose_parking {
-		chosen_parking <- one_of(list_of_available_parking where (each.capacity > 0));
+		chosen_parking <- one_of(list_of_available_parking where (
+											(each.capacity 		> 0) and 
+											(each.excess_time 	> (time_to_work - time_to_sleep) 
+											))
+		);
 		the_target_parking <- any_location_in(chosen_parking);		
 	}
 	// ----- REFLEXES 
@@ -298,8 +302,15 @@ species aalto_people parent:people skills: [moving] {
 		}
 	}
 	
+	
+	
 	aspect base {
-		draw circle(2) color:#red;
+		if driving_car = true {
+			draw circle(2) color:#cornflowerblue;
+		} else{
+			draw square(2) color:#lightsalmon;
+		}
+		
 	}
 }
 
@@ -309,30 +320,55 @@ species aalto_people parent:people skills: [moving] {
 
 species car_road schedules:[]{
 	aspect base{
-		draw shape color: #lightblue width:2;
+		draw shape color: rgb(50,50,50) width:2;
 	}
 }
 
-species pedestrian_road schedules:[]{
-	aspect base{
-		draw shape color: #lightgreen;
-	}
-}
+
 
 
 // ----------------- EXPREIMENTS -----------------
 experiment test type: gui {
 	float minimum_cycle_duration <- 0.05;
 	output {
-		display test type:opengl{
+		display test type:opengl background: #black{
 			species car_road aspect: base ;
 			// species pedestrian_road aspect: base ;
 			species parking aspect: test ;
 			species Aalto_buildings aspect:base;
 			species aalto_people aspect:base;
 
-			}
-			
 		}
-
+		display charts {
+			chart "parking vacancy" size: {1 , 0.5} type: series{
+				datalist list(parking)
+				value: list((parking collect (1-each.vacancy)))
+				marker: false
+				style: spline;
+			} 
+			chart "total parking vacancy" size: {1 , 0.5}  position: {0,0.5}type: series{
+				data "Total Parking Vacancy (%)"
+				value: mean(list(parking) collect each.vacancy)
+				style: spline;
+			} 
+		}
+		display pie_charts {
+			chart "found suitable parking (%)" size:{0.3 , 0.5} position: {0,0} type:pie{
+				data "Parking found"value: list(aalto_people) count (each.chosen_parking != nil) color:#chartreuse;
+				data "Parking Not found"value: list(aalto_people) count (each.chosen_parking = nil) color:#coral;
+			}
+			chart "Count of parkings with capacity" size:{0.3 , 0.5} position: {0.3,0} type:pie{
+				data "Parkings with remaining capacity"value: list(parking) count (each.vacancy != 0) color:#chartreuse;
+				data "Parkings with Full capacity"value: list(parking) count (each.vacancy = 0) color:#coral;
+			}
+			chart "total remaining capacity" size:{0.3 , 0.5} position: {0.6,0} type:pie{
+				data "vacant (%)"value: mean(list(parking) collect each.vacancy) color:#chartreuse;
+				data "Full (%)"value: 1 - mean(list(parking) collect each.vacancy) color:#coral;
+			}
+			chart "found suitable parking (%)" size:{1 , 0.5} position: {0,0.5} type:series{
+				data "Parking found"value: list(aalto_people) count (each.chosen_parking != nil) color:#chartreuse;
+			}
+		}
+	}
 }
+
