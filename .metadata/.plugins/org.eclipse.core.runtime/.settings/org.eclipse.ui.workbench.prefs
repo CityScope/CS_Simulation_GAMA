@@ -2,4 +2,5 @@
 ENABLED_DECORATORS=org.eclipse.ui.LinkedResourceDecorator\:false,org.eclipse.ui.SymlinkDecorator\:true,org.eclipse.ui.VirtualResourceDecorator\:false,org.eclipse.ui.ContentTypeDecorator\:true,org.eclipse.ui.ResourceFilterDecorator\:false,msi.gama.application.decorator\:true,msi.gama.application.date.decorator\:false,msi.gama.light.decorator\:true,
 UIActivities.disabled2=true
 UIActivities.org.eclipse.xtext.ui=false
+clearWorkspace=false
 eclipse.preferences.version=1

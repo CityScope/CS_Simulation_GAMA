@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="ExternalProjectImportWizard">
-		<item value="false" key="WizardProjectsImportPage.STORE_NESTED_PROJECTS"/>
-		<item value="false" key="WizardProjectsImportPage.STORE_COPY_PROJECT_ID"/>
-		<item value="false" key="WizardProjectsImportPage.STORE_ARCHIVE_SELECTED"/>
+		<item key="WizardProjectsImportPage.STORE_NESTED_PROJECTS" value="false"/>
+		<item key="WizardProjectsImportPage.STORE_COPY_PROJECT_ID" value="false"/>
+		<item key="WizardProjectsImportPage.STORE_ARCHIVE_SELECTED" value="false"/>
 		<list key="WizardProjectsImportPage.STORE_DIRECTORIES">
+			<item value="C:\Users\bfiro\OneDrive - Aalto University\Aalto\City Lab\Parking- Otaniemi\devEnergy"/>
 			<item value="C:\Users\bfiro\OneDrive - Aalto University\Aalto\City Lab\Parking- Otaniemi\CS_Simulation_GAMA\CS_CityScope_GAMA"/>
 		</list>
 		<list key="WizardProjectsImportPage.STORE_ARCHIVES">
