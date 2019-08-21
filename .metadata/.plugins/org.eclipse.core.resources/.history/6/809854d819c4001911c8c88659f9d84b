@@ -42,10 +42,6 @@ global{
 	int number_of_people <- 3500 min:0 max: 5000 parameter:"number of people in the simulation" category: "people settings";
 	float min_work_start <- 8.0;
 	float max_work_start <- 10.0;
-
-	float min_work_duration <- 1.0;
-	float max_work_duration <- 7.0;
-	
 	float min_work_end <- 17.0;
 	float max_work_end <- 18.0;
 	
@@ -58,9 +54,6 @@ global{
 	
 	float step <- 30 #sec;
 	int current_time update: (360 + time / #mn) mod 1440;
-	
-	int multiplication_factor;
-		
 	
 	//checking time
 	int clock_display;
@@ -105,7 +98,7 @@ global{
 		create aalto_people number: number_of_people {
 			location <- {0,0,0};
 			time_to_work <- int((min_work_start + rnd(max_work_start - min_work_start))*60);
-			time_to_sleep <-int((min_work_start + min_work_duration + rnd(max_work_duration - min_work_duration))*60);
+			time_to_sleep <-int((min_work_end + rnd(max_work_end - min_work_end))*60);
 			objective <- "resting";
 		}
 		
