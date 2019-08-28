@@ -1,8 +1,9 @@
-#Sat Aug 17 15:28:27 EEST 2019
+#Sat Aug 24 17:36:15 EEST 2019
 \!/=
 /instance/org.eclipse.core.net/org.eclipse.core.net.hasMigrated=true
 /instance/org.eclipse.core.resources/pathvariable.CACHE_LOC=C\:/Users/bfiro/OneDrive - Aalto University/Aalto/City Lab/Parking- Otaniemi/CS_Simulation_GAMA/.cache
 /instance/org.eclipse.core.resources/version=1
+/instance/org.eclipse.ui.editors/AbstractTextEditor.Color.Background.SystemDefault=false
 /instance/org.eclipse.ui.editors/overviewRuler_migration=migrated_3.1
 /instance/org.eclipse.ui.ide/PROBLEMS_FILTERS_MIGRATE=true
 /instance/org.eclipse.ui.ide/platformState=1565247030537

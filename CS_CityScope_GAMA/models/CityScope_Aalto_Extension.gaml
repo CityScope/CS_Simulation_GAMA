@@ -39,12 +39,27 @@ global{
 
 	// Babak dev:
 	int max_walking_distance <- 300 	min:0 max:3000	parameter: "maximum walking distance form parking:" category: "people settings";
-	int number_of_people <- 3500 min:0 max: 5000 parameter:"number of people in the simulation" category: "people settings";
-	float min_work_start <- 8.0;
-	float max_work_start <- 10.0;
+	
+	float min_work_start_for_staff <- 8.0;
+	float max_work_start_for_staff <- 10.0;
+	
+	float min_work_start_for_student <- 8.0;
+	float max_work_start_for_student <- 14.0;
+	
+	float min_work_start_for_visitor <- 8.0;
+	float max_work_start_for_visitor <- 14.0;
+	
 
-	float min_work_duration <- 1.0;
-	float max_work_duration <- 7.0;
+	
+	float min_work_duration_for_staff <- 1.0;
+	float max_work_duration_for_staff <- 7.0;
+	
+	float min_work_duration_for_student <- 1.0;
+	float max_work_duration_for_student <- 7.0;
+	
+	float min_work_duration_for_visitor <- 0.5;
+	float max_work_duration_for_visitor <- 2.0;	
+	
 	
 	float min_work_end <- 17.0;
 	float max_work_end <- 18.0;
@@ -52,14 +67,22 @@ global{
 	graph car_road_graph;
 	graph pedestrian_road_graph;
 	
+	//USER GOUPS PARAMETERS:
+	int count_of_staff <- 2000 min:0 max: 5000 parameter: "number of staff " category: 	"user group";
+	int count_of_students <- 2000 min:0 max: 5000 parameter: "number of students" category: "user group";	
+	int count_of_visitors <- 2000 min:0 max: 5000 parameter: "number of visitors during the day" category: "user group";
+	
+	int number_of_people <- count_of_staff + count_of_students + count_of_visitors ;
+		
 	file parking_footprint_shapefile <- file(cityGISFolder + "/parking_footprint.shp");
 	file roads_shapefile <- file(cityGISFolder + "/roads.shp");
 	file campus_buildings <- file(cityGISFolder + "/Campus_buildings.shp");
+	file gateways_file <- file(cityGISFolder + "/gateways.shp");
 	
-	float step <- 30 #sec;
+	float step <- 1 #mn;
 	int current_time update: (360 + time / #mn) mod 1440;
 	
-	int multiplication_factor;
+	int multiplication_factor <- 2;
 		
 	
 	//checking time
@@ -78,35 +101,102 @@ global{
 	string capacity_record <- "time,";
 	parking recording_parking_sample;
 	list<parking> list_of_parkings;
-	float total_weight;
-	
+	float total_weight_office;
+	float total_weight_residential;	
 	// INITIALIZATION:
 	
 	init {
-		create parking from: parking_footprint_shapefile with: [ID::int(read("Parking_id")),capacity::int(read("Capacity")),total_capacity::int(read("Capacity")), excess_time::int(read("time"))];
+		create parking from: parking_footprint_shapefile with: [
+			ID::int(read("Parking_id")),
+			capacity::(int(read("Capacity"))/multiplication_factor),
+			total_capacity::(int(read("Capacity"))/multiplication_factor), 
+			excess_time::int(read("time"))
+		];
 		list_of_parkings <- list(parking);
 		
 
-		create Aalto_buildings from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight"))]{
-			if usage = "O"{
-				color <- 	rgb(200,140,0,70);
+		//create Aalto_buildings from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight"))]{
+		//	if usage = "O"{
+		//		color <- 	rgb(200,140,0,70);
 				
+		//	}
+		create office from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight"))] {
+			if usage != "O"{
+				do die;
 			}
-			total_capacity <- int(weight * number_of_people)+1;
-			capacity <- int(weight * number_of_people)+1;
+			color <- #red;
 		}
 		
-		total_weight <- sum(Aalto_buildings collect each.weight);
-		write(total_weight);
+		create residential from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight"))] {
+			if usage != "R"{
+				do die;
+			}
+			color <- #yellow;
+			if weight = 0 {
+				weight <- 1.0;
+			}
+			
+			//TODO Here the capacity is not defined in the SHP file, therefore for the sake of demonstration capacity is set to 1
+			
+			//capacity <- capacity / multiplication_factor;
+			capacity <- 1;
+		}
+		
+		create gateways from: gateways_file{
+			capacity <- number_of_people;
+		}
+		
+		// ------ ADJUSTING THE WEIGHT OF THE BUILDINGS
+		
+		total_weight_office <- sum(office collect each.weight);
+		total_weight_residential <- sum(residential collect each.weight);
+		write(total_weight_office);		
+		write(total_weight_residential);
+		
+		
+		
+		loop i from:0 to:length(list(office))-1{
+			office[i].total_capacity <- int(((office[i].weight * number_of_people)/total_weight_office)/multiplication_factor)+1;
+			office[i].capacity <- int(((office[i].weight * number_of_people)/total_weight_office)/multiplication_factor)+1;
+		}
+		
+
+		
+		
+	
+		
+		
+
 		create car_road from: roads_shapefile;
 		car_road_graph <- as_edge_graph(car_road);
 		
+		//USER GROUP CREATION
 		
-		create aalto_people number: number_of_people {
+		create aalto_staff number: count_of_staff / multiplication_factor {
 			location <- {0,0,0};
-			time_to_work <- int((min_work_start + rnd(max_work_start - min_work_start))*60);
-			time_to_sleep <-int((min_work_start + min_work_duration + rnd(max_work_duration - min_work_duration))*60);
+			time_to_work <- int((min_work_start_for_staff + rnd(max_work_start_for_staff - min_work_start_for_staff))*60);
+			time_to_sleep <-int((min_work_start_for_staff + min_work_duration_for_staff + rnd(max_work_duration_for_staff - min_work_duration_for_staff))*60);
 			objective <- "resting";
+			people_color_car 	<- #darkviolet  ;
+			people_color		<- #violet  ;
+		}		
+		
+		create aalto_student number: count_of_students / multiplication_factor {
+			location <- {0,0,0};
+			time_to_work <- int((min_work_start_for_student + rnd(max_work_start_for_student - min_work_start_for_student))*60);
+			time_to_sleep <-int((min_work_start_for_student + min_work_duration_for_student + rnd(max_work_duration_for_student - min_work_duration_for_student))*60);
+			objective <- "resting";
+			people_color_car 	<- #deeppink  ;
+			people_color		<- #pink  ;
+		}		
+		
+		create aalto_visitor number: count_of_visitors / multiplication_factor {
+			location <- {0,0,0};
+			time_to_work <- int((min_work_start_for_visitor + rnd(max_work_start_for_visitor - min_work_start_for_visitor))*60);
+			time_to_sleep <-int((min_work_start_for_visitor + min_work_duration_for_visitor + rnd(max_work_duration_for_visitor - min_work_duration_for_visitor))*60);
+			objective <- "resting";
+			people_color_car 	<- #deepskyblue  ;
+			people_color		<- #skyblue ;
 		}
 		
 		do creat_headings_for_csv;
@@ -126,12 +216,13 @@ global{
 				
 		loop a from: 0 to: length(list_of_parkings)-1	 { 
 			recording_parking_sample <-list_of_parkings[a];
-			pressure_record <- pressure_record + list_of_parkings[a].pressure + "," ;
-			capacity_record <- capacity_record + list_of_parkings[a].vacancy + "," ;
+			pressure_record <- pressure_record + list_of_parkings[a].pressure *multiplication_factor + "," ;
+			capacity_record <- capacity_record + list_of_parkings[a].vacancy *multiplication_factor + "," ;
 		}	
 		pressure_record <- pressure_record + char(10);
 		capacity_record <- capacity_record + char(10);
 	}
+	
 	action creat_headings_for_csv {
 		loop b from: 0 to: length(list_of_parkings)-1	 { 
 			pressure_record <- pressure_record + list_of_parkings[b].ID + "," ;
@@ -195,7 +286,7 @@ global{
 	
 	action create_user_residential(point target_location){
 		my_input_capacity <- user_input("Please specify the count of people living in the building", "capacity" :: 100);
-		create Aalto_buildings number:1 with:(location: target_location ) {
+		create residential number:1 with:(location: target_location ) {
 			capacity <- int(my_input_capacity at "capacity");
 			usage <- "R";
 			shape <- polygon([target_location + {-10,-10},target_location + {-10,10},target_location + {10,-10},target_location + {10,10}]);		
@@ -206,7 +297,7 @@ global{
 	
 	action create_user_office(point target_location){
 		my_input_capacity <- user_input("Please specify the amount of people work at the office", "capacity" :: 100);
-		create Aalto_buildings number:1 with:(location: target_location) {
+		create office number:1 with:(location: target_location) {
 			capacity <- int(my_input_capacity at "capacity");
 			usage <- "O";
 			shape <- polygon([target_location + {-10,-10},target_location + {-10,10},target_location + {10,-10},target_location + {10,10}]);
@@ -234,6 +325,27 @@ species Aalto_buildings parent:building schedules:[] {
 	float weight;
 }
 
+species office parent:Aalto_buildings schedules:[] {
+	
+}
+
+species residential parent:Aalto_buildings schedules:[] {
+
+	action accept_people {
+		capacity <- capacity -1;
+	}
+	
+	action remove_people {
+		capacity <- capacity + 1;		
+	}
+}
+
+species gateways parent:residential schedules:[] {
+	aspect base {
+		draw circle(50) color: #blue;
+	}
+}
+
 species parking {
 	int capacity;
 	int ID;
@@ -246,7 +358,7 @@ species parking {
 		draw shape color: rgb(200 , 200 * vacancy, 200 * vacancy) ;
 	}
 	aspect pressure {
-		draw circle(5) depth:pressure color: #orange;
+		draw circle(5) depth:pressure * multiplication_factor color: #orange;
 	}
 	
 	reflex reset_the_pressure when: current_hour = max_work_start * 60{
@@ -256,9 +368,13 @@ species parking {
 
 species aalto_people parent:people skills: [moving] {
 	
-	Aalto_buildings working_place;
+	office working_place;
+	residential living_place;
+	
 	bool driving_car <- true;
 	bool mode_of_transportation_is_car <- true;
+	
+	bool could_not_find_parking <- false;
 	
 	int time_to_work;
 	int time_to_sleep;
@@ -268,9 +384,12 @@ species aalto_people parent:people skills: [moving] {
 	point the_target_parking;
 	parking chosen_parking;
 	string objective;
-	point the_target <- nil;
 	
-	rgb color <- #red ;
+	point the_target <- nil;
+	point living_place_location;
+	
+	rgb people_color_car ;
+	rgb people_color	;
 	
 	// ----- ACTIONS
 	action create_list_of_parkings{
@@ -278,7 +397,18 @@ species aalto_people parent:people skills: [moving] {
 	}
 	
 	action find_living_place {
-		living_place <- one_of(shuffle(Aalto_buildings where (each.usage = "R" )));
+		if (sum(residential collect each.capacity)!= 0){
+			living_place <- one_of(shuffle(residential where (each.capacity > 0)));
+			ask living_place {
+				do accept_people;
+			}
+			mode_of_transportation_is_car <- false ;
+			driving_car <- false;
+		}
+		else {
+			living_place <- one_of(shuffle(gateways));
+			mode_of_transportation_is_car <- true;
+		}
 	}
 	
 	
@@ -296,7 +426,7 @@ species aalto_people parent:people skills: [moving] {
 	}
 	
 	action choose_working_place {
-		working_place <- one_of(shuffle(Aalto_buildings where ((each.usage = "O" ) and (each.capacity > 0)) ) );
+		working_place <- one_of(shuffle(office where (each.capacity > 0)));
 		do distribution_by_weight (working_place);
 	}
 	
@@ -311,11 +441,14 @@ species aalto_people parent:people skills: [moving] {
 	}
 	// ----- REFLEXES 	
 	reflex time_to_go_to_work when: current_time = time_to_work and objective = "resting" {
+		could_not_find_parking <- false;
 		do find_living_place;
+		living_place_location <- any_location_in(living_place);
+		location <- living_place_location;
 		
-		location <- any_location_in(living_place);
 		
 		do choose_working_place;
+		
 		if (mode_of_transportation_is_car = true) {
 			do Choose_parking;
 			the_target <- any_location_in(working_place);
@@ -330,12 +463,12 @@ species aalto_people parent:people skills: [moving] {
 	
 	reflex time_to_go_home when: current_time = time_to_sleep and objective = "working" {
 		objective <- "resting";
+		
 		the_target <- any_location_in(living_place);
-		do find_living_place;
 	}
 	
-	reflex change_mode_of_transportation when: location = the_target_parking {
-		
+	reflex change_mode_of_transportation when: location = the_target_parking or location = living_place_location {
+// TODO needs re-definition. 		
 		if chosen_parking.capacity > 0 and objective = "working"{
 			driving_car <- false;
 			do park_the_car(chosen_parking);
@@ -345,11 +478,17 @@ species aalto_people parent:people skills: [moving] {
 			do take_the_car(chosen_parking);
 
 		}
-		
-		else {
+		else if (list_of_available_parking collect each.capacity) != 0 {
 			chosen_parking.pressure <- chosen_parking.pressure  + 1;
 			do Choose_parking;
 		}
+		else{
+			could_not_find_parking <- true;
+			target <- any_location_in(living_place);
+			objective <- "resting";
+			chosen_parking <- nil;
+		}
+		
 	}
 
 	reflex move when: the_target != nil {
@@ -362,11 +501,16 @@ species aalto_people parent:people skills: [moving] {
 			}
 		}
 		else {
-			if (objective = "working"){
+			if (objective = "working"  ){
 				do goto target: the_target on: car_road_graph speed: (0.1 + rnd(0,5) #km / #h);
 			}
 			else {
-				do goto target: the_target_parking on: car_road_graph speed: (0.1 + rnd(0,5)#km / #h);
+				if (mode_of_transportation_is_car = true){
+					do goto target: the_target_parking on: car_road_graph speed: (0.1 + rnd(0,5)#km / #h);
+				}
+				else {
+					do goto target: the_target on: car_road_graph speed: (0.1 + rnd(0,5) #km / #h);
+				}
 			}
 		}
 		
@@ -379,12 +523,29 @@ species aalto_people parent:people skills: [moving] {
 	
 	aspect base {
 		if driving_car = true {
-			draw circle(2) color:#cornflowerblue;
+			draw circle(2) color: people_color_car;
 		} else{
-			draw square(2) color:#lightsalmon;
+			draw square(2) color: people_color;
 		}
 		
 	}
+}
+
+
+
+// ----------------- USER GROUPS -----------------------
+
+
+species aalto_staff parent: aalto_people {
+	
+}
+
+species aalto_student parent: aalto_people {
+	
+}
+
+species aalto_visitor parent: aalto_people {
+	
 }
 
 // ----------------- ROADS SPECIES ---------------------
@@ -395,11 +556,13 @@ species car_road schedules:[]{
 	}
 }
 
-
+grid emmision_grid {
+	
+}
 
 
 // ----------------- EXPREIMENTS -----------------
-experiment test type: gui {
+experiment parking_pressure type: gui {
 	float minimum_cycle_duration <- 0.01;
 	output {
 
@@ -419,10 +582,22 @@ experiment test type: gui {
 			} 
 		}
 		display pie_charts {
-			chart "found suitable parking (%)" size:{0.3 , 0.5} position: {0,0} type:pie{
+			chart "Staff found suitable parking (%)" size:{0.3 , 0.2} position: {0,0.2} type:pie{
 				data "Parking found"value: list(aalto_people) count (each.chosen_parking != nil) color:#chartreuse;
-				data "Parking Not found"value: list(aalto_people) count (each.chosen_parking = nil) color:#coral;
+				data "Parking Not specified" value: list(aalto_people) count (each.chosen_parking = nil) color:#coral;
+				data "Parking Not found" value: list(aalto_people) count (each.could_not_find_parking = true) color:#grey;
 			}
+			chart "Students found suitable parking (%)" size:{0.3 , 0.2} position: {0,0.4} type:pie{
+				data "Parking found"value: list(aalto_people) count (each.chosen_parking != nil) color:#chartreuse;
+				data "Parking Not specified" value: list(aalto_people) count (each.chosen_parking = nil) color:#coral;
+				data "Parking Not found" value: list(aalto_people) count (each.could_not_find_parking = true) color:#grey;
+			}
+			chart "Visitors found suitable parking (%)" size:{0.3 , 0.2} position: {0,0.6} type:pie{
+				data "Parking found"value: list(aalto_people) count (each.chosen_parking != nil) color:#chartreuse;
+				data "Parking Not specified" value: list(aalto_people) count (each.chosen_parking = nil) color:#coral;
+				data "Parking Not found" value: list(aalto_people) count (each.could_not_find_parking = true) color:#grey;
+			}
+			
 			chart "Count of parkings with capacity" size:{0.3 , 0.5} position: {0.3,0} type:pie{
 				data "Parkings with remaining capacity"value: list(parking) count (each.vacancy != 0) color:#chartreuse;
 				data "Parkings with Full capacity"value: list(parking) count (each.vacancy = 0) color:#coral;
@@ -432,19 +607,34 @@ experiment test type: gui {
 				data "Full (%)"value: 1 - mean(list(parking) collect each.vacancy) color:#coral;
 			}
 			chart "found suitable parking (%)" size:{1 , 0.5} position: {0,0.5} type:series{
-				data "Parking found"value: list(aalto_people) count (each.chosen_parking != nil) 
+				data "Parking found"value: list(aalto_people where (each.mode_of_transportation_is_car = true)) count (each.chosen_parking != nil and each.could_not_find_parking != true) 
 				color:#chartreuse
 				marker: false;
 			}
 		}
-				display test type:opengl background: #black{
+		display map_2D_interface type:java2D background: #black{
+			species car_road aspect: base ;
+			// species pedestrian_road aspect: base ;
+			species parking aspect: Envelope ;
+			species office aspect:base;
+			species residential aspect:base;
+			species gateways aspect:base;
+			species aalto_staff aspect:base;
+			species aalto_student aspect:base;
+			species aalto_visitor aspect:base;
+			event 'c' action: create_agents;
+		}
+		display Map_3D type:opengl background: #black{
 			species car_road aspect: base ;
 			// species pedestrian_road aspect: base ;
 			species parking aspect: Envelope ;
 			species parking aspect: pressure;
-			species Aalto_buildings aspect:base;
-			species aalto_people aspect:base;
-			event 'c' action: create_agents;
+			species office aspect:base;
+			species residential aspect:base;
+			species aalto_staff aspect:base;
+			species aalto_student aspect:base;
+			species aalto_visitor aspect:base;
+			species gateways aspect:base;
 		}
 	}
 }
