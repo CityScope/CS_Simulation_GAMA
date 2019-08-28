@@ -14,7 +14,8 @@ global {
 	graph pt_graph;
 	map<int, graph> graph_map <-[0::car_graph, 1::cycling_graph, 2::walk_graph, 3::pt_graph];
 	geometry shape <- envelope(geo_file);
-	map<int, rgb> color_map <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
+	map<int, rgb> color_type_per_mode <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
+	map<int, rgb> color_type_per_type <- [0::#gamared, 1::#gamablue, 2::#gamaorange];
 	
 	
 	init {
@@ -39,7 +40,7 @@ global {
 		loop lo over: JsonFile {
 			loop l over: list(lo) {
 				map m <- map(l);
-				create people with: [mode::int(m["mode"]), home::point(m["home_ll"]), work::point(m["work_ll"]), start_time::int(m["start_time"])] {
+				create people with: [type::int(m["type"]), mode::int(m["mode"]), home::point(m["home_ll"]), work::point(m["work_ll"]), start_time::int(m["start_time"])] {
 					location <- home;
 					home <- point(to_GAMA_CRS(home, "EPSG:4326"));
 					work <- point(to_GAMA_CRS(work, "EPSG:4326"));
@@ -104,6 +105,7 @@ species areas {
 
 species people skills:[moving]{
 	int mode;
+	int type;
 	int start_time;
 	point home;
 	point work;
@@ -111,33 +113,43 @@ species people skills:[moving]{
 	list<point> locs;
 		
 	reflex move{
-		do goto target:work;
-		//do wander speed:5.0;
+		do goto target:work;// on:car_graph recompute_path:false;
 		if(cycle mod 50 = 0 and cycle>1){
 			locs << {location.x,location.y,cycle};
 		}
 		
 	}
 
-	aspect default {
-		draw circle(10#m) color: color_map[mode] border:color_map[mode]-50;
+	aspect mode {
+		draw circle(10#m) color: color_type_per_mode[mode] border:color_type_per_mode[mode]-50;
+	}
+	
+	aspect type{
+		draw circle(10#m) color: color_type_per_type[type] border:color_type_per_mode[mode]-50;
 	}
 }
 
 species road schedules: [] {
 	int type;
 	aspect default {
-		draw shape color: color_map[type];
+		draw shape color: color_type_per_mode[type];// at:{location.x,location.y,type*world.shape.width*0.1};
 	}
 
 }
 
 experiment Display type: gui {
 	output {
-		display map type:opengl background:#black{
+		layout #split;
+		display map_mode type:opengl background:#black{
 			species areas;
 			species road;
-			species people;
+			species people aspect:mode;
+		}
+		
+		display map_type type:opengl background:#black{
+			species areas;
+			species road;
+			species people aspect:type;
 		}
 
 	}
