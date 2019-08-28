@@ -79,10 +79,10 @@ global{
 	file campus_buildings <- file(cityGISFolder + "/Campus_buildings.shp");
 	file gateways_file <- file(cityGISFolder + "/gateways.shp");
 	
-	float step <- 1 #mn;
+	float step <- 2 #mn;
 	int current_time update: (360 + time / #mn) mod 1440;
 	
-	int multiplication_factor <- 2;
+	int multiplication_factor <- 3  min:1 max: 10 parameter: "Multiplication number" category: "people";
 		
 	
 	//checking time
@@ -159,12 +159,6 @@ global{
 			office[i].total_capacity <- int(((office[i].weight * number_of_people)/total_weight_office)/multiplication_factor)+1;
 			office[i].capacity <- int(((office[i].weight * number_of_people)/total_weight_office)/multiplication_factor)+1;
 		}
-		
-
-		
-		
-	
-		
 		
 
 		create car_road from: roads_shapefile;
@@ -358,7 +352,7 @@ species parking {
 		draw shape color: rgb(200 , 200 * vacancy, 200 * vacancy) ;
 	}
 	aspect pressure {
-		draw circle(5) depth:pressure * multiplication_factor color: #orange;
+		draw circle(5) depth:pressure * multiplication_factor*10 color: #orange;
 	}
 	
 	reflex reset_the_pressure when: current_hour = max_work_start * 60{
@@ -441,7 +435,7 @@ species aalto_people parent:people skills: [moving] {
 		the_target_parking <- any_location_in(chosen_parking);		
 	}
 	// ----- REFLEXES 	
-	reflex time_to_go_to_work when: current_time = time_to_work and objective = "resting" {
+	reflex time_to_go_to_work when: current_time > time_to_work and current_time < time_to_sleep and objective = "resting" {
 		could_not_find_parking <- false;
 		do find_living_place;
 		living_place_location <- any_location_in(living_place);
@@ -462,7 +456,7 @@ species aalto_people parent:people skills: [moving] {
 		}
 	}
 	
-	reflex time_to_go_home when: current_time = time_to_sleep and objective = "working" {
+	reflex time_to_go_home when:  current_time > time_to_sleep and objective = "working" {
 		objective <- "resting";
 		
 		the_target <- any_location_in(living_place);
