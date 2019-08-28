@@ -104,7 +104,7 @@ global{
 	float total_weight_office;
 	float total_weight_residential;	
 	// INITIALIZATION:
-	bool residence_type_randomness;
+	
 	init {
 		create parking from: parking_footprint_shapefile with: [
 			ID::int(read("Parking_id")),
@@ -397,7 +397,7 @@ species aalto_people parent:people skills: [moving] {
 	}
 	
 	action find_living_place {
-		if (sum(residential collect each.capacity)!= 0 and flip(0.5) = true){
+		if (sum(residential collect each.capacity)!= 0){
 			living_place <- one_of(shuffle(residential where (each.capacity > 0)));
 			ask living_place {
 				do accept_people;
@@ -579,9 +579,9 @@ experiment parking_pressure type: gui {
 	output {
 
 		display charts {
-			chart "parking occupied (%)" size: {1 , 0.5} type: series{
+			chart "parking vacancy" size: {1 , 0.5} type: series{
 				datalist list(parking)
-				value: list((parking collect ((1-each.vacancy)*100)))
+				value: list((parking collect (1-each.vacancy)))
 				marker: false
 				style: spline;
 			} 

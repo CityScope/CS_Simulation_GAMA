@@ -104,7 +104,7 @@ global{
 	float total_weight_office;
 	float total_weight_residential;	
 	// INITIALIZATION:
-	bool residence_type_randomness;
+	
 	init {
 		create parking from: parking_footprint_shapefile with: [
 			ID::int(read("Parking_id")),
@@ -177,8 +177,8 @@ global{
 			time_to_work <- int((min_work_start_for_staff + rnd(max_work_start_for_staff - min_work_start_for_staff))*60);
 			time_to_sleep <-int((min_work_start_for_staff + min_work_duration_for_staff + rnd(max_work_duration_for_staff - min_work_duration_for_staff))*60);
 			objective <- "resting";
-			people_color_car 	<- rgb(184,213,67)  ;
-			people_color		<- rgb(238,147,36)  ;
+			people_color_car 	<- #darkviolet  ;
+			people_color		<- #violet  ;
 		}		
 		
 		create aalto_student number: count_of_students / multiplication_factor {
@@ -186,8 +186,8 @@ global{
 			time_to_work <- int((min_work_start_for_student + rnd(max_work_start_for_student - min_work_start_for_student))*60);
 			time_to_sleep <-int((min_work_start_for_student + min_work_duration_for_student + rnd(max_work_duration_for_student - min_work_duration_for_student))*60);
 			objective <- "resting";
-			people_color_car 	<- rgb(106,189,69)  ;
-			people_color		<- rgb(230,77,61)  ;
+			people_color_car 	<- #deeppink  ;
+			people_color		<- #pink  ;
 		}		
 		
 		create aalto_visitor number: count_of_visitors / multiplication_factor {
@@ -195,8 +195,8 @@ global{
 			time_to_work <- int((min_work_start_for_visitor + rnd(max_work_start_for_visitor - min_work_start_for_visitor))*60);
 			time_to_sleep <-int((min_work_start_for_visitor + min_work_duration_for_visitor + rnd(max_work_duration_for_visitor - min_work_duration_for_visitor))*60);
 			objective <- "resting";
-			people_color_car 	<- rgb(31,179,90)  ;
-			people_color		<- rgb(151,26,47) ;
+			people_color_car 	<- #deepskyblue  ;
+			people_color		<- #skyblue ;
 		}
 		
 		do creat_headings_for_csv;
@@ -371,7 +371,7 @@ species aalto_people parent:people skills: [moving] {
 	office working_place;
 	residential living_place;
 	
-	bool driving_car;
+	bool driving_car <- true;
 	bool mode_of_transportation_is_car <- true;
 	
 	bool could_not_find_parking <- false;
@@ -397,7 +397,7 @@ species aalto_people parent:people skills: [moving] {
 	}
 	
 	action find_living_place {
-		if (sum(residential collect each.capacity)!= 0 and flip(0.5) = true){
+		if (sum(residential collect each.capacity)!= 0){
 			living_place <- one_of(shuffle(residential where (each.capacity > 0)));
 			ask living_place {
 				do accept_people;
@@ -408,7 +408,6 @@ species aalto_people parent:people skills: [moving] {
 		else {
 			living_place <- one_of(shuffle(gateways));
 			mode_of_transportation_is_car <- true;
-			driving_car <- false;
 		}
 	}
 	
@@ -468,7 +467,7 @@ species aalto_people parent:people skills: [moving] {
 		the_target <- any_location_in(living_place);
 	}
 	
-	reflex change_mode_of_transportation when: mode_of_transportation_is_car = true and (location = the_target_parking or location = living_place_location) {
+	reflex change_mode_of_transportation when: location = the_target_parking or location = living_place_location {
 // TODO needs re-definition. 
 		if location = the_target_parking {
 			if chosen_parking.capacity > 0 and objective = "working"{
@@ -498,11 +497,11 @@ species aalto_people parent:people skills: [moving] {
 			}
 			else {
 				driving_car <- false;
-				target <- nil;
 			}
 		}
 
 	}
+
 	reflex move when: the_target != nil {
 		if (driving_car = true){
 			if (objective = "working"){
@@ -579,9 +578,9 @@ experiment parking_pressure type: gui {
 	output {
 
 		display charts {
-			chart "parking occupied (%)" size: {1 , 0.5} type: series{
+			chart "parking vacancy" size: {1 , 0.5} type: series{
 				datalist list(parking)
-				value: list((parking collect ((1-each.vacancy)*100)))
+				value: list((parking collect (1-each.vacancy)))
 				marker: false
 				style: spline;
 			} 
