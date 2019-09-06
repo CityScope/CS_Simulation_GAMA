@@ -3,7 +3,6 @@ model microFromMacro
 global {
 	file JsonFile <- json_file("https://cityio.media.mit.edu/api/table/grasbrook/od");	
 	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/sim_area.geojson");
-	
 	file walk_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/walking_net.geojson");
 	file cycling_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/cycling_net.geojson");
 	file car_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/driving_net.geojson");
@@ -44,15 +43,15 @@ global {
 					location <- home;
 					home <- point(to_GAMA_CRS(home, "EPSG:4326"));
 					work <- point(to_GAMA_CRS(work, "EPSG:4326"));
-					location<-home;
+			       location<-home;
 				}
 			}
 
 		}
 		
 		ask people{
-			if flip(0.8){
-				do die;
+			if flip(0.9){
+				//do die;
 			}
 		}
 	}
@@ -61,7 +60,7 @@ global {
 		string t;
 		save "[" to: "result.json";
 		ask people {
-			t <- "{\n\"profile\": "+mode+",\n\"segments\": [";
+			t <- "{\n\"mode\": "+mode+",\n\"segments\": [";
 			int curLoc<-0;
 			loop l over: locs {
 				
@@ -113,8 +112,9 @@ species people skills:[moving]{
 	list<point> locs;
 		
 	reflex move{
+		do wander;
 		do goto target:work;// on:car_graph recompute_path:false;
-		if(cycle mod 50 = 0 and cycle>1){
+		if(cycle mod 250 = 0 and cycle>1){
 			locs << {location.x,location.y,cycle};
 		}
 		
