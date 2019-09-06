@@ -1,12 +1,17 @@
 model microFromMacro
 
 global {
-	file JsonFile <- json_file("https://cityio.media.mit.edu/api/table/grasbrook/od");	
-	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/sim_area.geojson");
-	file walk_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/walking_net.geojson");
-	file cycling_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/cycling_net.geojson");
-	file car_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/driving_net.geojson");
-	file pt_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/pt_net.geojson");
+	string city<-'Hamburg';
+	map<string, string> table_name_per_city <- ['Detroit'::'corktown', 'Hamburg'::'grasbrook'];
+	string city_io_table<-table_name_per_city[city];
+	
+	file JsonFile <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/od");	
+	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/table_area.geojson");
+	
+	file walk_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/walking_net.geojson");
+	file cycling_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/cycling_net.geojson");
+	file car_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/driving_net.geojson");
+	file pt_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/pt_net.geojson");
 	graph walk_graph;
 	graph cycling_graph;
 	graph car_graph;
@@ -85,7 +90,7 @@ global {
 		file JsonFileResults <- json_file("./result.json");
         map<string, unknown> c <- JsonFileResults.contents;
 		try{			
-	  	  save(json_file("https://cityio.media.mit.edu/api/table/update/grasbrook/cityIO_Gama_Hamburg", c));		
+	  	  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/cityIO_Gama_"+city, c));		
 	  	}catch{
 	  	  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 	  	} 
