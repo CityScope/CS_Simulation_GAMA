@@ -55,7 +55,7 @@ global{
 	// Multiplication factor for reducing the number of agents
 	// This is used to make the simulation lighter especially when the area is big and count of agetns is high
 	
-	int multiplication_factor <- 2  min:1 max: 10 parameter: "Multiplication factor" category: "people";
+	int multiplication_factor <- 1  min:1 max: 10 parameter: "Multiplication factor" category: "people";
 	
 	//Maximum distance between workspace and the parking
 	
@@ -146,14 +146,14 @@ global{
 			if usage != "O"{
 				do die;
 			}
-			color <- rgb(100,100,100,50);
+			color <- rgb(255,0,0,40);
 		}
 		
 		create residential from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight"))] {
 			if usage != "R"{
 				do die;
 			}
-			color <- rgb(150,150,150,50);
+			color <- rgb(255,255,0,50);
 			if weight = 0 {
 				weight <- 1.0;
 			}
@@ -198,6 +198,7 @@ global{
 			objective <- "resting";
 			people_color_car 	<- rgb(184,213,67)  ;
 			people_color		<- rgb(238,147,36)  ;
+			type_of_agent <- "aalto_staff";
 		}		
 		
 		create aalto_student number: count_of_students / multiplication_factor {
@@ -207,6 +208,7 @@ global{
 			objective <- "resting";
 			people_color_car 	<- rgb(106,189,69)  ;
 			people_color		<- rgb(230,77,61)  ;
+			type_of_agent <- "aalto_student";
 		}		
 		
 		create aalto_visitor number: count_of_visitors / multiplication_factor {
@@ -216,7 +218,11 @@ global{
 			objective <- "resting";
 			people_color_car 	<- rgb(31,179,90)  ;
 			people_color		<- rgb(151,26,47) ;
+			type_of_agent <- "aalto_visitor";
 		}
+		
+		
+		write(count(list(aalto_staff) , (each.could_not_find_parking = false)));
 		
 		do creat_headings_for_csv;
 
@@ -256,7 +262,7 @@ global{
 	}
 
 	reflex save_the_csv when: current_time = 0{
-		// TODO: just for testing, it should be removed later
+
 		
 		save string(pressure_record) to: pressure_csv_path + string(#now, 'yyyyMMdd- H-mm - ') + "pressure" + day_counter + ".csv"  type:text ;
 		save string(capacity_record) to: pressure_csv_path + string(#now, 'yyyyMMdd- H-mm - ') + "capacity" + day_counter + ".csv"  type:text ;
@@ -280,59 +286,67 @@ global{
 	
 	map<string,unknown> my_input_capacity; 
 	map my_agent_type;
-	point target;
+	point mouse_location;
+	user_command Create_agents action:create_agents;
 	
+	action record_mouse_location {
+		mouse_location <- #user_location;
+	}
 	action create_agents 
 	{
-		target <- #user_location;
+		mouse_location <- #user_location;
+		write(mouse_location);
 		my_agent_type <- user_input("please enter the agent type: [1 = parking, 2 = Residential, 3 = Office]", ["type" :: 1]);
-		write(target);
 		if my_agent_type at "type" = 1 {
-			do create_user_parking(target);
+			do create_user_parking(mouse_location);
 		}
 		else if my_agent_type at "type" = 2{
-			do create_user_residential(target);
+			do create_user_residential(mouse_location);
 		}
 		else if my_agent_type at "type" = 3{
-			do create_user_office(target);
+			do create_user_office(mouse_location);
 		}
 		else {
 			write("this type of agent does not exist");
 		}
+
 	}
 	
+	
 	action create_user_parking(point target_location){
-		my_input_capacity <- user_input("Please specify the parking capacity", "capacity" :: 100);
+		my_input_capacity <- user_input("Please specify the parking capacity", "capacity" :: 10);
 		create parking number:1 with:(location: target_location) {
 			capacity <- int(my_input_capacity at "capacity") ;
 			total_capacity <-  int(my_input_capacity at "capacity");
 			//vacancy <- (int(my_input_capacity at "capacity")/int(my_input_capacity at "capacity"));
 			shape <- square(20);
-			color <- #red;
 			list_of_parkings <- list(parking);
 			write("A parking was created with capacity of "+ char(10) + string(capacity) + char(10) + "and total capacity of " + char(10)+ string(total_capacity));
 		}
 	}
 	
 	action create_user_residential(point target_location){
-		my_input_capacity <- user_input("Please specify the count of people living in the building", "capacity" :: 100);
+		my_input_capacity <- user_input("Please specify the count of people living in the building", "capacity" :: 10);
 		create residential number:1 with:(location: target_location ) {
 			capacity <- int(my_input_capacity at "capacity");
 			usage <- "R";
-			shape <- polygon([target_location + {-10,-10},target_location + {-10,10},target_location + {10,-10},target_location + {10,10}]);		
+			shape <- square(20);
+			color <- rgb(255,255,0,50);
 			write("A building was constructed and count of dwellers are: " + char(10) + string(capacity));
 		}
 	}
 	
 	action create_user_office(point target_location){
-		my_input_capacity <- user_input("Please specify the amount of people work at the office", "capacity" :: 100);
+		my_input_capacity <- user_input("Please specify the amount of people work at the office", "capacity" :: 10);
 		create office number:1 with:(location: target_location) {
 			capacity <- int(my_input_capacity at "capacity");
 			usage <- "O";
-			shape <- polygon([target_location + {-10,-10},target_location + {-10,10},target_location + {10,-10},target_location + {10,10}]);
+			color <- rgb(255,0,0,40);
+			shape <-square(25);
 			write("A building was constructed and count of employees are: " + char(10) + string(capacity));
 		}
 	}
+
 }
 
 
@@ -343,9 +357,9 @@ global{
 species Aalto_buildings parent:building schedules:[] {
 	string usage;
 	string scale;
-	rgb color <- rgb(150,150,150,20);
+	rgb color <- rgb(150,150,150,30);
 	aspect base {
-		draw shape color: color empty: true depth:  (total_capacity / 5);
+		draw shape color: color  depth:  (total_capacity / 5);
 	}
 	int capacity;
 	int total_capacity;
@@ -376,7 +390,7 @@ species residential parent:Aalto_buildings schedules:[] {
 
 species gateways parent:residential schedules:[] {
 	aspect base {
-		draw circle(50) color: #blue;
+		draw circle(20) color: #blue;
 	}
 }
 
@@ -418,12 +432,12 @@ species aalto_people parent:people skills: [moving] {
 	
 	bool driving_car;
 	bool mode_of_transportation_is_car <- true;
-	
 	bool could_not_find_parking <- false;
 	
 	int time_to_work;
 	int time_to_sleep;
 	
+	string type_of_agent;
 	list<parking> list_of_available_parking;
 
 	point the_target_parking;
@@ -443,10 +457,10 @@ species aalto_people parent:people skills: [moving] {
 	}
 	
 	action find_living_place {
-		if (sum(residential collect each.capacity)!= 0 and flip(0.5) = true){
+		if ((sum(residential collect each.capacity)!= 0 and (flip(0.5) = true))){
 			living_place <- one_of(shuffle(residential where (each.capacity > 0)));
-			ask living_place {
-				do accept_people;
+				ask living_place {
+					do accept_people;
 			}
 			mode_of_transportation_is_car <- false ;
 			driving_car <- false;
@@ -489,6 +503,11 @@ species aalto_people parent:people skills: [moving] {
 	
 	reflex time_to_go_to_work when: current_time > time_to_work and current_time < time_to_sleep and objective = "resting" {
 		could_not_find_parking <- false;
+		if living_place != nil {
+			ask living_place{
+				do remove_people;
+			}
+		}
 		do find_living_place;
 		
 		living_place_location <- any_location_in(living_place);
@@ -531,7 +550,7 @@ species aalto_people parent:people skills: [moving] {
 			}
 			else{
 				could_not_find_parking <- true;
-				target <- any_location_in(living_place);
+				the_target <- any_location_in(living_place);
 				objective <- "resting";
 				chosen_parking <- nil;
 			}
@@ -543,7 +562,7 @@ species aalto_people parent:people skills: [moving] {
 			}
 			else {
 				driving_car <- false;
-				target <- nil;
+				the_target <- nil;
 			}
 		}
 
@@ -607,16 +626,16 @@ species aalto_visitor parent: aalto_people {
 
 // ----------------- EXPREIMENTS -----------------
 experiment parking_pressure type: gui {
-	float minimum_cycle_duration <- 0.01;
+	float minimum_cycle_duration <- 0.2;
 	output {
 
 		display charts {
-			chart "parking occupied (%)" size: {0.5 , 0.5} type: series{
-				datalist list(parking)
-				value: list((parking collect ((1-each.vacancy)*100)))
-				marker: false
-				style: spline;
-			} 
+//			chart "parking occupied (%)" size: {0.5 , 0.5} type: series{
+//				datalist list(parking)
+//				value: list((parking collect ((1-each.vacancy)*100)))
+//				marker: false
+//				style: spline;
+//			} 
 			chart "total parking vacancy" size: {0.5 , 0.5}  position: {0,0.5}type: series{
 				data "Total Parking Vacancy (%)"
 				value: mean(list(parking) collect each.vacancy)
@@ -624,23 +643,19 @@ experiment parking_pressure type: gui {
 				style: spline;
 				
 			} 
-			
-			chart "Parking Pressure" size: {0.5 , 0.5} position: {0.5,0} type: series{
-				datalist list(parking)
-				value: list(parking collect (each.pressure))
-				marker: false
-				style: spline;
-			} 			
-			
+
 			chart "Total Perking presure"	size: {0.5 , 0.5}	position: {0.5,0.5} type: series{
 				data "Total Parking Pressure"
 				value: sum(list(parking) collect each.pressure)
 				marker: false
 				style: spline;
+			}	
+			chart "Parking Status" size: {0.5 , 0.5}  type: pie{
+				data "Vacant Parkings" value: count(list(parking), each.vacancy > 0);
+				data "Full Parkings" value: count(list(parking), each.vacancy = 0);
 			}
-			
-		}
 		
+		}
 		
 		// This block was for generating pie charts. Because of changes in user groups it is no longer active.
 		// TODO: Fix these charts
@@ -691,9 +706,11 @@ experiment parking_pressure type: gui {
 			species aalto_visitor aspect:base;
 			
 		// key for character C initiates the create action.
-		
+			
 			event 'c' action: create_agents;
+			event mouse_up action: record_mouse_location;
 		}
+		
 		display Map_3D type:opengl background: #black{
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
@@ -706,5 +723,6 @@ experiment parking_pressure type: gui {
 			species gateways aspect:base;
 		}
 	}
+	
 }
 
