@@ -46,14 +46,14 @@ global{
 	
 	// Timing and speed of Simulation:
 	
-	int first_hour_of_day <- 6;
+	int first_hour_of_day <- 8;
 	int last_hour_of_day <- 19;
 	
 	int seconds_per_day <- 8640;
 	int current_hour update: first_hour_of_day + (time / #hour) mod (last_hour_of_day-first_hour_of_day);
 	int current_day <- 0;
 	
-	float step <- 30 #mn;
+	float step <- 1 #mn;
 	int current_time update: (first_hour_of_day *60) + ((time / #mn) mod ((last_hour_of_day-first_hour_of_day) * 60));
 	
 	// Multiplication factor for reducing the number of agents
@@ -201,8 +201,8 @@ global{
 		
 		create aalto_staff number: count_of_staff / multiplication_factor {
 			location <- {0,0,0};
-			time_to_work <- int((min_work_start_for_staff + rnd(max_work_start_for_staff - min_work_start_for_staff))*60);
-			time_to_sleep <-int((min_work_start_for_staff + min_work_duration_for_staff + rnd(max_work_duration_for_staff - min_work_duration_for_staff))*60);
+			time_to_work <- int((min_work_start_for_staff*60 + rnd(max_work_start_for_staff - min_work_start_for_staff)*60));
+			time_to_sleep <-int((time_to_work + min_work_duration_for_staff*60 + rnd(max_work_duration_for_staff - min_work_duration_for_staff)*60));
 			objective <- "resting";
 			people_color_car 	<- rgb(184,213,67)  ;
 			people_color		<- rgb(238,147,36)  ;
@@ -211,8 +211,8 @@ global{
 		
 		create aalto_student number: count_of_students / multiplication_factor {
 			location <- {0,0,0};
-			time_to_work <- int((min_work_start_for_student + rnd(max_work_start_for_student - min_work_start_for_student))*60);
-			time_to_sleep <-int((min_work_start_for_student + min_work_duration_for_student + rnd(max_work_duration_for_student - min_work_duration_for_student))*60);
+			time_to_work <- int((min_work_start_for_student*60 + rnd(max_work_start_for_student - min_work_start_for_student)*60));
+			time_to_sleep <-int((time_to_work + min_work_duration_for_student*60 + rnd(max_work_duration_for_student - min_work_duration_for_student)*60));
 			objective <- "resting";
 			people_color_car 	<- rgb(106,189,69)  ;
 			people_color		<- rgb(230,77,61)  ;
@@ -221,8 +221,8 @@ global{
 		
 		create aalto_visitor number: count_of_visitors / multiplication_factor {
 			location <- {0,0,0};
-			time_to_work <- int((min_work_start_for_visitor + rnd(max_work_start_for_visitor - min_work_start_for_visitor))*60);
-			time_to_sleep <-int((min_work_start_for_visitor + min_work_duration_for_visitor + rnd(max_work_duration_for_visitor - min_work_duration_for_visitor))*60);
+			time_to_work <- int((min_work_start_for_visitor*60 + rnd(max_work_start_for_visitor - min_work_start_for_visitor)*60));
+			time_to_sleep <-int((time_to_work + min_work_duration_for_visitor*60 + rnd(max_work_duration_for_visitor - min_work_duration_for_visitor)*60));
 			objective <- "resting";
 			people_color_car 	<- rgb(31,179,90)  ;
 			people_color		<- rgb(151,26,47) ;
