@@ -7,7 +7,7 @@
 
 model CityScope_ABM_Aalto
 
-import "CityScope_main.gaml"
+//import "CityScope_main.gaml"
 
 global{
 	//GIS folder of the CITY	
@@ -25,18 +25,18 @@ global{
 	// Offline backup data to use when server data unavailable.
 	string BACKUP_DATA <- "../includes/City/otaniemi/cityIO_Aalto.json";
 	
-    //Sliders that dont exisit in Aalto table and are only used in version 1.0 
-	int	toggle1 <- 2;
-	int	slider1 <-2;
-	// TODO: Hard-coding density because the Aalto table doesnt have it.
-	list<float> density_array<-[1.0,1.0,1.0,1.0,1.0,1.0];
+//    //Sliders that dont exisit in Aalto table and are only used in version 1.0 
+//	int	toggle1 <- 2;
+//	int	slider1 <-2;
+//	// TODO: Hard-coding density because the Aalto table doesnt have it.
+//	list<float> density_array<-[1.0,1.0,1.0,1.0,1.0,1.0];
 	
-	// TODO: mapping needs to be fixed for Aalto inputs
-	map<int, list> citymatrix_map_settings <- [-1::["Green", "Green"], 0::["R", "L"], 1::["R", "M"], 2::["R", "S"], 3::["O", "L"], 4::["O", "M"], 5::["O", "S"], 6::["A", "Road"], 7::["A", "Plaza"], 
-		8::["Pa", "Park"], 9::["P", "Parking"], 20::["Green", "Green"], 21::["Green", "Green"]
-	]; 
+//	// TODO: mapping needs to be fixed for Aalto inputs
+//	map<int, list> citymatrix_map_settings <- [-1::["Green", "Green"], 0::["R", "L"], 1::["R", "M"], 2::["R", "S"], 3::["O", "L"], 4::["O", "M"], 5::["O", "S"], 6::["A", "Road"], 7::["A", "Plaza"], 
+//		8::["Pa", "Park"], 9::["P", "Parking"], 20::["Green", "Green"], 21::["Green", "Green"]
+//	]; 
 	
-	
+	map<string, string> people_to_housing_types <- ['aalto_staff':: 'M', 'aalto_student':: 'S', 'aalto_visitor'::'NA'];
 	
 	////////////////////////////////////////////
 	//		
@@ -49,8 +49,12 @@ global{
 	int first_hour_of_day <- 6;
 	int last_hour_of_day <- 19;
 	
-	float step <- 5 #mn;
-	int current_time update: ((first_hour_of_day *60 + time / #mn) mod (last_hour_of_day * 60));
+	int seconds_per_day <- 8640;
+	int current_hour update: first_hour_of_day + (time / #hour) mod (last_hour_of_day-first_hour_of_day);
+	int current_day <- 0;
+	
+	float step <- 30 #mn;
+	int current_time update: (first_hour_of_day *60) + ((time / #mn) mod ((last_hour_of_day-first_hour_of_day) * 60));
 	
 	// Multiplication factor for reducing the number of agents
 	// This is used to make the simulation lighter especially when the area is big and count of agetns is high
@@ -82,11 +86,15 @@ global{
 	float min_work_duration_for_visitor <- 0.5	;
 	float max_work_duration_for_visitor <- 2.0	;	
 	
+	float max_work_start<-max(min_work_start_for_staff, max_work_start_for_student, max_work_start_for_visitor);
+	
 	// Count of People for each user Groups
 	int count_of_staff <- 2000 min:0 max: 5000 parameter: "number of staff " category: 	"user group";
 	int count_of_students <- 2000 min:0 max: 5000 parameter: "number of students" category: "user group";	
 	int count_of_visitors <- 2000 min:0 max: 5000 parameter: "number of visitors during the day" category: "user group";
 	
+	
+	float total_pressure<-0;
 	//////////////////////////////////////////
 	//
 	// 		FILES LOCATION SECTION:
@@ -98,7 +106,7 @@ global{
 	file roads_shapefile <- file(cityGISFolder + "/roads.shp");
 	file campus_buildings <- file(cityGISFolder + "/Campus_buildings.shp");
 	file gateways_file <- file(cityGISFolder + "/gateways.shp");
-	
+	file bound_shapefile <- file(cityGISFolder + "/Bounds.shp");
 
 		
 		
@@ -261,9 +269,9 @@ global{
 		capacity_record <- capacity_record + char(10);
 	}
 
-	reflex save_the_csv when: current_time = 0{
+	reflex save_the_csv when: current_time = (first_hour_of_day *60){
 
-		
+//		total_pressure<-0;
 		save string(pressure_record) to: pressure_csv_path + string(#now, 'yyyyMMdd- H-mm - ') + "pressure" + day_counter + ".csv"  type:text ;
 		save string(capacity_record) to: pressure_csv_path + string(#now, 'yyyyMMdd- H-mm - ') + "capacity" + day_counter + ".csv"  type:text ;
 		day_counter <- day_counter +1;
@@ -354,7 +362,16 @@ global{
 	//
 	// 		BUILT ENVIRONMENT:
 
-species Aalto_buildings parent:building schedules:[] {
+species building schedules: [] {
+	string usage;
+	string scale;
+	float nbFloors <- 1.0; // 1 by default if no value is set.
+	int depth;
+	float area;
+	float perimeter;
+	}
+
+species Aalto_buildings schedules:[] {
 	string usage;
 	string scale;
 	rgb color <- rgb(150,150,150,30);
@@ -409,9 +426,9 @@ species parking {
 		draw circle(5) depth:pressure * multiplication_factor color: #orange;
 	}
 	
-	reflex reset_the_pressure when: current_hour = max_work_start * 60{
-		pressure <- 0 ;
-	}
+//	reflex reset_the_pressure when: current_time = (last_hour_of_day*60)- 60 {
+//		pressure <- 0 ;
+//	}
 }
 
 species car_road schedules:[]{
@@ -425,7 +442,7 @@ species car_road schedules:[]{
 	// 		PEOPLE:
 
 
-species aalto_people parent:people skills: [moving] {
+species aalto_people skills: [moving] {
 	
 	office working_place;
 	residential living_place;
@@ -457,8 +474,8 @@ species aalto_people parent:people skills: [moving] {
 	}
 	
 	action find_living_place {
-		if ((sum(residential collect each.capacity)!= 0 and (flip(0.5) = true))){
-			living_place <- one_of(shuffle(residential where (each.capacity > 0)));
+		if ((sum((residential where (each.scale = people_to_housing_types[type_of_agent])) collect each.capacity)!= 0 and (flip(0.5) = true))){
+			living_place <- one_of(shuffle((residential where (each.scale = people_to_housing_types[type_of_agent])) where (each.capacity > 0)));
 				ask living_place {
 					do accept_people;
 			}
@@ -546,6 +563,7 @@ species aalto_people parent:people skills: [moving] {
 			}
 			else if (list_of_available_parking collect each.capacity) != 0 {
 				chosen_parking.pressure <- chosen_parking.pressure  + 1;
+				total_pressure <- total_pressure + 1;
 				do Choose_parking;
 			}
 			else{
@@ -646,7 +664,8 @@ experiment parking_pressure type: gui {
 
 			chart "Total Perking presure"	size: {0.5 , 0.5}	position: {0.5,0.5} type: series{
 				data "Total Parking Pressure"
-				value: sum(list(parking) collect each.pressure)
+//				value: sum(list(parking) collect each.pressure)
+				value: total_pressure
 				marker: false
 				style: spline;
 			}	
