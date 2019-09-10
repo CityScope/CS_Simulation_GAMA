@@ -1,6 +1,6 @@
 /***
 * Name: CityScope_ABM_Aalto
-* Author: Ronan Doorley and Arnaud Grignard
+* Author: Babak Firoozi Fooladi, Ronan Doorley and Arnaud Grignard
 * Description: This is an extension of the orginal CityScope Main model.
 * Tags: Tag1, Tag2, TagN
 ***/
@@ -53,13 +53,13 @@ global{
 	int current_hour update: first_hour_of_day + (time / #hour) mod (last_hour_of_day-first_hour_of_day);
 	int current_day <- 0;
 	
-	float step <- 1 #mn;
+	float step <- 5 #mn;
 	int current_time update: (first_hour_of_day *60) + ((time / #mn) mod ((last_hour_of_day-first_hour_of_day) * 60));
 	
 	// Multiplication factor for reducing the number of agents
 	// This is used to make the simulation lighter especially when the area is big and count of agetns is high
 	
-	int multiplication_factor <- 1  min:1 max: 10 parameter: "Multiplication factor" category: "people";
+	int multiplication_factor <- 1  min:1 max: 20 parameter: "Multiplication factor" category: "people";
 	
 	//Maximum distance between workspace and the parking
 	
@@ -91,10 +91,16 @@ global{
 	// Count of People for each user Groups
 	int count_of_staff <- 2000 min:0 max: 5000 parameter: "number of staff " category: 	"user group";
 	int count_of_students <- 2000 min:0 max: 5000 parameter: "number of students" category: "user group";	
-	int count_of_visitors <- 2000 min:0 max: 5000 parameter: "number of visitors during the day" category: "user group";
+	int count_of_visitors <- 200 min:0 max: 5000 parameter: "number of visitors during the day" category: "user group";
+
 	
 	
-	float total_pressure<-0;
+	//////////////////////////////////////////
+	//Style
+	////////////////////////////////////////// 
+	
+	map people_color_map <- ["aalto_student"::rgb(55,126,184), "aalto_visitor"::rgb(152,78,163),  "aalto_staff"::rgb(77,175,74)];
+	map mode_color_map <- ["walk"::#green, "drive"::#gamaorange];
 	//////////////////////////////////////////
 	//
 	// 		FILES LOCATION SECTION:
@@ -132,7 +138,6 @@ global{
 	
 	int number_of_people <- count_of_staff + count_of_students + count_of_visitors ;
 
-		
 	//////////////////////////////////////////
 	//
 	// 		INITIALIZATION SECTION:
@@ -154,14 +159,14 @@ global{
 			if usage != "O"{
 				do die;
 			}
-			color <- rgb(255,0,0,40);
+			color <- rgb(255,0,0,20);
 		}
 		
 		create residential from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight"))] {
 			if usage != "R"{
 				do die;
 			}
-			color <- rgb(255,255,0,50);
+			color <- rgb(255,255,0,20);
 			if weight = 0 {
 				weight <- 1.0;
 			}
@@ -232,7 +237,7 @@ global{
 		
 		write(count(list(aalto_staff) , (each.could_not_find_parking = false)));
 		
-		do creat_headings_for_csv;
+//		do creat_headings_for_csv;
 
 
 	}
@@ -243,47 +248,47 @@ global{
 	//
 	//////////////////////////////////////////
 	
-	int day_counter <- 1;
-	string pressure_csv_path <- "../results/";
-	string capacity_csv_path<- "../results/";
-	
-	action record_parking_attribute{
-		pressure_record <- pressure_record + current_time;
-		capacity_record <- capacity_record + current_time;
-				
-		loop a from: 0 to: length(list_of_parkings)-1	 { 
-			recording_parking_sample <-list_of_parkings[a];
-			pressure_record <- pressure_record + list_of_parkings[a].pressure *multiplication_factor + "," ;
-			capacity_record <- capacity_record + list_of_parkings[a].vacancy *multiplication_factor + "," ;
-		}	
-		pressure_record <- pressure_record + char(10);
-		capacity_record <- capacity_record + char(10);
-	}
-	
-	action creat_headings_for_csv {
-		loop b from: 0 to: length(list_of_parkings)-1	 { 
-			pressure_record <- pressure_record + list_of_parkings[b].ID + "," ;
-			capacity_record <- capacity_record + list_of_parkings[b].ID + "," ;
-		}		
-		pressure_record <- pressure_record + char(10);
-		capacity_record <- capacity_record + char(10);
-	}
-
-	reflex save_the_csv when: current_time = (first_hour_of_day *60){
-
-//		total_pressure<-0;
-		save string(pressure_record) to: pressure_csv_path + string(#now, 'yyyyMMdd- H-mm - ') + "pressure" + day_counter + ".csv"  type:text ;
-		save string(capacity_record) to: pressure_csv_path + string(#now, 'yyyyMMdd- H-mm - ') + "capacity" + day_counter + ".csv"  type:text ;
-		day_counter <- day_counter +1;
-		loop t from: 0 to: length(list_of_parkings)-1	 { 
-			parking[t].pressure <- 0;
-			
-		}
-	}
-	
-	reflex time_to_record_stuff when: current_time mod 2 = 0 {
-		do record_parking_attribute;
-	}
+//	int day_counter <- 1;
+//	string pressure_csv_path <- "../results/";
+//	string capacity_csv_path<- "../results/";
+//	
+//	action record_parking_attribute{
+//		pressure_record <- pressure_record + current_time;
+//		capacity_record <- capacity_record + current_time;
+//				
+//		loop a from: 0 to: length(list_of_parkings)-1	 { 
+//			recording_parking_sample <-list_of_parkings[a];
+//			pressure_record <- pressure_record + list_of_parkings[a].pressure *multiplication_factor + "," ;
+//			capacity_record <- capacity_record + list_of_parkings[a].vacancy *multiplication_factor + "," ;
+//		}	
+//		pressure_record <- pressure_record + char(10);
+//		capacity_record <- capacity_record + char(10);
+//	}
+//	
+//	action creat_headings_for_csv {
+//		loop b from: 0 to: length(list_of_parkings)-1	 { 
+//			pressure_record <- pressure_record + list_of_parkings[b].ID + "," ;
+//			capacity_record <- capacity_record + list_of_parkings[b].ID + "," ;
+//		}		
+//		pressure_record <- pressure_record + char(10);
+//		capacity_record <- capacity_record + char(10);
+//	}
+//
+//	reflex save_the_csv when: current_time = (first_hour_of_day *60){
+//
+////		total_pressure<-0;
+//		save string(pressure_record) to: pressure_csv_path + string(#now, 'yyyyMMdd- H-mm - ') + "pressure" + day_counter + ".csv"  type:text ;
+//		save string(capacity_record) to: pressure_csv_path + string(#now, 'yyyyMMdd- H-mm - ') + "capacity" + day_counter + ".csv"  type:text ;
+//		day_counter <- day_counter +1;
+//		loop t from: 0 to: length(list_of_parkings)-1	 { 
+//			parking[t].pressure <- 0;
+//			
+//		}
+//	}
+//	
+//	reflex time_to_record_stuff when: current_time mod 2 = 0 {
+//		do record_parking_attribute;
+//	}
 	
 	
 	////////////////////////////////////////
@@ -293,6 +298,7 @@ global{
 	////////////////////////////////////////
 	
 	map<string,unknown> my_input_capacity; 
+	map<string,unknown> my_input_scale; 
 	map my_agent_type;
 	point mouse_location;
 	user_command Create_agents action:create_agents;
@@ -335,9 +341,11 @@ global{
 	
 	action create_user_residential(point target_location){
 		my_input_capacity <- user_input("Please specify the count of people living in the building", "capacity" :: 10);
+		my_input_scale <- user_input("Please specify the scale ['S', 'M', 'L']", "scale" :: 'S');
 		create residential number:1 with:(location: target_location ) {
 			capacity <- int(my_input_capacity at "capacity");
 			usage <- "R";
+			scale<-string(my_input_scale at 'scale');
 			shape <- square(20);
 			color <- rgb(255,255,0,50);
 			write("A building was constructed and count of dwellers are: " + char(10) + string(capacity));
@@ -426,9 +434,9 @@ species parking {
 		draw circle(5) depth:pressure * multiplication_factor color: #orange;
 	}
 	
-//	reflex reset_the_pressure when: current_time = (last_hour_of_day*60)- 60 {
-//		pressure <- 0 ;
-//	}
+	reflex reset_the_pressure when: current_time = (first_hour_of_day*60) {
+		pressure <- 0 ;
+	}
 }
 
 species car_road schedules:[]{
@@ -450,6 +458,7 @@ species aalto_people skills: [moving] {
 	bool driving_car;
 	bool mode_of_transportation_is_car <- true;
 	bool could_not_find_parking <- false;
+	bool commuter<-false;
 	
 	int time_to_work;
 	int time_to_sleep;
@@ -467,6 +476,9 @@ species aalto_people skills: [moving] {
 	rgb people_color_car ;
 	rgb people_color	;
 	
+	float km_driven;
+	float km_walked;
+	
 	// ----- ACTIONS
 	
 	action create_list_of_parkings{
@@ -481,11 +493,13 @@ species aalto_people skills: [moving] {
 			}
 			mode_of_transportation_is_car <- false ;
 			driving_car <- false;
+			commuter<-false;
 		}
 		else {
 			living_place <- one_of(shuffle(gateways));
 			mode_of_transportation_is_car <- true;
 			driving_car <- false;
+			commuter<-true;
 		}
 	}
 	
@@ -563,7 +577,6 @@ species aalto_people skills: [moving] {
 			}
 			else if (list_of_available_parking collect each.capacity) != 0 {
 				chosen_parking.pressure <- chosen_parking.pressure  + 1;
-				total_pressure <- total_pressure + 1;
 				do Choose_parking;
 			}
 			else{
@@ -617,9 +630,17 @@ species aalto_people skills: [moving] {
 	
 	aspect base {
 		if driving_car = true {
-			draw circle(2) color: people_color_car;
+			draw square(4) color: mode_color_map['drive'];
 		} else{
-			draw square(2) color: people_color;
+			draw circle(3) color: mode_color_map['walk'];
+		}
+		
+	}
+	aspect show_person_type {
+		if driving_car = true {
+			draw square(4) color: people_color_map[type_of_agent];
+		} else{
+			draw circle(3) color: people_color_map[type_of_agent];
 		}
 		
 	}
@@ -662,12 +683,12 @@ experiment parking_pressure type: gui {
 				
 			} 
 
-			chart "Total Perking presure"	size: {0.5 , 0.5}	position: {0.5,0.5} type: series{
+			chart "Total Parking presure"	size: {0.5 , 0.5}	position: {0.5,0.5} type: series{
 				data "Total Parking Pressure"
-//				value: sum(list(parking) collect each.pressure)
-				value: total_pressure
+				value: sum(list(parking) collect each.pressure)
+//				value: total_pressure
 				marker: false
-				style: spline;
+				style: line;
 			}	
 			chart "Parking Status" size: {0.5 , 0.5}  type: pie{
 				data "Vacant Parkings" value: count(list(parking), each.vacancy > 0);
@@ -714,32 +735,66 @@ experiment parking_pressure type: gui {
 		// 2D Display has actions for creating new agents by user interaction
 		// 3D display caused inaccuracies for user interaction.
 		
-		display map_2D_interface type:java2D background: #black{
+		display mode_interface type:java2D background: #black{
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
-			species office aspect:base;
 			species residential aspect:base;
 			species gateways aspect:base;
 			species aalto_staff aspect:base;
 			species aalto_student aspect:base;
 			species aalto_visitor aspect:base;
+			species office aspect:base;
 			
 		// key for character C initiates the create action.
 			
 			event 'c' action: create_agents;
 			event mouse_up action: record_mouse_location;
 		}
+
 		
-		display Map_3D type:opengl background: #black{
+//		display Map_3D type:opengl background: #black{
+//			species car_road aspect: base ;
+//			species parking aspect: Envelope ;
+//			species parking aspect: pressure;
+//			species office aspect:base;
+//			species residential aspect:base;
+//			species aalto_staff aspect:base;
+//			species aalto_student aspect:base;
+//			species aalto_visitor aspect:base;
+//			species gateways aspect:base;
+//		}
+		display Map_3D_person_type type:opengl background: #black{
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
 			species parking aspect: pressure;
 			species office aspect:base;
 			species residential aspect:base;
-			species aalto_staff aspect:base;
-			species aalto_student aspect:base;
-			species aalto_visitor aspect:base;
+			species aalto_staff aspect:show_person_type;
+			species aalto_student aspect:show_person_type;
+			species aalto_visitor aspect:show_person_type;
 			species gateways aspect:base;
+			overlay position: { 3,3 } size: { 150 #px, 80 #px } background: # gray transparency: 0.8 border: # black
+			{	
+  				draw "Students " at: { 20#px, 20#px } color: people_color_map['aalto_student'] font: font("Helvetica", 20, #bold ) perspective:false;
+  				draw "Staff " at: { 20#px, 40#px } color: people_color_map['aalto_staff'] font: font("Helvetica", 20, #bold ) perspective:false;
+  				draw "Visitors " at: { 20#px, 60#px } color: people_color_map['aalto_visitor'] font: font("Helvetica", 20, #bold ) perspective:false;
+            }
+			chart " " background:#black  type: pie style: ring size: {0.5,0.5} position: {world.shape.width*1.1,0} color: #white 
+			tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 1 label_font_style: 'bold'
+			{
+
+				  data 'Commuters' value: length(aalto_student where (each.commuter = true)) color:#green;
+				  data 'Live-Work' value: length(aalto_student where (each.commuter = false)) color:#red;
+				
+			}
+			chart " " background:#black  type: pie style: ring size: {0.5,0.5} position: {world.shape.width*1.1,world.shape.height*0.5} color: #white 
+			tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 1 label_font_style: 'bold'
+			{
+
+				  data 'Km driven' value: 50 color:#green;
+				  data 'Km walked' value: 50 color:#red;
+				
+			}
 		}
 	}
 	
