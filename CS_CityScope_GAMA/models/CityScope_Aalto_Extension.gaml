@@ -52,8 +52,10 @@ global{
 	int seconds_per_day <- 8640;
 	int current_hour update: first_hour_of_day + (time / #hour) mod (last_hour_of_day-first_hour_of_day);
 	int current_day <- 0;
+	float driving_speed<- 30/3.6; // km/hr to m/s
+	float walking_speed<- 4/3.6; // km/hr to m/s
 	
-	float step <- 5 #mn;
+	float step <- 1 #mn;
 	int current_time update: (first_hour_of_day *60) + ((time / #mn) mod ((last_hour_of_day-first_hour_of_day) * 60));
 	
 	// Multiplication factor for reducing the number of agents
@@ -146,7 +148,7 @@ global{
 	
 	bool residence_type_randomness;
 	init {
-		
+		write(step);
 		create parking from: parking_footprint_shapefile with: [
 			ID::int(read("Parking_id")),
 			capacity::(int(read("Capacity"))/multiplication_factor),
@@ -476,8 +478,8 @@ species aalto_people skills: [moving] {
 	rgb people_color_car ;
 	rgb people_color	;
 	
-	float km_driven;
-	float km_walked;
+	int sim_steps_walking<-0;
+	int sim_steps_driving<-0;
 	
 	// ----- ACTIONS
 	
@@ -532,6 +534,10 @@ species aalto_people skills: [moving] {
 	
 	// ----- REFLEXES 	
 	
+	reflex reset_day when: current_time = (first_hour_of_day*60) {
+		sim_steps_driving <- 0 ;
+		sim_steps_walking <- 0 ;
+	}
 	reflex time_to_go_to_work when: current_time > time_to_work and current_time < time_to_sleep and objective = "resting" {
 		could_not_find_parking <- false;
 		if living_place != nil {
@@ -600,23 +606,25 @@ species aalto_people skills: [moving] {
 	}
 	reflex move when: the_target != nil {
 		if (driving_car = true){
+			sim_steps_driving<-sim_steps_driving+1;
 			if (objective = "working"){
-				do goto target: the_target_parking on: car_road_graph  speed: (1 + rnd(0,5)#km / #h);
+				do goto target: the_target_parking on: car_road_graph  speed: driving_speed;
 			}
 			else{
-				do goto target: the_target on: car_road_graph speed: (1 + rnd(0,5)#km / #h);
+				do goto target: the_target on: car_road_graph speed: driving_speed;
 			}
 		}
 		else {
+			sim_steps_walking<-sim_steps_walking+1;
 			if (objective = "working"  ){
-				do goto target: the_target on: car_road_graph speed: (0.1 + rnd(0,5) #km / #h);
+				do goto target: the_target on: car_road_graph speed: walking_speed;
 			}
 			else {
 				if (mode_of_transportation_is_car = true){
-					do goto target: the_target_parking on: car_road_graph speed: (0.1 + rnd(0,5)#km / #h);
+					do goto target: the_target_parking on: car_road_graph speed: walking_speed;
 				}
 				else {
-					do goto target: the_target on: car_road_graph speed: (0.1 + rnd(0,5) #km / #h);
+					do goto target: the_target on: car_road_graph speed: walking_speed;
 				}
 			}
 		}
@@ -783,16 +791,16 @@ experiment parking_pressure type: gui {
 			tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 1 label_font_style: 'bold'
 			{
 
-				  data 'Commuters' value: length(aalto_student where (each.commuter = true)) color:#green;
-				  data 'Live-Work' value: length(aalto_student where (each.commuter = false)) color:#red;
+				  data 'Commuters' value: length(aalto_student where (each.commuter = true)) color:#red;
+				  data 'Live-Work' value: length(aalto_student where (each.commuter = false)) color:#green;
 				
 			}
 			chart " " background:#black  type: pie style: ring size: {0.5,0.5} position: {world.shape.width*1.1,world.shape.height*0.5} color: #white 
 			tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 1 label_font_style: 'bold'
 			{
 
-				  data 'Km driven' value: 50 color:#green;
-				  data 'Km walked' value: 50 color:#red;
+				  data 'Km driven' value: sum(aalto_student collect each.sim_steps_driving)*step*driving_speed color:#red;
+				  data 'Km walked' value: sum(aalto_student collect each.sim_steps_walking)*step*walking_speed color:#green;
 				
 			}
 		}
