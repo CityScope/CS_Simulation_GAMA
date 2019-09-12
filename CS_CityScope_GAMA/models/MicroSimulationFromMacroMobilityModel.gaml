@@ -2,7 +2,7 @@ model microFromMacro
 
 global {
 	file JsonFile <- json_file("https://cityio.media.mit.edu/api/table/grasbrook/od");	
-	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/sim_area.geojson");
+	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/table_area.geojson");
 	file walk_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/walking_net.geojson");
 	file cycling_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/cycling_net.geojson");
 	file car_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/driving_net.geojson");
@@ -14,7 +14,12 @@ global {
 	map<int, graph> graph_map <-[0::car_graph, 1::cycling_graph, 2::walk_graph, 3::pt_graph];
 	geometry shape <- envelope(geo_file);
 	map<int, rgb> color_type_per_mode <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
+	map<int, string> string_type_per_mode <- [0::"driving", 1::"cycling", 2::"walking", 3::"transit"];
+	map<int, float> speed_per_mode <- [0::30.0, 1::15.0, 2::5.0, 3::10.0];
+	
+	
 	map<int, rgb> color_type_per_type <- [0::#gamared, 1::#gamablue, 2::#gamaorange];
+	map<int, string> string_type_per_type <- [0::"live and works here ", 1::"works here", 2::"lives here"];
 	
 	
 	init {
@@ -43,7 +48,7 @@ global {
 					location <- home;
 					home <- point(to_GAMA_CRS(home, "EPSG:4326"));
 					work <- point(to_GAMA_CRS(work, "EPSG:4326"));
-			       location<-home;
+			        location<-home;
 				}
 			}
 
@@ -56,7 +61,7 @@ global {
 		}
 	}
 	
-	reflex save_results when: (cycle = 1000)  {
+	reflex save_results when: (cycle = 86400/2)  {
 		string t;
 		save "[" to: "result.json";
 		ask people {
@@ -112,12 +117,16 @@ species people skills:[moving]{
 	list<point> locs;
 		
 	reflex move{
-		do wander;
-		do goto target:work;// on:car_graph recompute_path:false;
-		if(cycle mod 250 = 0 and cycle>1){
-			locs << {location.x,location.y,cycle};
+		if(cycle>start_time and location!=work){  
+		  do goto target:work speed:0.01 * speed_per_mode[mode];
+		  do wander speed:0.05;
+		  
+		}else{
+		  do wander speed:0.1;
 		}
-		
+		if(cycle mod 75 = 0 and cycle>1 and location!=work){
+		 	locs << {location.x,location.y,cycle};
+		}	
 	}
 
 	aspect mode {
@@ -141,15 +150,38 @@ experiment Display type: gui {
 	output {
 		layout #split;
 		display map_mode type:opengl background:#black{
-			species areas;
-			species road;
+			species areas refresh:false;
+			species road refresh:false;
 			species people aspect:mode;
+			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
+            {
+                float y <- 30#px;
+                loop mode over: color_type_per_mode.keys
+                {
+                    draw square(10#px) at: { 20#px, y } color: color_type_per_mode[mode] border: #white;
+                    draw string(string_type_per_mode[mode]) at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+                    y <- y + 25#px;
+                }
+
+            }
 		}
 		
+		
 		display map_type type:opengl background:#black{
-			species areas;
-			species road;
+			species areas refresh:false;
+			species road refresh:false;
 			species people aspect:type;
+			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
+            {
+                float y <- 30#px;
+                loop type over: color_type_per_type.keys
+                {
+                    draw square(10#px) at: { 20#px, y } color: color_type_per_type[type] border: #white;
+                    draw string(string_type_per_type[type]) at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+                    y <- y + 25#px;
+                }
+
+            }
 		}
 
 	}
