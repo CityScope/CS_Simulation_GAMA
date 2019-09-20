@@ -36,7 +36,7 @@ global{
 //		8::["Pa", "Park"], 9::["P", "Parking"], 20::["Green", "Green"], 21::["Green", "Green"]
 //	]; 
 	
-	map<string, string> people_to_housing_types <- ['aalto_staff':: 'M', 'aalto_student':: 'S', 'aalto_visitor'::'NA'];
+	map<string, string> people_to_housing_types <- ['aalto_staff':: 'R', 'aalto_student':: 'S', 'aalto_visitor'::'NA'];
 	
 	////////////////////////////////////////////
 	//		
@@ -61,7 +61,7 @@ global{
 	// Multiplication factor for reducing the number of agents
 	// This is used to make the simulation lighter especially when the area is big and count of agetns is high
 	
-	int multiplication_factor <- 1  min:1 max: 20 parameter: "Multiplication factor" category: "people";
+	int multiplication_factor <- 20  min:1 max: 50 parameter: "Multiplication factor" category: "people";
 	
 	//Maximum distance between workspace and the parking
 	
@@ -71,14 +71,14 @@ global{
 	float min_work_start_for_staff <- 8.0		;
 	float max_work_start_for_staff <- 10.0		;
 
-	float min_work_duration_for_staff <- 1.0	;
+	float min_work_duration_for_staff <- 5.0	;
 	float max_work_duration_for_staff <- 7.0	;
 	
 	// Students timing options
 	float min_work_start_for_student <- 8.0		;
-	float max_work_start_for_student <- 13.0	;
+	float max_work_start_for_student <- 12.0	;
 
-	float min_work_duration_for_student <- 1.0	;
+	float min_work_duration_for_student <- 5.0	;
 	float max_work_duration_for_student <- 7.0	;
 	
 	// Visitors timing option
@@ -91,11 +91,9 @@ global{
 	float max_work_start<-max(min_work_start_for_staff, max_work_start_for_student, max_work_start_for_visitor);
 	
 	// Count of People for each user Groups
-	int count_of_staff <- 2000 min:0 max: 5000 parameter: "number of staff " category: 	"user group";
-	int count_of_students <- 2000 min:0 max: 5000 parameter: "number of students" category: "user group";	
-	int count_of_visitors <- 200 min:0 max: 5000 parameter: "number of visitors during the day" category: "user group";
-
-	
+	int count_of_staff <- 5000 min:0 max: 10000 parameter: "number of staff " category: 	"user group";
+	int count_of_students <- 5000 min:0 max: 10000 parameter: "number of students" category: "user group";	
+	int count_of_visitors <- 1000 min:0 max: 5000 parameter: "number of visitors during the day" category: "user group";	
 	
 	//////////////////////////////////////////
 	//Style
@@ -112,11 +110,9 @@ global{
 	
 	file parking_footprint_shapefile <- file(cityGISFolder + "/parking_footprint.shp");
 	file roads_shapefile <- file(cityGISFolder + "/roads.shp");
-	file campus_buildings <- file(cityGISFolder + "/Campus_buildings.shp");
+	file campus_buildings <- file(cityGISFolder + "/buildings_3.shp");
 	file gateways_file <- file(cityGISFolder + "/gateways.shp");
 	file bound_shapefile <- file(cityGISFolder + "/Bounds.shp");
-
-		
 		
 	//checking time
 	//This line ensures that whenever time is changed the clock will be written down.
@@ -157,14 +153,14 @@ global{
 		];
 		list_of_parkings <- list(parking);
 		
-		create office from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight"))] {
+		create office from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight")), category::string(read("Category"))] {
 			if usage != "O"{
 				do die;
 			}
 			color <- rgb(255,0,0,20);
 		}
 		
-		create residential from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight"))] {
+		create residential from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight")), category::string(read("Category")), capacity::int(read("Residents"))] {
 			if usage != "R"{
 				do die;
 			}
@@ -176,7 +172,7 @@ global{
 			//TODO Here the capacity is not defined in the SHP file, therefore for the sake of demonstration capacity is set to 1
 			// To define the capacity, reading information should be added to the creating residentials line
 			
-			capacity <- 1;
+//			capacity <- 1;
 			
 			capacity <- int(capacity / multiplication_factor)+1;
 		}
@@ -375,6 +371,7 @@ global{
 species building schedules: [] {
 	string usage;
 	string scale;
+	string category;
 	float nbFloors <- 1.0; // 1 by default if no value is set.
 	int depth;
 	float area;
@@ -384,6 +381,7 @@ species building schedules: [] {
 species Aalto_buildings schedules:[] {
 	string usage;
 	string scale;
+	string category;
 	rgb color <- rgb(150,150,150,30);
 	aspect base {
 		draw shape color: color  depth:  (total_capacity / 5);
@@ -488,8 +486,8 @@ species aalto_people skills: [moving] {
 	}
 	
 	action find_living_place {
-		if ((sum((residential where (each.scale = people_to_housing_types[type_of_agent])) collect each.capacity)!= 0 and (flip(0.5) = true))){
-			living_place <- one_of(shuffle((residential where (each.scale = people_to_housing_types[type_of_agent])) where (each.capacity > 0)));
+		if ((sum((residential where (each.category = people_to_housing_types[type_of_agent])) collect each.capacity)!= 0 )){
+			living_place <- one_of(shuffle((residential where (each.category = people_to_housing_types[type_of_agent])) where (each.capacity > 0)));
 				ask living_place {
 					do accept_people;
 			}
@@ -537,18 +535,20 @@ species aalto_people skills: [moving] {
 	reflex reset_day when: current_time = (first_hour_of_day*60) {
 		sim_steps_driving <- 0 ;
 		sim_steps_walking <- 0 ;
-	}
-	reflex time_to_go_to_work when: current_time > time_to_work and current_time < time_to_sleep and objective = "resting" {
-		could_not_find_parking <- false;
 		if living_place != nil {
 			ask living_place{
 				do remove_people;
 			}
 		}
 		do find_living_place;
-		
 		living_place_location <- any_location_in(living_place);
 		location <- living_place_location;
+	}
+	reflex time_to_go_to_work when: current_time > time_to_work and current_time < time_to_sleep and objective = "resting" {
+		could_not_find_parking <- false;
+		
+		
+		
 		
 		do choose_working_place;
 		
@@ -791,8 +791,8 @@ experiment parking_pressure type: gui {
 			tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 1 label_font_style: 'bold'
 			{
 
-				  data 'Commuters' value: length(aalto_student where (each.commuter = true)) color:#red;
-				  data 'Live-Work' value: length(aalto_student where (each.commuter = false)) color:#green;
+				  data 'Commuters' value: length(aalto_student where (each.commuter = true))+length(aalto_staff where (each.commuter = true)) color:#red;
+				  data 'Live-Work' value: length(aalto_student where (each.commuter = false))+length(aalto_staff where (each.commuter = false)) color:#green;
 				
 			}
 			chart " " background:#black  type: pie style: ring size: {0.5,0.5} position: {world.shape.width*1.1,world.shape.height*0.5} color: #white 
