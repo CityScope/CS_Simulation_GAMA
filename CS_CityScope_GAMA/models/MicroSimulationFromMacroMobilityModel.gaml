@@ -2,12 +2,18 @@ model microFromMacro
 
 global {
 
-	file JsonFile <- json_file("https://cityio.media.mit.edu/api/table/grasbrook/od");	
-	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/table_area.geojson");
-	file walk_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/walking_net.geojson");
-	file cycling_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/cycling_net.geojson");
-	file car_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/driving_net.geojson");
-	file pt_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/Hamburg/clean/pt_net.geojson");
+	string city<-'Hamburg';
+	map<string, string> table_name_per_city <- ['Detroit'::'corktown', 'Hamburg'::'grasbrook'];
+	string city_io_table<-table_name_per_city[city];
+
+	file JsonFile <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/od");	
+	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/table_area.geojson");
+
+	file walk_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/walking_net.geojson");
+	file cycling_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/cycling_net.geojson");
+	file car_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/driving_net.geojson");
+	file pt_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/pt_net.geojson");
+
 	graph walk_graph;
 	graph cycling_graph;
 	graph car_graph;
@@ -22,6 +28,7 @@ global {
 	map<int, rgb> color_type_per_type <- [0::#gamared, 1::#gamablue, 2::#gamaorange];
 	map<int, string> string_type_per_type <- [0::"live and works here ", 1::"works here", 2::"lives here"];
 	
+	float step <- 10 #sec;
 	
 	init {
 		create areas from: geo_file;
@@ -62,7 +69,7 @@ global {
 		}
 	}
 	
-	reflex save_results when: (cycle = 86400/2)  {
+	reflex save_results when: (time = 86400/(2*step))  {
 		string t;
 		save "[" to: "result.json";
 		ask people {
@@ -91,7 +98,7 @@ global {
 		file JsonFileResults <- json_file("./result.json");
         map<string, unknown> c <- JsonFileResults.contents;
 		try{			
-	  	  save(json_file("https://cityio.media.mit.edu/api/table/update/grasbrook/cityIO_Gama_", c));		
+	  	  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/cityIO_Gama_", c));		
 	  	}catch{
 	  	  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 	  	} 
@@ -118,15 +125,18 @@ species people skills:[moving]{
 	list<point> locs;
 		
 	reflex move{
-		if(cycle>start_time and location!=work){  
-		  do goto target:work speed:0.01 * speed_per_mode[mode];
-		  do wander speed:0.05;
+		if(time>start_time and location!=work){
+			if (mode=0) {do goto target:work speed:0.01 * speed_per_mode[mode] on: car_graph;}
+			else if (mode=1) {do goto target:work speed:0.01 * speed_per_mode[mode] on: cycling_graph;}
+			else if (mode=2) {do goto target:work speed:0.01 * speed_per_mode[mode] on: walk_graph;}
+			else if (mode=3) {do goto target:work speed:0.01 * speed_per_mode[mode] on: pt_graph;}
+		  	do wander speed:0.05;
 		  
 		}else{
 		  do wander speed:0.1;
 		}
-		if(cycle mod 75 = 0 and cycle>1 and location!=work){
-		 	locs << {location.x,location.y,cycle};
+		if(time mod 75 = 0 and time>1 and location!=work){
+		 	locs << {location.x,location.y,time};
 		}	
 	}
 
