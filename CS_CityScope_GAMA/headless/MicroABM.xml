@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Experiment_plan>
+ <Simulation id="1" sourcePath="./../models/MicroSimulationFromMacroMobilityModel.gaml" finalStep="-1" experiment="Display">
+  <Parameters>
+  </Parameters>
+  <Outputs>
+  </Outputs>
+ </Simulation>
+</Experiment_plan>
