@@ -2,14 +2,13 @@ model microFromMacro
 
 global {
 
-	string city<-'Hamburg';
+	string city<-'Detroit';
 	map<string, string> table_name_per_city <- ['Detroit'::'corktown', 'Hamburg'::'grasbrook'];
 	string city_io_table<-table_name_per_city[city];
 
 	file ODJsonFile <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/od");	
-	file currentHasg <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/meta/hashes/grid");
-	//file tableGrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/grid_full_table","EPSG:4326");
-	string currentGridHash;
+	//file currentHasg <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/meta/hashes/grid");
+	file tableGrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/meta_grid","EPSG:4326");
 
 	
 	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/table_area.geojson");
@@ -28,8 +27,13 @@ global {
 	geometry free_space <- copy(shape);
 	
 	
-	//LANDUSE
-	map<int, rgb> string_type_per_landuse <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
+	//LANDUSE FOR CORKTOWN (https://data.detroitmi.gov/app/parcel-viewer-2)
+	map<string, rgb> string_type_per_landuse <- ["B1"::rgb(161,80,98),"B2"::rgb(190,60,94),"B3"::rgb(218,26,91),"B4"::rgb(153,0,51),"B5"::rgb(130,16,54),"B6"::rgb(96,0,21),
+	"M1"::rgb(133,84,157),"M2"::rgb(144,72,183),"M3"::rgb(155,55,209),"M4"::rgb(93,32,128),"M5"::rgb(101,0,151),
+	"P1"::rgb(95,152,61),"PC"::rgb(95,152,61),"PCA"::rgb(95,152,61),"PD"::rgb(95,152,61),"PR"::rgb(95,152,61),
+	"R1"::rgb(109,129,159),"R2"::rgb(77,130,197),"R3"::rgb(16,131,237),"R4"::rgb(11,83,176),"R5"::rgb(30,83,141),"R6"::rgb(8,45,121),
+	"SD1"::rgb(185,105,40),"SD2"::rgb(185,105,40),"SD4"::rgb(185,105,40),"SD5"::rgb(185,105,40),"TM"::rgb(185,105,40),"W1"::rgb(185,105,40)	
+	];
 	//MODE
 	map<int, rgb> color_type_per_mode <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
 	map<int, string> string_type_per_mode <- [0::"driving", 1::"cycling", 2::"walking", 3::"transit"];
@@ -43,6 +47,7 @@ global {
 	
 	init {
 		create areas from: geo_file;
+		create block from:tableGrid with:[land_use::read("land_use")];
 		create road from: car_network{
 			type<-0;
 		}
@@ -59,7 +64,8 @@ global {
 		cycling_graph <- as_edge_graph(road where (each.type=1));
 		walk_graph <- as_edge_graph(road where (each.type=2));
 		pt_graph <- as_edge_graph(road where (each.type=3));
-		do initiatePeople;				
+		do initiatePeople;	
+			
 	}
 	
 	action initiatePeople{
@@ -81,12 +87,18 @@ global {
 		  	location<-any_location_in(one_of(areas));
 		  }
     }
-	
-	reflex save_results when: (cycle = 1000){//(time = 8640/(2*step))  {
+	//6AM to 12pm=> 
+	reflex save_results when: (cycle=6480){//(time = 8640/(2*step))  {
 		string t;
+		map<string, unknown> test;
+		
+		
 		save "[" to: "result.json";
 		ask pedestrian {
-			t <- "{\n\"mode\": "+mode+",\n\"path\": [";
+			test <+ "mode"::mode;
+			test<+"path"::locs;
+			//test<+locs;
+			t <- "{\n\"mode\": "+rnd(2)+",\n\"path\": [";
 			int curLoc<-0;
 			loop l over: locs {
 				
@@ -118,13 +130,14 @@ global {
 			if (int(self) < (length(pedestrian) - 1)) {
 				t <- t + ",";
 			}
-
 			save t to: "result.json" rewrite: false;
 		}
 
 		save "]" to: "result.json" rewrite: false;
 		file JsonFileResults <- json_file("./result.json");
         map<string, unknown> c <- JsonFileResults.contents;
+        write "c" + c;
+        write "test" + test;
 		try{			
 	  	  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/ABM", c));		
 	  	}catch{
@@ -138,12 +151,26 @@ global {
 }
 
 
+species block{
+	string land_use;
+	aspect base {
+		draw shape color: string_type_per_landuse[land_use];
+	}
+	
+}
+
 species areas {
 	rgb color <- rnd_color(255);
 	rgb text_color <- (color.brighter);
 	
 	aspect default {
-		draw shape color: #white;
+		draw shape color: #gray;
+	}
+}
+
+species obstacle {
+	aspect base {
+		draw shape color: #gray border: #black;
 	}
 }
 
@@ -202,7 +229,7 @@ species pedestrian skills: [pedestrian]{
 		current_target <- any_location_in(one_of(people));
 	}
 	reflex move when: current_target != nil{
-		do walk target: current_target bounds: free_space;
+		do walk target: current_target bounds: free_space speed:0.01;
 		if (self distance_to current_target < 0.1) {
 			current_target <- any_location_in(one_of(people));
 		}
@@ -229,11 +256,15 @@ experiment Dev type: gui {
 	output {
 		layout #split;
 		display map_mode type:opengl background:#white{
+			
 			species staticBlock aspect:base;
-			//species areas refresh:false;
+			species obstacle aspect:base;
+			species areas refresh:false;
 			species road refresh:false;
 			species people aspect:mode;
 			species pedestrian aspect:base;	
+			species block aspect:base transparency:0.5;
+			
 		}
 	}
 }
