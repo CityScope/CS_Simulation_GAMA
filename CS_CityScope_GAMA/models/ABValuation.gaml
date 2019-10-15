@@ -1,13 +1,17 @@
 /***
-* Name: ABValuationv02
+* Name: ABValuation
 * Author: crisjf
 * Description: 
 * Tags: Tag1, Tag2, TagN
 ***/
 
-model ABValuationv03
+model ABValuation
 
 global{
+	// Model mode
+	bool updateUnitSize<-true;
+	bool modeCar <- false;	
+	
 	// Grid parameters
 	int grid_width<-20;
 	int grid_height<-20;
@@ -23,7 +27,9 @@ global{
 	int unitsPerBuilding <- 10; 
 	float globalWage <-1.0;
 	float wageRatio<-7.0;
-	float commutingCost<-0.35;
+	float commutingCost <- 0.35;
+	float commutingCostCar <- 0.3;
+	float commutingCostCarFixed <- 0.5;
 	float landUtilityParameter <- 10.0;
 	float globalWage1<-globalWage;
 	float globalWage2<-wageRatio*globalWage;
@@ -101,11 +107,10 @@ global{
 		ask one_of(city) {
 			do updateCityParams;
 		}
-				
+			
 	}
 	
 }
-
 
 species city {
 	float maxRent;
@@ -160,7 +165,7 @@ species building {
 		}
 	}
 	
-	reflex raiseUnitSize {
+	reflex raiseUnitSize when: (updateUnitSize=true) {
 		float newUnitSize;
 		newUnitSize <- (1.0+sizeDelta)*unitSize;
 		if (vacant>=(1.0+sizeDelta)*(buildingSize-vacant) and newUnitSize<=buildingSize) {
@@ -224,15 +229,32 @@ species building {
 species worker {
 	building myBuilding;
 	firm myFirm;
+	bool useCar;
+	float currentUtility;
 	
-	float myUtility (building referenceBuilding, firm referenceFirm, float myUnitSize<-nil) {
-		float utility; // BUG: The referenceBuilding and referenceFirm should have a default value.
+	float myUtility (building referenceBuilding, firm referenceFirm, bool useCarLocal, float myUnitSize<-nil) {
+		float utility; // BUG: The referenceBuilding, referenceFirm, and useCarLocal should have a default value.
+		float workDistance <- (referenceBuilding distance_to referenceFirm);
 		if (myUnitSize=nil){
-			utility <- referenceFirm.wage - commutingCost * (referenceBuilding distance_to referenceFirm) - referenceBuilding.rent * referenceBuilding.unitSize + landUtilityParameter * log(referenceBuilding.unitSize);
+			utility <- referenceFirm.wage - commutingValue(workDistance,useCarLocal) - referenceBuilding.rent * referenceBuilding.unitSize + landUtilityParameter * log(referenceBuilding.unitSize);
 		} else {
-			utility <- referenceFirm.wage - commutingCost * (referenceBuilding distance_to referenceFirm) - referenceBuilding.rent * myUnitSize + landUtilityParameter * log(myUnitSize);
+			utility <- referenceFirm.wage - commutingValue(workDistance,useCarLocal) - referenceBuilding.rent * myUnitSize + landUtilityParameter * log(myUnitSize);
 		}
 		return utility;
+	}
+	
+	float commutingValue (float distance, bool useCarLocal) {
+		float outValue;
+		if (modeCar=true) {
+			if (useCarLocal=false){
+				outValue <- commutingCost*distance;
+			} else {
+				outValue <- commutingCostCarFixed+commutingCostCar*distance;
+			}
+		} else {
+			outValue <- commutingCost*distance;
+		}
+		return outValue; 
 	}
 		
 	action attemptFirmUpdate (firm newFirm) {
@@ -254,12 +276,26 @@ species worker {
 		}
 	}
 	
+	reflex updateUtility {
+		float utility<-myUtility(myBuilding,myFirm,useCar);
+		currentUtility<-utility;
+	}
+	
+	reflex updateCommutingMode {
+		float utilityCar<-myUtility(myBuilding,myFirm,true);
+		float utilityNoCar<-myUtility(myBuilding,myFirm,false);
+		if (utilityCar>utilityNoCar){
+			useCar<-true;
+		} else {
+			useCar<-false;
+		}
+	}
 	
 	reflex updateBuilding {
-		float utility <- myUtility(myBuilding,myFirm);
+		float utility <- myUtility(myBuilding,myFirm,useCar);
 		building possibleBuilding <- one_of(building);
 
-		float possibleUtility <- myUtility(possibleBuilding,myFirm);
+		float possibleUtility <- myUtility(possibleBuilding,myFirm,useCar);
 		float utilityChange <- possibleUtility-utility;
 		
 		if (utilityChange>0.0){
@@ -268,9 +304,9 @@ species worker {
 	}
 	
 	reflex updateWork {		
-		float utility <- myUtility(myBuilding,myFirm);
+		float utility <- myUtility(myBuilding,myFirm,useCar);
 		firm possibleFirm <- one_of(firm);
-		float possibleUtility<- myUtility(myBuilding,possibleFirm);
+		float possibleUtility<- myUtility(myBuilding,possibleFirm,useCar);
 		if (possibleUtility>utility){
 			do attemptFirmUpdate(possibleFirm);
 		}
@@ -291,7 +327,7 @@ species worker {
 		}
 	}
 	
-	reflex updateUnitSize {
+	reflex updateUnitSize when: (updateUnitSize=true) {
 		float utility;		
 		float newUnitSizem;
 		float newUnitSizep;
@@ -302,12 +338,12 @@ species worker {
 		loop while: (updateFlag=true) {
 			updateFlag<-false;
 			
-			utility <- myUtility(myBuilding,myFirm);
+			utility <- myUtility(myBuilding,myFirm,useCar);
 			newUnitSizem <- (1.0-sizeDelta)*myBuilding.unitSize;
 			newUnitSizep <- (1.0+sizeDelta)*myBuilding.unitSize;
 			
-			possibleUtilitym <- myUtility(myBuilding,myFirm,newUnitSizem);
-			possibleUtilityp <- myUtility(myBuilding,myFirm,newUnitSizep);
+			possibleUtilitym <- myUtility(myBuilding,myFirm,useCar,newUnitSizem);
+			possibleUtilityp <- myUtility(myBuilding,myFirm,useCar,newUnitSizep);
 			
 			if (possibleUtilityp>utility and myBuilding.vacant>=(1.0+sizeDelta)*(myBuilding.buildingSize-myBuilding.vacant) and newUnitSizep<=myBuilding.buildingSize) {
 				myBuilding.vacant <- myBuilding.buildingSize-(1.0+sizeDelta)*(myBuilding.buildingSize-myBuilding.vacant); 
@@ -337,6 +373,23 @@ species worker {
 		int colorValue <- int(30+220*myFirm.wage/myFirm.myCity.maxWage);
 		draw circle(0.5) color: rgb(0,0,colorValue);
 	}
+	
+	aspect threeD_commuting {
+		if (useCar=true) {
+			draw sphere(1.0) color: rgb(8,81,156);
+		} else {
+			draw sphere(1.0) color: rgb(158,202,225);
+		}	
+	}
+	
+	aspect commuting_aspect {
+		if (useCar=true) {
+			draw circle(1.0) color: rgb(8,81,156);
+		} else {
+			draw circle(1.0) color: rgb(158,202,225);
+		}	
+	}
+	
 }
 
 grid cell width: grid_width height: grid_height {
@@ -347,19 +400,30 @@ experiment name type: gui {
 	parameter "Farm productivity" var: rentFarm min: 0.0 max: 10.0 step: 1.0;
 	parameter "Land/rent price tradeoff" var: landUtilityParameter min: 1.0 max: 20.0 step: 1.0;
 	parameter "Commuting cost" var: commutingCost min: 0.0 max: 1.0 step: 0.05;
-	parameter "Wage ratio" var: globalWage2 min: 0.1 max: 20.0 step: 0.1; // BUG: This is not updating
+	parameter "Wage ratio" var: wageRatio min: 0.1 max: 20.0 step: 0.1; // BUG: This is not updating
 	
-	output {
+	output  {
 //		when: (bool(cycle mod 10)) // BUG: Show outupt every 10 steps 
 		layout #split;
-		display map_3D type:opengl{
+		display map_3D type:opengl {
+			
 			species cell;			
 //			species building aspect:density_aspect;
 //			species building aspect:rent_aspect; // BUG: How do we switch aspect in the UI
 			species building aspect:threeD transparency: 0.5;
 			species firm aspect:wage_aspect;
 			species worker aspect:threeD;
-			// BUG: How do we increase the number of agents in the UI?
+			
+			// DISPLAY FOR CARS
+//			species cell;			
+////			species building aspect:density_aspect;
+////			species building aspect:rent_aspect; // BUG: How do we switch aspect in the UI
+////			species building aspect: threeD transparency: 0.5;
+//			species building aspect: density_aspect;
+//			species firm aspect:wage_aspect;
+//			species worker aspect:commuting_aspect;
+//			// BUG: How do we increase the number of agents in the UI?
 		}
 	}
+	
 }
