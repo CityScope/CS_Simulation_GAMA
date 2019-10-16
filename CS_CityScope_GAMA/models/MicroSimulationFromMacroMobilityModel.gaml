@@ -7,7 +7,6 @@ global {
 	string city_io_table<-table_name_per_city[city];
 
 	file ODJsonFile <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/od");	
-	//file currentHasg <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/meta/hashes/grid");
 	file tableGrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/meta_grid","EPSG:4326");
 
 	
@@ -26,6 +25,8 @@ global {
 	geometry shape <- envelope(geo_file);
 	geometry free_space <- copy(shape);
 	
+	bool simple_landuse<-true;
+	
 	
 	//LANDUSE FOR CORKTOWN (https://data.detroitmi.gov/app/parcel-viewer-2)
 	map<string, rgb> string_type_per_landuse <- ["B1"::rgb(161,80,98),"B2"::rgb(190,60,94),"B3"::rgb(218,26,91),"B4"::rgb(153,0,51),"B5"::rgb(130,16,54),"B6"::rgb(96,0,21),
@@ -34,6 +35,11 @@ global {
 	"R1"::rgb(109,129,159),"R2"::rgb(77,130,197),"R3"::rgb(16,131,237),"R4"::rgb(11,83,176),"R5"::rgb(30,83,141),"R6"::rgb(8,45,121),
 	"SD1"::rgb(185,105,40),"SD2"::rgb(185,105,40),"SD4"::rgb(185,105,40),"SD5"::rgb(185,105,40),"TM"::rgb(185,105,40),"W1"::rgb(185,105,40)	
 	];
+	map<string, rgb> string_type_per_landuse_Simple <- ["B"::rgb(161,80,98),"M"::rgb(133,84,157),"P"::rgb(95,152,61),"R"::rgb(109,129,159),"S"::rgb(185,105,40)];
+	
+	map<string, string> detailed_to_simple_landuse <- ["B1"::"B","B2"::"B","B3"::"B","B4"::"B","B5"::"B","B6"::"B","M1"::"M","M2"::"M","M3"::"M","M4"::"M","M5"::"M",
+	"P1"::"P","PC"::"P","PCA"::"P","PD"::"P","PR"::"P","R1"::"R","R2"::"R","R3"::"R","R4"::"R","R5"::"R","R6"::"R","SD1"::"S","SD2"::"S","SD4"::"S","SD5"::"S","TM"::"S","W1"::"S"];
+	
 	//MODE
 	map<int, rgb> color_type_per_mode <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
 	map<int, string> string_type_per_mode <- [0::"driving", 1::"cycling", 2::"walking", 3::"transit"];
@@ -47,7 +53,12 @@ global {
 	
 	init {
 		create areas from: geo_file;
-		create block from:tableGrid with:[land_use::read("land_use")];
+		create block from:tableGrid with:[land_use::read("land_use")]{
+			if(simple_landuse){
+				land_use<-detailed_to_simple_landuse[land_use];
+			}
+			
+		}
 		create road from: car_network{
 			type<-0;
 		}
@@ -154,7 +165,7 @@ global {
 species block{
 	string land_use;
 	aspect base {
-		draw shape color: string_type_per_landuse[land_use];
+		draw shape color: simple_landuse ? string_type_per_landuse_Simple[land_use]: string_type_per_landuse[land_use];
 	}
 	
 }
