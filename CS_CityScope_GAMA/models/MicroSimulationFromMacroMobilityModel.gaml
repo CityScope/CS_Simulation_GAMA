@@ -6,27 +6,26 @@ global {
 	map<string, string> table_name_per_city <- ['Detroit'::'corktown', 'Hamburg'::'grasbrook'];
 	string city_io_table<-table_name_per_city[city];
 
-	file ODJsonFile <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/od");	
-	file tableGrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/meta_grid","EPSG:4326");
-
-	
-	file geo_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/table_area.geojson");
-	file walk_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/walking_net.geojson");
-	file cycling_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/cycling_net.geojson");
-	file car_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/driving_net.geojson");
-	file pt_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/pt_net.geojson");
-	file portal_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/portals.geojson");
+	file od_file <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/od");	
+	file meta_grid_file <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/meta_grid","EPSG:4326");	
+	file table_area_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/table_area.geojson");
+	file walking_net_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/walking_net.geojson");
+	file cycling_net_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/cycling_net.geojson");
+	file driving_net_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/driving_net.geojson");
+	file pt_net_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/pt_net.geojson");
+	file portals_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/portals.geojson");
 	
 	
-	graph walk_graph;
+	
+	graph walking_graph;
 	graph cycling_graph;
-	graph car_graph;
+	graph driving_graph;
 	graph pt_graph;
-	graph micro_graph;
-	map<int, graph> graph_map <-[0::car_graph, 1::cycling_graph, 2::walk_graph, 3::pt_graph];
-	geometry shape <- envelope(geo_file);
-	geometry free_space <- copy(shape);
+	map<int, graph> graph_map <-[0::driving_graph, 1::cycling_graph, 2::walking_graph, 3::pt_graph];
 	
+	
+	geometry shape <- envelope(meta_grid_file);
+	geometry free_space <- copy(shape);
 	bool simple_landuse<-true;
 	
 	
@@ -37,11 +36,11 @@ global {
 	"R1"::rgb(109,129,159),"R2"::rgb(77,130,197),"R3"::rgb(16,131,237),"R4"::rgb(11,83,176),"R5"::rgb(30,83,141),"R6"::rgb(8,45,121),
 	"SD1"::rgb(185,105,40),"SD2"::rgb(185,105,40),"SD4"::rgb(185,105,40),"SD5"::rgb(185,105,40),"TM"::rgb(185,105,40),"W1"::rgb(185,105,40)	
 	];
-	map<string, rgb> string_type_per_landuse_Simple <- ["B"::rgb(161,80,98),"M"::rgb(133,84,157),"P"::rgb(95,152,61),"R"::rgb(109,129,159),"S"::rgb(185,105,40)];
+	map<string, rgb> string_type_per_landuse_Simple <- ["B"::rgb(161,80,98),"M"::rgb(133,84,157),"P"::rgb(95,152,61),"R"::rgb(109,129,159),"S"::rgb(185,105,40),nil::#black];
 	map<string, string> detailed_to_simple_landuse <- ["B1"::"B","B2"::"B","B3"::"B","B4"::"B","B5"::"B","B6"::"B","M1"::"M","M2"::"M","M3"::"M","M4"::"M","M5"::"M",
 	"P1"::"P","PC"::"P","PCA"::"P","PD"::"P","PR"::"P","R1"::"R","R2"::"R","R3"::"R","R4"::"R","R5"::"R","R6"::"R","SD1"::"S","SD2"::"S","SD4"::"S","SD5"::"S","TM"::"S","W1"::"S"];
 	
-	//MODE
+	//MODE PARAMETERS
 	map<int, rgb> color_type_per_mode <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
 	map<int, string> string_type_per_mode <- [0::"driving", 1::"cycling", 2::"walking", 3::"transit"];
 	map<int, float> speed_per_mode <- [0::30.0, 1::15.0, 2::5.0, 3::10.0];
@@ -53,29 +52,28 @@ global {
 	int saveLocationInterval<-500;
 	
 	init {
-		create areas from: geo_file;
-		create portal from: portal_file;
-		create block from:tableGrid with:[land_use::read("land_use")]{
+		create areas from: table_area_file;
+		create portal from: portals_file;
+		create block from:meta_grid_file with:[land_use::read("land_use")]{
 			if(simple_landuse){
 				land_use<-detailed_to_simple_landuse[land_use];
 			}
-			
 		}
-		create road from: car_network{
+		create road from: driving_net_file{
 			type<-0;
 		}
-		create road from: cycling_network{
+		create road from: cycling_net_file{
 			type<-1;
 		}
-		create road from: walk_network{
+		create road from: walking_net_file{
 			type<-2;
 		}
-		create road from: pt_network{
+		create road from: pt_net_file{
 			type<-3;
 		}
-		car_graph <- as_edge_graph(road where (each.type=0));
+		driving_graph <- as_edge_graph(road where (each.type=0));
 		cycling_graph <- as_edge_graph(road where (each.type=1));
-		walk_graph <- as_edge_graph(road where (each.type=2));
+		walking_graph <- as_edge_graph(road where (each.type=2));
 		pt_graph <- as_edge_graph(road where (each.type=3));
 		do initiatePeople;	
 			
@@ -85,7 +83,7 @@ global {
 		  ask people{
 		    do die;
 		  }
-		  loop lo over: ODJsonFile {
+		  loop lo over: od_file {
 			loop l over: list(lo) {
 				map m <- map(l);
 				create people with: [type::int(m["type"]), mode::int(m["mode"]), home::point(m["home_ll"]), work::point(m["work_ll"]), start_time::int(m["start_time"])] {
@@ -183,7 +181,7 @@ species areas {
 
 species portal{
 	aspect base {
-		draw shape color: #blue;
+		draw circle(50#m) color: #gamablue;
 	}
 }
 
@@ -194,14 +192,15 @@ species people skills:[moving]{
 	int start_time;
 	point home;
 	point work;
+	
 	rgb color <- rnd_color(255);
 	list<point> locs;
 		
 	reflex move{
 		if(time>start_time and location!=work){
-			if (mode=0) {do goto target:work speed:0.01 * speed_per_mode[mode] on: car_graph;}
+			if (mode=0) {do goto target:work speed:0.01 * speed_per_mode[mode] on: driving_graph;}
 			else if (mode=1) {do goto target:work speed:0.01 * speed_per_mode[mode] on: cycling_graph;}
-			else if (mode=2) {do goto target:work speed:0.01 * speed_per_mode[mode] on: walk_graph;}
+			else if (mode=2) {do goto target:work speed:0.01 * speed_per_mode[mode] on: walking_graph;}
 			else if (mode=3) {do goto target:work speed:0.01 * speed_per_mode[mode] on: pt_graph;} 
 		}
 		if(time mod saveLocationInterval = 0 and time>1 and location!=work){
@@ -215,22 +214,6 @@ species people skills:[moving]{
 	
 	aspect type{
 		draw circle(10#m) color: color_type_per_type[type] border:color_type_per_mode[mode]-50;
-	}
-}
-
-
-species staticBlock{
-	string usage;
-	int type;
-	aspect base{
-		draw shape color:string_type_per_landuse[type] border:#black;
-	}
-}
-
-species dynamicBlock{
-	string usage;
-	aspect base{
-		draw shape color:#white border:#black;
 	}
 }
 
@@ -260,7 +243,7 @@ species pedestrian skills: [pedestrian]{
 species road schedules: [] {
 	int type;
 	aspect default {
-		draw shape color: color_type_per_mode[type];// at:{location.x,location.y,type*world.shape.width*0.1};
+		draw shape color: color_type_per_mode[type] width:2;
 	}
 
 }
@@ -268,17 +251,13 @@ species road schedules: [] {
 
 experiment Dev type: gui {
 	output {
-		layout #split;
-		display map_mode type:opengl background:#white{
-			
-			species staticBlock aspect:base;
-			species areas refresh:false;
+		display map_mode type:opengl background:#black{	
+			//species areas refresh:false;
+			species block aspect:base;
 			species road refresh:false;
 			species people aspect:mode;
 			species pedestrian aspect:base;	
-			species block aspect:base transparency:0.5;
 			species portal aspect:base;
-			
 		}
 	}
 }
