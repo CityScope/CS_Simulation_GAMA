@@ -58,6 +58,9 @@ global {
 			if(simple_landuse){
 				land_use<-detailed_to_simple_landuse[land_use];
 			}
+			if(land_use!=nil){
+				free_space <- free_space - shape;
+			}
 		}
 		create road from: driving_net_file{
 			type<-0;
