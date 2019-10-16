@@ -15,6 +15,8 @@ global {
 	file cycling_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/cycling_net.geojson");
 	file car_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/driving_net.geojson");
 	file pt_network<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/pt_net.geojson");
+	file portal_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/portals.geojson");
+	
 	
 	graph walk_graph;
 	graph cycling_graph;
@@ -36,7 +38,6 @@ global {
 	"SD1"::rgb(185,105,40),"SD2"::rgb(185,105,40),"SD4"::rgb(185,105,40),"SD5"::rgb(185,105,40),"TM"::rgb(185,105,40),"W1"::rgb(185,105,40)	
 	];
 	map<string, rgb> string_type_per_landuse_Simple <- ["B"::rgb(161,80,98),"M"::rgb(133,84,157),"P"::rgb(95,152,61),"R"::rgb(109,129,159),"S"::rgb(185,105,40)];
-	
 	map<string, string> detailed_to_simple_landuse <- ["B1"::"B","B2"::"B","B3"::"B","B4"::"B","B5"::"B","B6"::"B","M1"::"M","M2"::"M","M3"::"M","M4"::"M","M5"::"M",
 	"P1"::"P","PC"::"P","PCA"::"P","PD"::"P","PR"::"P","R1"::"R","R2"::"R","R3"::"R","R4"::"R","R5"::"R","R6"::"R","SD1"::"S","SD2"::"S","SD4"::"S","SD5"::"S","TM"::"S","W1"::"S"];
 	
@@ -53,6 +54,7 @@ global {
 	
 	init {
 		create areas from: geo_file;
+		create portal from: portal_file;
 		create block from:tableGrid with:[land_use::read("land_use")]{
 			if(simple_landuse){
 				land_use<-detailed_to_simple_landuse[land_use];
@@ -179,11 +181,12 @@ species areas {
 	}
 }
 
-species obstacle {
+species portal{
 	aspect base {
-		draw shape color: #gray border: #black;
+		draw shape color: #blue;
 	}
 }
+
 
 species people skills:[moving]{
 	int mode;
@@ -269,12 +272,12 @@ experiment Dev type: gui {
 		display map_mode type:opengl background:#white{
 			
 			species staticBlock aspect:base;
-			species obstacle aspect:base;
 			species areas refresh:false;
 			species road refresh:false;
 			species people aspect:mode;
 			species pedestrian aspect:base;	
 			species block aspect:base transparency:0.5;
+			species portal aspect:base;
 			
 		}
 	}
