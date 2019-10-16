@@ -18,13 +18,13 @@ global{
 	float cell_width<-100.0/grid_width;
 	float cell_height<-100.0/grid_height;
 	
-	int firm_pos_1 <- int(3.0*grid_width/5.0-1.0);
+	int firm_pos_1 <- int(2.0*grid_width/5.0-1.0);
 	int firm_pos_2 <- int(3.0*grid_height/5.0);
 	
 	// Global model parameters
 	float rentFarm<- 5.0;
 	float buildingSizeGlobal <- 1.2;
-	int unitsPerBuilding <- 10; 
+	int unitsPerBuilding <- 5; 
 	float globalWage <-1.0;
 	float wageRatio<-7.0;
 	float commutingCost <- 0.35;
@@ -428,7 +428,7 @@ species worker {
 		} else {
 			color<-rgb('#6baed6');
 		}
-		draw cylinder(0.15,0.4) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color;	
+		draw cylinder(0.15,0.4) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color border:color-25;	
 	}
 	
 }
@@ -439,20 +439,13 @@ grid cell width: grid_width height: grid_height {
 	}
 }
 
-experiment name type: gui {
-//	parameter "Land/rent price tradeoff" var: landUtilityParameter min: 1.0 max: 20.0 step: 1.0;
+experiment ABValuationDemo type: gui autorun:true{
 	parameter "Commuting cost" var: commutingCost min: 0.0 max: 1.0 step: 0.05; 
-	
 	output { 
-		layout #split;
-		display map_3D refresh: (cycle mod 2=0) type:opengl background: #black draw_env: false {
-			
-			
-//			fullscreen: 1 
-
-//			SET DEFAULT ROTATED POSITIONG
-			
-			
+		display map_3D  type:opengl background: #black draw_env: false fullscreen:1 toolbar:false
+		camera_pos: {-31.3849,154.8123,60.965} camera_look_pos: {39.7081,49.4125,-9.5042} camera_up_vector: {0.2711,0.4019,0.8746}
+		camera_interaction:false
+		{
 			species cell aspect: dark_aspect;			
 			species worker aspect:threeD;
 			species building aspect:threeD transparency: 0.5;
@@ -461,6 +454,61 @@ experiment name type: gui {
 			event "e" action: {controlBool <- !controlBool;}; //<- Do this in the aspect (aspect++ will allow you to show aspects)
 
 			event mouse_down action: create_firm;
+			event "+" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
+			event "-" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
+			
+			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
+            {   
+            	
+            	draw string("MULTI EMPLOYER HOUSING MARKET SIMULATION") at: { 10#px, 20#px } color: #white font: font("SansSerif", "bold" ,72);
+            	
+            	float y <- 150#px;
+            	draw string("Population (Income)") at: { 10#px, y-20#px } color: #white font: font("SansSerif", "bold" ,32);
+                draw circle(10#px) at: { 20#px, y } color: rgb('#08519c') border: rgb('#08519c')-25;
+                draw string("High") at: { 40#px, y + 4#px } color: #white font: font("SansSerif","plain", 18);
+                y <- y + 25#px;
+                draw circle(10#px) at: { 20#px, y } color: rgb('#6baed6') border: rgb('#6baed6')-25;
+                draw string("Medium") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18);
+                y <- y + 25#px;
+                draw string("Employement (Sector)") at: { 10#px, y } color: #white font: font("SansSerif", "bold" ,32);
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: rgb('#a50f15') border: rgb('#a50f15')-25;
+                draw string("Services") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18);
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: rgb('#ef3b2c') border: rgb('#ef3b2c')-25;
+                draw string("Manufacturing") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18);
+                
+                y <- y + 25#px;
+                draw string("Housing (Cost)") at: { 10#px, y } color: #white font: font("SansSerif", "bold" ,32);
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: rgb(50,50,50) border: rgb(50,50,50)-25;
+                draw string("High") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18);  
+                
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: #lightgray border: #lightgray-25;
+                draw string("Low") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18); 
+                
+                y <- y + 100#px;
+                draw string("Comutting Cost") at: { 20#px, y + 4#px } color: #white font: font("SansSerif", 32);
+                y <- y + 25#px;
+                draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { commutingCost*100#px, y } color: #white;
+
+                y <- y + 25#px;
+                draw string("Inequality") at: { 20#px, y + 4#px } color: #white font: font("SansSerif", 32);
+                y <- y + 25#px;
+                draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { commutingCost*100#px, y } color: #white;
+                
+                y <- y + 25#px;
+                float x<-0#px;
+                draw string("Housing Supply: Fixed/Dynamic") at: { 20#px + x , y + 4#px } color: #white font: font("SansSerif", 32);
+                
+
+                
+                
+                               
+            }
 			
 //			event "c" action: commuting_mode;
 //			event "p action: commutingCost_up;
