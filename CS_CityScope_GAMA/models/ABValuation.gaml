@@ -13,12 +13,12 @@ global{
 	bool modeCar <- false;	
 	
 	// Grid parameters
-	int grid_width<-20;
-	int grid_height<-20;
+	int grid_width<-16;
+	int grid_height<-16;
 	float cell_width<-100.0/grid_width;
 	float cell_height<-100.0/grid_height;
 	
-	int firm_pos_1 <- int(2.0*grid_width/5.0);
+	int firm_pos_1 <- int(3.0*grid_width/5.0-1.0);
 	int firm_pos_2 <- int(3.0*grid_height/5.0);
 	
 	// Global model parameters
@@ -41,7 +41,28 @@ global{
 	float rentDelta <- 0.05;
 	float sizeDelta <- 0.05;
 	float randomMoveRate <- 0.001;
-		
+	
+	// Display parameters
+	bool controlBool;
+	
+	action change_color 
+	{
+		write "change color";
+	}
+	
+	reflex update_pop {
+//		loop while: (length(worker)<nAgents) {
+////			Create people
+//		}
+//		if (length(worker)<nAgents) {
+////			Create people
+//		}
+	}
+	
+	action create_firm {
+//		(circle(10) at_location #user_location)
+	}
+
 	init{
 		write "Number of units " +unitsPerBuilding*((grid_width+1)*(grid_height+1)-2);
 		write "Number of workers "+nAgents;
@@ -138,8 +159,24 @@ species firm{
 	}
 	
 	aspect wage_aspect {
-		int colorValue <- int(30+220*wage/myCity.maxWage);
-		draw shape color: rgb(0,0,colorValue);
+//		int colorValue <- int(30+220*wage/myCity.maxWage);
+		if (wage>=globalWage2) {
+//			I pay a lot
+			color <- rgb('#a50f15');
+		} else {
+			color <- rgb('#ef3b2c');
+		}
+		draw shape color: color;
+	}
+	
+	aspect threeD {
+		if (wage>=globalWage2) {
+//			I pay a lot
+			color <- rgb('#a50f15');
+		} else {
+			color <- rgb('#ef3b2c');
+		}
+		draw shape color: color depth: 20;
 	}
 }
 
@@ -152,6 +189,8 @@ species building {
 	float vacant;
 	
 	float density;
+	
+	float heightValue;
 	
 	reflex lowerRent {  
 		if (vacant>=unitSize) {
@@ -207,8 +246,8 @@ species building {
 	}
 	
 	aspect threeD {
-		int colorValue <- int(255*(rent-rentFarm)/(myCity.maxRent-rentFarm));
-		float heightValue;
+		int colorValue <- int(220-220*log(rent+1.0)/log(myCity.maxRent+1.0));
+		
 		if (density=0) {
 			heightValue<-0.0;
 		} else {
@@ -218,7 +257,7 @@ species building {
 		if (colorValue<=10) {
 			colorValue<-0;
 		}
-    	draw shape color: rgb(colorValue,0,0) depth: heightValue;
+    	draw shape color: rgb(colorValue,colorValue,colorValue) depth: heightValue;
     }
 	
 	aspect base{
@@ -233,7 +272,7 @@ species worker {
 	float currentUtility;
 	
 	float myUtility (building referenceBuilding, firm referenceFirm, bool useCarLocal, float myUnitSize<-nil) {
-		float utility; // BUG: The referenceBuilding, referenceFirm, and useCarLocal should have a default value.
+		float utility;
 		float workDistance <- (referenceBuilding distance_to referenceFirm);
 		if (myUnitSize=nil){
 			utility <- referenceFirm.wage - commutingValue(workDistance,useCarLocal) - referenceBuilding.rent * referenceBuilding.unitSize + landUtilityParameter * log(referenceBuilding.unitSize);
@@ -366,63 +405,78 @@ species worker {
 	}
 	
 	aspect base{
-		draw circle(0.5) color:#green;					
+		draw circle(0.25) color:#green;					
 	}
 	
 	aspect wage_aspect {
-		int colorValue <- int(30+220*myFirm.wage/myFirm.myCity.maxWage);
-		draw circle(0.5) color: rgb(0,0,colorValue);
+		if (myFirm.wage>=globalWage2) {
+//			I'm high income
+			color<-rgb('#08519c');
+		} else {
+			color<-rgb('#6baed6');
+		}
+		
+//		int colorValue <- int(30+220*myFirm.wage/myFirm.myCity.maxWage);
+//		draw circle(0.25) color: rgb(colorValue,0,0);
+		draw circle(0.25) color: color;
 	}
 	
-	aspect threeD_commuting {
-		if (useCar=true) {
-			draw sphere(1.0) color: rgb(8,81,156);
+	aspect threeD {
+		if (myFirm.wage>=globalWage2) {
+//			I'm high income
+			color<-rgb('#08519c');
 		} else {
-			draw sphere(1.0) color: rgb(158,202,225);
-		}	
-	}
-	
-	aspect commuting_aspect {
-		if (useCar=true) {
-			draw circle(1.0) color: rgb(8,81,156);
-		} else {
-			draw circle(1.0) color: rgb(158,202,225);
-		}	
+			color<-rgb('#6baed6');
+		}
+		draw cylinder(0.15,0.4) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color;	
 	}
 	
 }
 
 grid cell width: grid_width height: grid_height {
-
+	aspect dark_aspect {
+		draw shape color: #black;
+	}
 }
 
 experiment name type: gui {
-	parameter "Farm productivity" var: rentFarm min: 0.0 max: 10.0 step: 1.0;
-	parameter "Land/rent price tradeoff" var: landUtilityParameter min: 1.0 max: 20.0 step: 1.0;
-	parameter "Commuting cost" var: commutingCost min: 0.0 max: 1.0 step: 0.05;
-	parameter "Wage ratio" var: wageRatio min: 0.1 max: 20.0 step: 0.1; // BUG: This is not updating
+//	parameter "Land/rent price tradeoff" var: landUtilityParameter min: 1.0 max: 20.0 step: 1.0;
+	parameter "Commuting cost" var: commutingCost min: 0.0 max: 1.0 step: 0.05; 
 	
-	output  {
-//		when: (bool(cycle mod 10)) // BUG: Show outupt every 10 steps 
+	output { 
 		layout #split;
-		display map_3D type:opengl {
+		display map_3D refresh: (cycle mod 2=0) type:opengl background: #black draw_env: false {
 			
-			species cell;			
-//			species building aspect:density_aspect;
-//			species building aspect:rent_aspect; // BUG: How do we switch aspect in the UI
-			species building aspect:threeD transparency: 0.5;
-			species firm aspect:wage_aspect;
+			
+//			fullscreen: 1 
+
+//			SET DEFAULT ROTATED POSITIONG
+			
+			
+			species cell aspect: dark_aspect;			
 			species worker aspect:threeD;
+			species building aspect:threeD transparency: 0.5;
+			species firm aspect: threeD transparency: 0.5;
 			
-			// DISPLAY FOR CARS
+			event "e" action: {controlBool <- !controlBool;}; //<- Do this in the aspect (aspect++ will allow you to show aspects)
+
+			event mouse_down action: create_firm;
+			
+//			event "c" action: commuting_mode;
+//			event "p action: commutingCost_up;
+//			event "m" action: commutingCost_down;
+
+			
+			// DISPLAY FOR CARS 
 //			species cell;			
 ////			species building aspect:density_aspect;
-////			species building aspect:rent_aspect; // BUG: How do we switch aspect in the UI
+////			species building aspect:rent_aspect; // 
 ////			species building aspect: threeD transparency: 0.5;
 //			species building aspect: density_aspect;
 //			species firm aspect:wage_aspect;
 //			species worker aspect:commuting_aspect;
-//			// BUG: How do we increase the number of agents in the UI?
+
+//			
 		}
 	}
 	
