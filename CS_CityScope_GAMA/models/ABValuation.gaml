@@ -118,7 +118,7 @@ global{
 		
 		int i<-0;
 		int j<-0;
-		create building number:((grid_width+1)*(grid_height+1)-2){
+		create building number:((grid_width+1)*(grid_height+1)-1){
 			myCity<-one_of(city);
 			shape<-square(0.95*cell_width);
 			
