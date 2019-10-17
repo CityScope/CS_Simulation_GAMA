@@ -44,6 +44,9 @@ global{
 	bool controlBool;
 	string firmTypeToAdd<-'low';
 	
+	rgb servicesColor<-rgb('#a50f15');
+	rgb manufactoringColor<-rgb('#fc9272');
+	
 	action change_color 
 	{
 		write "change color";
@@ -189,9 +192,9 @@ species firm{
 	
 	aspect threeD {
 		if (myType='high') {
-			color <- rgb('#a50f15');
+			color <- servicesColor;
 		} else {
-			color <- rgb('#ef3b2c');
+			color <- manufactoringColor;
 		}
 		draw shape color: color depth: 20;
 	}
@@ -280,8 +283,7 @@ species worker {
 	bool useCar;
 	float currentUtility;
 	
-	
-	
+
 	float myUtility (building referenceBuilding, firm referenceFirm, bool useCarLocal, float myUnitSize<-nil) {
 		float utility;
 		float workDistance <- (referenceBuilding distance_to referenceFirm);
@@ -452,7 +454,8 @@ species worker {
 		} else {
 			color<-rgb('#6baed6');
 		}
-		draw cylinder(0.15,0.4) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color border:color-25;	
+		draw cylinder(0.1,0.5) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color;	
+		//draw sphere(0.2) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color;
 	}
 	
 }
@@ -466,9 +469,9 @@ grid cell width: grid_width height: grid_height {
 experiment ABValuationDemo type: gui autorun:true{
 	parameter "Commuting cost" var: commutingCost min: 0.0 max: 1.0 step: 0.05; 
 	output { 
-		display map_3D  type:opengl background: #black draw_env: false fullscreen:1 toolbar:false
+		display map_3D  type:opengl background: #black draw_env: false  toolbar:false fullscreen:1
 		camera_pos: {-31.3849,154.8123,60.965} camera_look_pos: {39.7081,49.4125,-9.5042} camera_up_vector: {0.2711,0.4019,0.8746}
-		camera_interaction:false
+		//camera_interaction:false
 		{
 			species cell aspect: dark_aspect;			
 			species worker aspect:threeD;
@@ -499,10 +502,10 @@ experiment ABValuationDemo type: gui autorun:true{
                 y <- y + 25#px;
                 draw string("Employement (Sector)") at: { 10#px, y } color: #white font: font("SansSerif", "bold" ,32);
                 y <- y + 25#px;
-                draw square(20#px) at: { 20#px, y } color: rgb('#a50f15') border: rgb('#a50f15')-25;
+                draw square(20#px) at: { 20#px, y } color: servicesColor border: servicesColor-25;
                 draw string("Services") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18);
                 y <- y + 25#px;
-                draw square(20#px) at: { 20#px, y } color: rgb('#ef3b2c') border: rgb('#ef3b2c')-25;
+                draw square(20#px) at: { 20#px, y } color: manufactoringColor border: manufactoringColor-25;
                 draw string("Manufacturing") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18);
                 
                 y <- y + 25#px;
@@ -533,6 +536,22 @@ experiment ABValuationDemo type: gui autorun:true{
                   
             }
 		}
+		/*display map_2D  type:opengl background: #black draw_env: false fullscreen:1 toolbar:false
+		{
+			species cell aspect: dark_aspect;			
+			species worker aspect:threeD;
+			species building aspect:threeD transparency: 0.5;
+			species firm aspect: threeD transparency: 0.5;
+			
+			event "e" action: {controlBool <- !controlBool;}; //<- Do this in the aspect (aspect++ will allow you to show aspects)
+
+			event mouse_down action: create_firm;
+			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
+			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
+			event "h" action: {firmTypeToAdd<-'high';};
+			event "l" action: {firmTypeToAdd<-'low';};
+			event "s" action: {updateUnitSize<-!updateUnitSize;};
+		}*/
 	}
 	
 }
