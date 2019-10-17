@@ -227,6 +227,14 @@ species firm{
 		}
 		draw shape color: color depth: 20;
 	}
+	aspect twoD {
+		if (myType='high') {
+			color <- servicesColor;
+		} else {
+			color <- manufactoringColor;
+		}
+		draw shape color: color;
+	}
 }
 
 species building {
@@ -296,6 +304,11 @@ species building {
 	aspect threeD{
 		int colorValue<- 35+ int(220-220*log(rent+1.0)/log(myCity.maxRent+1.0));
 		draw shape color: rgb(colorValue,colorValue,colorValue) depth: heightValue;
+    }
+    
+    aspect twoD{
+		int colorValue<- 35+ int(220-220*log(rent+1.0)/log(myCity.maxRent+1.0));
+		draw shape color: rgb(colorValue,colorValue,colorValue);
     }
 	
 	aspect base{
@@ -493,7 +506,6 @@ species worker {
 			color<-rgb('#6baed6');
 		}
 		draw cylinder(0.2,0.75) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color;	
-		//draw sphere(0.2) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color;
 	}
 	
 }
@@ -526,63 +538,25 @@ experiment ABValuationDemo type: gui autorun:true{
 			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
 			event "l" action: {firmTypeToAdd<-'low'; firmDeleteMode<-false;};
 			event "d" action: {firmDeleteMode<-true;};
-
-						
+			
 			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
             {   
-            	
-            	draw string("MULTI EMPLOYER HOUSING MARKET SIMULATION") at: { 10#px, 20#px } color: #white font: font("SansSerif", "bold" ,72);
-            	
-            	float y <- 150#px;
-            	draw string("Population (Income)") at: { 10#px, y-20#px } color: #white font: font("SansSerif", "bold" ,32);
-                draw circle(10#px) at: { 20#px, y } color: rgb('#08519c') border: rgb('#08519c')-25;
-                draw string("High") at: { 40#px, y + 4#px } color: #white font: font("SansSerif","plain", 18);
-                y <- y + 25#px;
-                draw circle(10#px) at: { 20#px, y } color: rgb('#6baed6') border: rgb('#6baed6')-25;
-                draw string("Medium") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18);
-                y <- y + 25#px;
-                draw string("Employement (Sector)") at: { 10#px, y } color: #white font: font("SansSerif", "bold" ,32);
-                y <- y + 25#px;
-                draw square(20#px) at: { 20#px, y } color: servicesColor border: servicesColor-25;
-                draw string("Services") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18);
-                y <- y + 25#px;
-                draw square(20#px) at: { 20#px, y } color: manufactoringColor border: manufactoringColor-25;
-                draw string("Manufacturing") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18);
-                
-                y <- y + 25#px;
-                draw string("Housing (Cost)") at: { 10#px, y } color: #white font: font("SansSerif", "bold" ,32);
-                y <- y + 25#px;
-                draw square(20#px) at: { 20#px, y } color: rgb(50,50,50) border: rgb(50,50,50)-25;
-                draw string("High") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18);  
-                
-                y <- y + 25#px;
-                draw square(20#px) at: { 20#px, y } color: #lightgray border: #lightgray-25;
-                draw string("Low") at: { 40#px, y + 4#px } color: #white font: font("SansSerif", 18); 
-                
-                y <- y + 100#px;
-                draw string("Comutting Cost") at: { 20#px, y + 4#px } color: #white font: font("SansSerif", 32);
-                y <- y + 25#px;
-                draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
-                draw rectangle(2#px,10#px) at: { commutingCost*100#px, y } color: #white;
-
-                y <- y + 25#px;
-                draw string("Inequality") at: { 20#px, y + 4#px } color: #white font: font("SansSerif", 32);
-                y <- y + 25#px;
-                draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
-                draw rectangle(2#px,10#px) at: { commutingCost*100#px, y } color: #white;
-                
-                y <- y + 25#px;
-                float x<-0#px;
-                draw string("Housing Stock: " + (updateUnitSize ? "Demand-driven" :"fixed")) at: { 20#px + x , y + 4#px } color: #white font: font("SansSerif", 32);
-                  
+            	float y1;
+            	draw string("MULTI EMPLOYER HOUSING MARKET SIMULATION") at: { 10#px, 20#px } color: #white font: font("Helvetica", "bold" ,72); 
+            	y1<-y1+20#px;
+            	draw string("This model represents the effect business and their location can have on housing markets. \n In contracts to site-by-site analysis, this ABM model allows users to understand the impact of multiple employers within a given housing market.") at: { 10#px, 20#px+y1 } color: #white font: font("Helvetica", "bold" ,72);        	          	 
             }
+
+						
+
 		}
-		/*display map_2D  type:opengl background: #black draw_env: false fullscreen:1 toolbar:false
+		display map_2D  type:opengl background: #black draw_env: false fullscreen:0 toolbar:false
+		camera_pos: {14.4668,47.5198,191.0387} camera_look_pos: {14.4668,47.5165,0.0} camera_up_vector: {0.0,1.0,0.0}
 		{
 			species cell aspect: dark_aspect;			
 			species worker aspect:threeD;
-			species building aspect:threeD transparency: 0.5;
-			species firm aspect: threeD transparency: 0.5;
+			species building aspect:twoD transparency: 0.5;
+			species firm aspect: twoD transparency: 0.5;
 			
 			event "e" action: {controlBool <- !controlBool;}; //<- Do this in the aspect (aspect++ will allow you to show aspects)
 
@@ -592,7 +566,60 @@ experiment ABValuationDemo type: gui autorun:true{
 			event "h" action: {firmTypeToAdd<-'high';};
 			event "l" action: {firmTypeToAdd<-'low';};
 			event "s" action: {updateUnitSize<-!updateUnitSize;};
-		}*/
+			
+						overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
+            {   
+            	
+            	draw string("MULTI EMPLOYER HOUSING MARKET SIMULATION") at: { 10#px, 20#px } color: #white font: font("Helvetica", "bold" ,72);
+            	
+            	float y <- 150#px;
+            	draw string("Population (Income)") at: { 10#px, y-20#px } color: #white font: font("Helvetica", "bold" ,32);
+                draw circle(10#px) at: { 20#px, y } color: rgb('#08519c') border: rgb('#08519c')-25;
+                draw string("High") at: { 40#px, y + 4#px } color: #white font: font("Helvetica","plain", 18);
+                y <- y + 25#px;
+                draw circle(10#px) at: { 20#px, y } color: rgb('#6baed6') border: rgb('#6baed6')-25;
+                draw string("Medium") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18);
+                y <- y + 25#px;
+                draw string("Employement (Sector)") at: { 10#px, y } color: #white font: font("Helvetica", "bold" ,32);
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: servicesColor border: servicesColor-25;
+                draw string("Services") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18);
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: manufactoringColor border: manufactoringColor-25;
+                draw string("Manufacturing") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18);
+                
+                y <- y + 25#px;
+                draw string("Housing (Cost)") at: { 10#px, y } color: #white font: font("Helvetica", "bold" ,32);
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: rgb(50,50,50) border: rgb(50,50,50)-25;
+                draw string("High") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18);  
+                
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: #lightgray border: #lightgray-25;
+                draw string("Low") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18); 
+                
+                y <- y + 100#px;
+                draw string("Comutting Cost") at: { 0#px, y + 4#px } color: #white font: font("Helvetica", 32);
+                y <- y + 25#px;
+                draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { commutingCost*100#px, y } color: #white;
+
+                y <- y + 25#px;
+                draw string("Inequality") at: { 0#px, y + 4#px } color: #white font: font("Helvetica", 32);
+                y <- y + 25#px;
+                draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { commutingCost*100#px, y } color: #white;
+                
+                y <- y + 25#px;
+                float x<-0#px;
+                draw string("Housing Supply") at: { 0#px + x , y + 4#px } color: #white font: font("Helvetica", 32);
+                y <- y + 25#px;
+                draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { (updateUnitSize ? 0.25 :0.75)*100#px, y } color: #white;
+                y<-y+15#px; 
+                draw string("     Market Driven        Fixed") at: { 10#px + x , y + 4#px } color: #white font: font("Helvetica", 12);  
+            }
+		}
 	}
 	
 }
