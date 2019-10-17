@@ -18,8 +18,8 @@ global{
 	float cell_width<-100.0/grid_width;
 	float cell_height<-100.0/grid_height;
 	
-	int firm_pos_1 <- int(2.0*grid_width/5.0-1.0);
-	int firm_pos_2 <- int(3.0*grid_height/5.0);
+	int firm_pos_1 <- int(0.5*grid_width);
+//	int firm_pos_2 <- int(0.5*grid_height);
 	
 	// Global model parameters
 	float rentFarm<- 5.0;
@@ -43,6 +43,7 @@ global{
 	// Display parameters
 	bool controlBool;
 	string firmTypeToAdd<-'low';
+	bool firmDeleteMode <- false;	
 	
 	action change_color 
 	{
@@ -59,24 +60,50 @@ global{
 	}
 	
 	action create_firm {
-		building toKill<- (building closest_to(#user_location));
-		create firm {
-			myCity<-one_of(city);
-			shape<-square(0.95*cell_width);
-			myType<-firmTypeToAdd;
-			wage<-wageRatio*globalWage;	
-			location <- toKill.location;
-			nbWorkers<-0;
-			write location;
-		}
-		ask worker {
-			if (myBuilding=toKill) {
-				do forceBuildingUpdate;				
+		if (firmDeleteMode=false) {
+			building toKill<- (building closest_to(#user_location));
+			create firm {
+				myCity<-one_of(city);
+				shape<-square(0.95*cell_width);
+				myType<-firmTypeToAdd;
+				wage<-wageRatio*globalWage;	
+				location <- toKill.location;
+				nbWorkers<-0;
+				write location;
+			}
+			ask worker {
+				if (myBuilding=toKill) {
+					do forceBuildingUpdate;				
+				}
+			}
+			ask toKill {
+				do die;
+			}
+		} else {
+			if (length(firm)>1) {
+				firm toKill<- (firm closest_to(#user_location));
+				create building {
+					myCity<-one_of(city);
+					shape<-square(0.95*cell_width);
+				
+					rent <- rentFarm;
+					buildingSize <- buildingSizeGlobal;
+					vacant <- buildingSizeGlobal;
+					unitSize <- buildingSizeGlobal/float(unitsPerBuilding);
+				
+					location <- toKill.location;
+				}
+				ask worker {
+					if (myFirm=toKill) {
+						do forceFirmUpdate;				
+					}
+				}
+				ask toKill {
+					do die;
+				}
 			}
 		}
-		ask toKill {
-			do die;
-		}
+		
 	}
 
 	init{
@@ -105,26 +132,27 @@ global{
 			if (i=firm_pos_1 and j=firm_pos_1) {
 				i<-((i+1) mod (grid_width+1));
 			}
-			if (i=firm_pos_2 and j=firm_pos_2) {
-				i<-((i+1) mod (grid_width+1));
-			}
+//			if (i=firm_pos_2 and j=firm_pos_2) {
+//				i<-((i+1) mod (grid_width+1));
+//			}
 			
 		}
 		
-		i<-0;
-		create firm number:2{
+//		i<-0;
+		create firm {
 			myCity<-one_of(city);
 			shape<-square(0.95*cell_width);
-			if (i=0){
-				myType<-'low';
-				wage<-globalWage;
-				location <- {cell_width*firm_pos_1,cell_height*firm_pos_1};
-			} else {
-				myType<-'high';
-				wage<-wageRatio*globalWage;	
-				location <- {cell_width*firm_pos_2,cell_height*firm_pos_2};
-			}
-			i<-i+1;
+//			if (i=0){
+			myType<-'high';
+			wage<-globalWage;
+			location <- {cell_width*firm_pos_1,cell_height*firm_pos_1};
+//			} 
+//			else {
+//				myType<-'low';
+//				wage<-wageRatio*globalWage;	
+//				location <- {cell_width*firm_pos_2,cell_height*firm_pos_2};
+//			}
+//			i<-i+1;
 			nbWorkers<-0;
 		}
 		
@@ -307,6 +335,18 @@ species worker {
 		return outValue; 
 	}
 	
+	action forceFirmUpdate {
+		bool updateSuccess<-false;
+		firm newFirm;
+		loop while: (updateSuccess=false) {
+			newFirm<- one_of(firm);
+			if (newFirm!=myFirm) {
+				do attemptFirmUpdate(newFirm);
+				updateSuccess<-true;
+			} 
+		}
+	}
+	
 	action forceBuildingUpdate {
 		bool updateSuccess<-false;
 		building newBuilding;
@@ -480,9 +520,10 @@ experiment ABValuationDemo type: gui autorun:true{
 			event mouse_down action: create_firm;
 			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
 			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
-			event "h" action: {firmTypeToAdd<-'high';};
-			event "l" action: {firmTypeToAdd<-'low';};
 			event "s" action: {updateUnitSize<-!updateUnitSize;};
+			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
+			event "l" action: {firmTypeToAdd<-'low'; firmDeleteMode<-false;};
+			event "d" action: {firmDeleteMode<-true;};
 						
 			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
             {   
