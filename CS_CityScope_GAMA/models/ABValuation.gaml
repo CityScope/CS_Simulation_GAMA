@@ -215,7 +215,7 @@ species firm{
 		} else {
 			color <- manufactoringColor;
 		}
-		draw shape color: color depth: 20;
+		draw shape color: color depth: 2+nbWorkers/nAgents*20;
 	}
 	aspect twoD {
 		if (myType='high') {
