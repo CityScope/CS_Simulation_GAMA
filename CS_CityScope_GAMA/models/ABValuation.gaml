@@ -43,7 +43,8 @@ global{
 	// Display parameters
 	bool controlBool;
 	string firmTypeToAdd<-'low';
-	bool firmDeleteMode <- false;	
+	bool firmDeleteMode <- false;
+	
 	
 	rgb servicesColor<-rgb('#a50f15');
 	rgb manufactoringColor<-rgb('#fc9272');
@@ -292,12 +293,9 @@ species building {
 		draw shape color: rgb(colorValue,colorValue,colorValue);
 	}
 	
-	aspect threeD {
-		int colorValue <- int(220-220*log(rent+1.0)/log(myCity.maxRent+1.0));
-		if (colorValue<=10) {
-			colorValue<-0;
-		}
-    	draw shape color: rgb(colorValue,colorValue,colorValue) depth: heightValue;
+	aspect threeD{
+		int colorValue<- 35+ int(220-220*log(rent+1.0)/log(myCity.maxRent+1.0));
+		draw shape color: rgb(colorValue,colorValue,colorValue) depth: heightValue;
     }
 	
 	aspect base{
@@ -494,7 +492,7 @@ species worker {
 		} else {
 			color<-rgb('#6baed6');
 		}
-		draw cylinder(0.1,0.5) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color;	
+		draw cylinder(0.2,0.75) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color;	
 		//draw sphere(0.2) at_location {location.x,location.y,rnd(myBuilding.heightValue)} color: color;
 	}
 	
@@ -515,8 +513,9 @@ experiment ABValuationDemo type: gui autorun:true{
 		{
 			species cell aspect: dark_aspect;			
 			species worker aspect:threeD;
-			species building aspect:threeD transparency: 0.5;
-			species firm aspect: threeD transparency: 0.5;
+			species firm aspect: threeD transparency: 0.25;
+			species building aspect:threeD transparency: 0.35;
+			
 			
 			event "e" action: {controlBool <- !controlBool;}; //<- Do this in the aspect (aspect++ will allow you to show aspects)
 
@@ -527,6 +526,7 @@ experiment ABValuationDemo type: gui autorun:true{
 			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
 			event "l" action: {firmTypeToAdd<-'low'; firmDeleteMode<-false;};
 			event "d" action: {firmDeleteMode<-true;};
+
 						
 			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
             {   
@@ -573,7 +573,7 @@ experiment ABValuationDemo type: gui autorun:true{
                 
                 y <- y + 25#px;
                 float x<-0#px;
-                draw string("Housing Supply: Fixed/Dynamic") at: { 20#px + x , y + 4#px } color: #white font: font("SansSerif", 32);
+                draw string("Housing Stock: " + (updateUnitSize ? "Demand-driven" :"fixed")) at: { 20#px + x , y + 4#px } color: #white font: font("SansSerif", 32);
                   
             }
 		}
