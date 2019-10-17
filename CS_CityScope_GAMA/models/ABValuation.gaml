@@ -31,8 +31,6 @@ global{
 	float commutingCostCar <- 0.3;
 	float commutingCostCarFixed <- 0.5;
 	float landUtilityParameter <- 10.0;
-	float globalWage1<-globalWage;
-	float globalWage2<-wageRatio*globalWage;
 	
 	int nAgents <- int(0.95*(unitsPerBuilding)*((grid_width+1)*(grid_height+1)-1));
 	
@@ -44,6 +42,7 @@ global{
 	
 	// Display parameters
 	bool controlBool;
+	string firmTypeToAdd<-'low';
 	
 	action change_color 
 	{
@@ -60,7 +59,24 @@ global{
 	}
 	
 	action create_firm {
-//		(circle(10) at_location #user_location)
+		building toKill<- (building closest_to(#user_location));
+		create firm {
+			myCity<-one_of(city);
+			shape<-square(0.95*cell_width);
+			myType<-firmTypeToAdd;
+			wage<-wageRatio*globalWage;	
+			location <- toKill.location;
+			nbWorkers<-0;
+			write location;
+		}
+		ask worker {
+			if (myBuilding=toKill) {
+				do forceBuildingUpdate;				
+			}
+		}
+		ask toKill {
+			do die;
+		}
 	}
 
 	init{
@@ -100,10 +116,12 @@ global{
 			myCity<-one_of(city);
 			shape<-square(0.95*cell_width);
 			if (i=0){
-				wage<-globalWage1;
+				myType<-'low';
+				wage<-globalWage;
 				location <- {cell_width*firm_pos_1,cell_height*firm_pos_1};
 			} else {
-				wage<-globalWage2;
+				myType<-'high';
+				wage<-wageRatio*globalWage;	
 				location <- {cell_width*firm_pos_2,cell_height*firm_pos_2};
 			}
 			i<-i+1;
@@ -137,10 +155,12 @@ species city {
 	float maxRent;
 	float maxDensity;
 	float maxWage;
+	float maxSupportedDensity;
 	
 	action updateCityParams{
 		maxRent <- max(building collect each.rent);
 		maxDensity <- max(building collect each.density);
+		maxSupportedDensity <- max(building collect each.supportedDensity);
 		maxWage <- max(firm collect each.wage);
 	}
 	
@@ -151,6 +171,7 @@ species city {
 
 species firm{
 	int nbWorkers;
+	string myType;
 	float wage;
 	city myCity;
 
@@ -158,20 +179,16 @@ species firm{
 		draw shape color:#blue;
 	}
 	
-	aspect wage_aspect {
-//		int colorValue <- int(30+220*wage/myCity.maxWage);
-		if (wage>=globalWage2) {
-//			I pay a lot
-			color <- rgb('#a50f15');
+	reflex updateWage {
+		if (myType='high') {
+			wage <- wageRatio*globalWage;
 		} else {
-			color <- rgb('#ef3b2c');
+			wage <- globalWage;
 		}
-		draw shape color: color;
 	}
 	
 	aspect threeD {
-		if (wage>=globalWage2) {
-//			I pay a lot
+		if (myType='high') {
 			color <- rgb('#a50f15');
 		} else {
 			color <- rgb('#ef3b2c');
@@ -189,7 +206,7 @@ species building {
 	float vacant;
 	
 	float density;
-	
+	float supportedDensity;
 	float heightValue;
 	
 	reflex lowerRent {  
@@ -218,17 +235,16 @@ species building {
 		if (density<0) {
 			density<-0.0;
 		}
+		
+		supportedDensity <- buildingSize/unitSize;
+		if (supportedDensity=0) {
+			heightValue<-0.0;
+		} else {
+			heightValue<-supportedDensity;
+		}
+		heightValue<-0.3*heightValue;
+		
 	}
-
-//	reflex updateUnitSize {
-//		list<worker> myWorkers <- (worker where (each.myBuilding=self));
-//		if length(myWorkers)!=0 {
-//			worker myWorker <- one_of(myWorkers);
-//			ask myWorker{
-//				do updateUnitSize;
-//			}
-//		} 
-//	}
 
 	aspect rent_aspect {
 		int colorValue <- int(220-220*rent/myCity.maxRent);
@@ -247,13 +263,6 @@ species building {
 	
 	aspect threeD {
 		int colorValue <- int(220-220*log(rent+1.0)/log(myCity.maxRent+1.0));
-		
-		if (density=0) {
-			heightValue<-0.0;
-		} else {
-			heightValue<-density;
-		}
-		heightValue<-0.3*heightValue;
 		if (colorValue<=10) {
 			colorValue<-0;
 		}
@@ -270,6 +279,8 @@ species worker {
 	firm myFirm;
 	bool useCar;
 	float currentUtility;
+	
+	
 	
 	float myUtility (building referenceBuilding, firm referenceFirm, bool useCarLocal, float myUnitSize<-nil) {
 		float utility;
@@ -294,6 +305,24 @@ species worker {
 			outValue <- commutingCost*distance;
 		}
 		return outValue; 
+	}
+	
+	action forceBuildingUpdate {
+		bool updateSuccess<-false;
+		building newBuilding;
+		
+		loop while: (updateSuccess=false) {
+			newBuilding <- one_of(building);
+			if (newBuilding!=myBuilding) {
+				if (newBuilding.vacant>=newBuilding.unitSize) {
+					myBuilding.vacant <- myBuilding.vacant + myBuilding.unitSize;
+					newBuilding.vacant <- newBuilding.vacant - newBuilding.unitSize;
+					myBuilding <- newBuilding;
+					location <- any_location_in(myBuilding);
+					updateSuccess<-true;
+				}
+			} 
+		}
 	}
 		
 	action attemptFirmUpdate (firm newFirm) {
@@ -409,21 +438,16 @@ species worker {
 	}
 	
 	aspect wage_aspect {
-		if (myFirm.wage>=globalWage2) {
-//			I'm high income
+		if (myFirm.myType='high') {
 			color<-rgb('#08519c');
 		} else {
 			color<-rgb('#6baed6');
 		}
-		
-//		int colorValue <- int(30+220*myFirm.wage/myFirm.myCity.maxWage);
-//		draw circle(0.25) color: rgb(colorValue,0,0);
 		draw circle(0.25) color: color;
 	}
 	
 	aspect threeD {
-		if (myFirm.wage>=globalWage2) {
-//			I'm high income
+		if (myFirm.myType='high') {
 			color<-rgb('#08519c');
 		} else {
 			color<-rgb('#6baed6');
@@ -454,9 +478,12 @@ experiment ABValuationDemo type: gui autorun:true{
 			event "e" action: {controlBool <- !controlBool;}; //<- Do this in the aspect (aspect++ will allow you to show aspects)
 
 			event mouse_down action: create_firm;
-			event "+" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
-			event "-" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
-			
+			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
+			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
+			event "h" action: {firmTypeToAdd<-'high';};
+			event "l" action: {firmTypeToAdd<-'low';};
+			event "s" action: {updateUnitSize<-!updateUnitSize;};
+						
 			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
             {   
             	
@@ -503,28 +530,8 @@ experiment ABValuationDemo type: gui autorun:true{
                 y <- y + 25#px;
                 float x<-0#px;
                 draw string("Housing Supply: Fixed/Dynamic") at: { 20#px + x , y + 4#px } color: #white font: font("SansSerif", 32);
-                
-
-                
-                
-                               
+                  
             }
-			
-//			event "c" action: commuting_mode;
-//			event "p action: commutingCost_up;
-//			event "m" action: commutingCost_down;
-
-			
-			// DISPLAY FOR CARS 
-//			species cell;			
-////			species building aspect:density_aspect;
-////			species building aspect:rent_aspect; // 
-////			species building aspect: threeD transparency: 0.5;
-//			species building aspect: density_aspect;
-//			species firm aspect:wage_aspect;
-//			species worker aspect:commuting_aspect;
-
-//			
 		}
 	}
 	
