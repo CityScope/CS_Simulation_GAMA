@@ -36,7 +36,8 @@ global {
 	"R1"::rgb(109,129,159),"R2"::rgb(77,130,197),"R3"::rgb(16,131,237),"R4"::rgb(11,83,176),"R5"::rgb(30,83,141),"R6"::rgb(8,45,121),
 	"SD1"::rgb(185,105,40),"SD2"::rgb(185,105,40),"SD4"::rgb(185,105,40),"SD5"::rgb(185,105,40),"TM"::rgb(185,105,40),"W1"::rgb(185,105,40)	
 	];
-	map<string, rgb> string_type_per_landuse_Simple <- ["B"::rgb(161,80,98),"M"::rgb(133,84,157),"P"::rgb(95,152,61),"R"::rgb(109,129,159),"S"::rgb(185,105,40),nil::#black];
+	//map<string, rgb> string_type_per_landuse_Simple <- ["B"::rgb(161,80,98),"M"::rgb(133,84,157),"P"::rgb(95,152,61),"R"::rgb(109,129,159),"S"::rgb(185,105,40),nil::#black];
+	map<string, rgb> string_type_per_landuse_Simple <- ["B"::rgb(0,0,255),"M"::rgb(255,0,0),"P"::rgb(0,255,0),"R"::rgb(255,255,0),"S"::rgb(0,255,255),nil::#black];
 	map<string, string> detailed_to_simple_landuse <- ["B1"::"B","B2"::"B","B3"::"B","B4"::"B","B5"::"B","B6"::"B","M1"::"M","M2"::"M","M3"::"M","M4"::"M","M5"::"M",
 	"P1"::"P","PC"::"P","PCA"::"P","PD"::"P","PR"::"P","R1"::"R","R2"::"R","R3"::"R","R4"::"R","R5"::"R","R6"::"R","SD1"::"S","SD2"::"S","SD4"::"S","SD5"::"S","TM"::"S","W1"::"S"];
 	
@@ -51,6 +52,11 @@ global {
 	float step <- 10 #sec;
 	int saveLocationInterval<-500;
 	
+	bool showLegend parameter: 'Show Legend' category: "Parameters" <-true;
+	bool showLandUse parameter: 'Show Landuse' category: "Parameters" <-true; 
+	bool showMode parameter: 'Show Mode' category: "Parameters" <-true; 
+    bool showRoad parameter: 'Show Road' category: "Parameters" <-true; 
+	
 	init {
 		create areas from: table_area_file;
 		create portal from: portals_file;
@@ -59,7 +65,7 @@ global {
 				land_use<-detailed_to_simple_landuse[land_use];
 			}
 			if(land_use!=nil){
-				free_space <- free_space - shape;
+				//free_space <- free_space - shape;
 			}
 		}
 		create road from: driving_net_file{
@@ -168,7 +174,9 @@ global {
 species block{
 	string land_use;
 	aspect base {
-		draw shape color: simple_landuse ? string_type_per_landuse_Simple[land_use]: string_type_per_landuse[land_use];
+		if(showLandUse){
+		  draw shape color: simple_landuse ? string_type_per_landuse_Simple[land_use]: string_type_per_landuse[land_use];	
+		}
 	}
 	
 }
@@ -211,12 +219,13 @@ species people skills:[moving]{
 		}	
 	}
 
-	aspect mode {
-		draw circle(10#m) color: color_type_per_mode[mode] border:color_type_per_mode[mode]-50;
-	}
-	
-	aspect type{
-		draw circle(10#m) color: color_type_per_type[type] border:color_type_per_mode[mode]-50;
+	aspect base {
+		if(showMode){
+		  draw circle(10#m) color: color_type_per_mode[mode] border:color_type_per_mode[mode]-50;	
+		}else{
+		  draw circle(10#m) color: color_type_per_type[type] border:color_type_per_mode[mode]-50;	
+		}
+		
 	}
 }
 
@@ -239,70 +248,54 @@ species pedestrian skills: [pedestrian]{
 	}
 	
 	aspect base{
-		draw triangle(10) color:#white border:#black;
+		draw triangle(10) color:#gamablue border:#gamablue-50;
 	}
 }
 
 species road schedules: [] {
 	int type;
 	aspect default {
-		draw shape color: color_type_per_mode[type] width:2;
+		if(showRoad){
+		  draw shape color: color_type_per_mode[type] width:2;	
+		}	
 	}
-
 }
 
 
-experiment Dev type: gui {
+experiment Dev type: gui autorun:true{
 	output {
 		display map_mode type:opengl background:#black{	
 			//species areas refresh:false;
 			species block aspect:base;
-			species road refresh:false;
-			species people aspect:mode;
+			species road;
+			species people aspect:base;
 			species pedestrian aspect:base;	
 			species portal aspect:base;
-		}
-	}
-}
-
-
-experiment Display type: gui {
-	output {
-		layout #split;
-		display map_mode type:opengl background:#black{
-			species areas refresh:false;
-			species road refresh:false;
-			species people aspect:mode;
+			event["b"] action: {showLandUse<-!showLandUse;};
+			event["l"] action: {showLegend<-!showLegend;};
+			event["m"] action: {showMode<-!showMode;};
+			event["r"] action: {showRoad<-!showRoad;};
 			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
             {
-                float y <- 30#px;
-                loop mode over: color_type_per_mode.keys
-                {
-                    draw square(10#px) at: { 20#px, y } color: color_type_per_mode[mode] border: #white;
-                    draw string(string_type_per_mode[mode]) at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
-                    y <- y + 25#px;
-                }
-
+            	if(showLegend){
+	            	float y <- 30#px;
+	            	if(showMode){
+	            	  loop mode over: color_type_per_mode.keys
+	                	{
+	                    draw square(10#px) at: { 20#px, y } color: color_type_per_mode[mode] border: #white;
+	                    draw string(string_type_per_mode[mode]) at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+	                    y <- y + 25#px;
+	                	}	
+	            	}else{
+	            		loop type over: color_type_per_type.keys
+		                {
+		                    draw square(10#px) at: { 20#px, y } color: color_type_per_type[type] border: #white;
+		                    draw string(string_type_per_type[type]) at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
+		                    y <- y + 25#px;
+		                }
+	            	}	                
+            	}
             }
 		}
-		
-		
-		display map_type type:opengl background:#black{
-			species areas refresh:false;
-			species road refresh:false;
-			species people aspect:type;
-			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
-            {
-                float y <- 30#px;
-                loop type over: color_type_per_type.keys
-                {
-                    draw square(10#px) at: { 20#px, y } color: color_type_per_type[type] border: #white;
-                    draw string(string_type_per_type[type]) at: { 40#px, y + 4#px } color: # white font: font("SansSerif", 18, #bold);
-                    y <- y + 25#px;
-                }
-
-            }
-		}
-
 	}
 }
