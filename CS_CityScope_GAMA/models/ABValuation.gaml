@@ -19,7 +19,6 @@ global{
 	float cell_height<-100.0/grid_height;
 	
 	int firm_pos_1 <- int(0.5*grid_width);
-//	int firm_pos_2 <- int(0.5*grid_height);
 	
 	// Global model parameters
 	float rentFarm<- 5.0;
@@ -44,7 +43,7 @@ global{
 	bool controlBool;
 	string firmTypeToAdd<-'low';
 	bool firmDeleteMode <- false;
-	
+	bool reflexPause<-false;
 	
 	rgb servicesColor<-rgb('#a50f15');
 	rgb manufactoringColor<-rgb('#fc9272');
@@ -54,7 +53,8 @@ global{
 		write "change color";
 	}
 	
-	reflex update_pop {
+
+	reflex update_pop when: (reflexPause=false) {
 //		loop while: (length(worker)<nAgents) {
 ////			Create people
 //		}
@@ -73,8 +73,8 @@ global{
 				wage<-wageRatio*globalWage;	
 				location <- toKill.location;
 				nbWorkers<-0;
-				write location;
 			}
+			reflexPause<-true;
 			ask worker {
 				if (myBuilding=toKill) {
 					do forceBuildingUpdate;				
@@ -83,6 +83,7 @@ global{
 			ask toKill {
 				do die;
 			}
+			reflexPause<-false;
 		} else {
 			if (length(firm)>1) {
 				firm toKill<- (firm closest_to(#user_location));
@@ -97,14 +98,16 @@ global{
 				
 					location <- toKill.location;
 				}
+				reflexPause<-true;
 				ask worker {
 					if (myFirm=toKill) {
-						do forceFirmUpdate;				
+						do forceFirmUpdate;
 					}
-				}
+				}				
 				ask toKill {
 					do die;
 				}
+				reflexPause<-false;
 			}
 		}
 		
@@ -136,27 +139,14 @@ global{
 			if (i=firm_pos_1 and j=firm_pos_1) {
 				i<-((i+1) mod (grid_width+1));
 			}
-//			if (i=firm_pos_2 and j=firm_pos_2) {
-//				i<-((i+1) mod (grid_width+1));
-//			}
-			
 		}
 		
-//		i<-0;
 		create firm {
 			myCity<-one_of(city);
 			shape<-square(0.95*cell_width);
-//			if (i=0){
 			myType<-'high';
 			wage<-globalWage;
 			location <- {cell_width*firm_pos_1,cell_height*firm_pos_1};
-//			} 
-//			else {
-//				myType<-'low';
-//				wage<-wageRatio*globalWage;	
-//				location <- {cell_width*firm_pos_2,cell_height*firm_pos_2};
-//			}
-//			i<-i+1;
 			nbWorkers<-0;
 		}
 		
@@ -196,7 +186,7 @@ species city {
 		maxWage <- max(firm collect each.wage);
 	}
 	
-	reflex update{
+	reflex update when: (reflexPause=false) {
 		do updateCityParams;
 	}
 }
@@ -211,7 +201,7 @@ species firm{
 		draw shape color:#blue;
 	}
 	
-	reflex updateWage {
+	reflex updateWage when: (reflexPause=false) {
 		if (myType='high') {
 			wage <- wageRatio*globalWage;
 		} else {
@@ -249,7 +239,7 @@ species building {
 	float supportedDensity;
 	float heightValue;
 	
-	reflex lowerRent {  
+	reflex lowerRent when: (reflexPause=false) {  
 		if (vacant>=unitSize) {
 			rent <- rent-rentDelta*rent;
 			if (rent<rentFarm){
@@ -286,16 +276,6 @@ species building {
 		
 	}
 
-	aspect rent_aspect {
-		int colorValue <- int(220-220*rent/myCity.maxRent);
-		draw shape color: rgb(colorValue,colorValue,colorValue);
-	}
-	
-	aspect rent_log_aspect {
-		int colorValue <- int(220-220*log(rent)/log(myCity.maxRent));
-		draw shape color: rgb(colorValue,colorValue,colorValue);
-	}
-	
 	aspect density_aspect {
 		int colorValue <- int(220-220*density/myCity.maxDensity);
 		draw shape color: rgb(colorValue,colorValue,colorValue);
@@ -311,9 +291,6 @@ species building {
 		draw shape color: rgb(colorValue,colorValue,colorValue);
     }
 	
-	aspect base{
-		draw shape color:#gray;
-	}
 }
 
 species worker {
@@ -321,7 +298,6 @@ species worker {
 	firm myFirm;
 	bool useCar;
 	float currentUtility;
-	
 
 	float myUtility (building referenceBuilding, firm referenceFirm, bool useCarLocal, float myUnitSize<-nil) {
 		float utility;
@@ -348,11 +324,20 @@ species worker {
 		return outValue; 
 	}
 	
+	action checkMyStuff {
+		if (myFirm=nil){
+			myFirm <- one_of(firm);
+		}
+		if (myBuilding=nil){
+			myBuilding <- one_of(building);
+		}
+	}
+	
 	action forceFirmUpdate {
 		bool updateSuccess<-false;
 		firm newFirm;
 		loop while: (updateSuccess=false) {
-			newFirm<- one_of(firm);
+			newFirm <- one_of(firm);
 			if (newFirm!=myFirm) {
 				do attemptFirmUpdate(newFirm);
 				updateSuccess<-true;
@@ -397,12 +382,14 @@ species worker {
 		}
 	}
 	
-	reflex updateUtility {
+	reflex updateUtility when: (reflexPause=false) {
+		do checkMyStuff;
 		float utility<-myUtility(myBuilding,myFirm,useCar);
 		currentUtility<-utility;
 	}
 	
-	reflex updateCommutingMode {
+	reflex updateCommutingMode when: (reflexPause=false) {
+		do checkMyStuff;
 		float utilityCar<-myUtility(myBuilding,myFirm,true);
 		float utilityNoCar<-myUtility(myBuilding,myFirm,false);
 		if (utilityCar>utilityNoCar){
@@ -412,10 +399,10 @@ species worker {
 		}
 	}
 	
-	reflex updateBuilding {
+	reflex updateBuilding when: (reflexPause=false) {
+		do checkMyStuff;
 		float utility <- myUtility(myBuilding,myFirm,useCar);
 		building possibleBuilding <- one_of(building);
-
 		float possibleUtility <- myUtility(possibleBuilding,myFirm,useCar);
 		float utilityChange <- possibleUtility-utility;
 		
@@ -424,7 +411,8 @@ species worker {
 		}
 	}
 	
-	reflex updateWork {		
+	reflex updateWork when: (reflexPause=false) {	
+		do checkMyStuff;	
 		float utility <- myUtility(myBuilding,myFirm,useCar);
 		firm possibleFirm <- one_of(firm);
 		float possibleUtility<- myUtility(myBuilding,possibleFirm,useCar);
@@ -433,14 +421,14 @@ species worker {
 		}
 	}
 	
-	reflex updateBuildingRandom {
+	reflex updateBuildingRandom when: (reflexPause=false) {
 		if (rnd(1.0)<randomMoveRate) {
 			building possibleBuilding <- one_of(building);
 			do attemptBuildingUpdate(possibleBuilding);
 		}
 	}
 	
-	reflex updateWorkRandom {
+	reflex updateWorkRandom when: (reflexPause=false) {
 		if (rnd(1.0)<randomMoveRate) {
 			firm possibleFirm;
 			possibleFirm <- one_of(firm);
@@ -448,7 +436,7 @@ species worker {
 		}
 	}
 	
-	reflex updateUnitSize when: (updateUnitSize=true) {
+	reflex updateUnitSize when: (updateUnitSize=true and reflexPause=false) {
 		float utility;		
 		float newUnitSizem;
 		float newUnitSizep;
@@ -459,6 +447,7 @@ species worker {
 		loop while: (updateFlag=true) {
 			updateFlag<-false;
 			
+			do checkMyStuff;
 			utility <- myUtility(myBuilding,myFirm,useCar);
 			newUnitSizem <- (1.0-sizeDelta)*myBuilding.unitSize;
 			newUnitSizep <- (1.0+sizeDelta)*myBuilding.unitSize;
@@ -534,6 +523,8 @@ experiment ABValuationDemo type: gui autorun:true{
 			event mouse_down action: create_firm;
 			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
 			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
+			event "u" action: {if(wageRatio<10.0){wageRatio<-wageRatio+0.1;}};
+			event "e" action: {if(wageRatio>1.0){wageRatio<-wageRatio-0.1;}};
 			event "s" action: {updateUnitSize<-!updateUnitSize;};
 			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
 			event "l" action: {firmTypeToAdd<-'low'; firmDeleteMode<-false;};
@@ -544,7 +535,54 @@ experiment ABValuationDemo type: gui autorun:true{
             	float y1;
             	draw string("MULTI EMPLOYER HOUSING MARKET SIMULATION") at: { 10#px, 20#px } color: #white font: font("Helvetica", "bold" ,72); 
             	y1<-y1+20#px;
-            	draw string("This model represents the effect business and their location can have on housing markets. \n In contracts to site-by-site analysis, this ABM model allows users to understand the impact of multiple employers within a given housing market.") at: { 10#px, 20#px+y1 } color: #white font: font("Helvetica", "bold" ,72);        	          	 
+            	draw string("This model represents the effect business and their location can have on housing markets. \n In contracts to site-by-site analysis, this ABM model allows users to understand the impact of multiple employers within a given housing market.") at: { 10#px, 20#px+y1 } color: #white font: font("Helvetica", "bold" ,72); 
+            	
+            	float y <- 150#px;
+            	draw string("Population (Income)") at: { 10#px, y-20#px } color: #white font: font("Helvetica", "bold" ,32);
+                draw circle(10#px) at: { 20#px, y } color: rgb('#08519c') border: rgb('#08519c')-25;
+                draw string("High") at: { 40#px, y + 4#px } color: #white font: font("Helvetica","plain", 18);
+                y <- y + 25#px;
+                draw circle(10#px) at: { 20#px, y } color: rgb('#6baed6') border: rgb('#6baed6')-25;
+                draw string("Medium") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18);
+                y <- y + 25#px;
+                draw string("Employement (Sector)") at: { 10#px, y } color: #white font: font("Helvetica", "bold" ,32);
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: servicesColor border: servicesColor-25;
+                draw string("Services") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18);
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: manufactoringColor border: manufactoringColor-25;
+                draw string("Manufacturing") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18);
+                
+                y <- y + 25#px;
+                draw string("Housing (Cost)") at: { 10#px, y } color: #white font: font("Helvetica", "bold" ,32);
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: rgb(50,50,50) border: rgb(50,50,50)-25;
+                draw string("High") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18);  
+                
+                y <- y + 25#px;
+                draw square(20#px) at: { 20#px, y } color: #lightgray border: #lightgray-25;
+                draw string("Low") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18); 
+                
+                y <- y + 100#px;
+                draw string("Comutting Cost") at: { 0#px, y + 4#px } color: #white font: font("Helvetica", 32);
+                y <- y + 25#px;
+                draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { commutingCost*100#px, y } color: #white;
+
+                y <- y + 25#px;
+                draw string("Inequality") at: { 0#px, y + 4#px } color: #white font: font("Helvetica", 32);
+                y <- y + 25#px;
+                draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { wageRatio*100#px, y } color: #white;
+                
+                y <- y + 25#px;
+                float x<-0#px;
+                draw string("Housing Supply") at: { 0#px + x , y + 4#px } color: #white font: font("Helvetica", 32);
+                y <- y + 25#px;
+                draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { (updateUnitSize ? 0.25 :0.75)*100#px, y } color: #white;
+                y<-y+15#px; 
+                draw string("     Market Driven        Fixed") at: { 10#px + x , y + 4#px } color: #white font: font("Helvetica", 12);       	          	 
             }
 
 						
@@ -563,11 +601,15 @@ experiment ABValuationDemo type: gui autorun:true{
 			event mouse_down action: create_firm;
 			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
 			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
-			event "h" action: {firmTypeToAdd<-'high';};
-			event "l" action: {firmTypeToAdd<-'low';};
+			event "u" action: {if(wageRatio<10.0){wageRatio<-wageRatio+0.1;}};
+			event "e" action: {if(wageRatio>1.0){wageRatio<-wageRatio-0.1;}};
 			event "s" action: {updateUnitSize<-!updateUnitSize;};
-			
-						overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
+			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
+			event "l" action: {firmTypeToAdd<-'low'; firmDeleteMode<-false;};
+			event "d" action: {firmDeleteMode<-true;};
+				
+			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
+
             {   
             	
             	draw string("MULTI EMPLOYER HOUSING MARKET SIMULATION") at: { 10#px, 20#px } color: #white font: font("Helvetica", "bold" ,72);
@@ -608,7 +650,7 @@ experiment ABValuationDemo type: gui autorun:true{
                 draw string("Inequality") at: { 0#px, y + 4#px } color: #white font: font("Helvetica", 32);
                 y <- y + 25#px;
                 draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
-                draw rectangle(2#px,10#px) at: { commutingCost*100#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { wageRatio*100#px, y } color: #white;
                 
                 y <- y + 25#px;
                 float x<-0#px;
