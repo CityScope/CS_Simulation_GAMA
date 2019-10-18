@@ -55,7 +55,7 @@ global{
 	float driving_speed<- 30/3.6; // km/hr to m/s
 	float walking_speed<- 4/3.6; // km/hr to m/s
 	
-	float step <- 1 #mn;
+	float step <- 10 #mn;
 	int current_time update: (first_hour_of_day *60) + ((time / #mn) mod ((last_hour_of_day-first_hour_of_day) * 60));
 	
 	// Multiplication factor for reducing the number of agents
@@ -297,6 +297,7 @@ global{
 	
 	map<string,unknown> my_input_capacity; 
 	map<string,unknown> my_input_scale; 
+	map<string,unknown> my_input_category;
 	map my_agent_type;
 	point mouse_location;
 	user_command Create_agents action:create_agents;
@@ -339,11 +340,11 @@ global{
 	
 	action create_user_residential(point target_location){
 		my_input_capacity <- user_input("Please specify the count of people living in the building", "capacity" :: 10);
-		my_input_scale <- user_input("Please specify the scale ['S', 'M', 'L']", "scale" :: 'S');
+		my_input_category <- user_input("Please specify the scale ['S', 'R']", "category" :: 'S');
 		create residential number:1 with:(location: target_location ) {
 			capacity <- int(my_input_capacity at "capacity");
 			usage <- "R";
-			scale<-string(my_input_scale at 'scale');
+			category<-string(my_input_category at 'category');
 			shape <- square(20);
 			color <- rgb(255,255,0,50);
 			write("A building was constructed and count of dwellers are: " + char(10) + string(capacity));
