@@ -16,11 +16,11 @@ def combine(outFname = 'test.mp4',frameRate = '60',aspectRatio='2560x1049'):
 	cycles = [int(f.split('cycle_')[-1].split('_')[0].replace('.png','')) for f in fnames]
 	order = sorted(range(len(cycles)), key=lambda k: cycles[k])
 
-	digits = 4
+	digits = 5
 	j = 0
 	for i in order:
 		src = fnames[i]
-		dst = 'cycle_'+('0'*digits+str(j))[-3:]+'.png'
+		dst = 'cycle_'+('0'*digits+str(j))[-digits:]+'.png'
 		print(src,dst)
 		os.rename(src, dst)
 		j+=1
