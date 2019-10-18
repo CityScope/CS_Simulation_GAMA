@@ -508,8 +508,11 @@ grid cell width: grid_width height: grid_height {
 experiment ABValuationDemo type: gui autorun:true{
 	parameter "Commuting cost" var: commutingCost min: 0.0 max: 1.0 step: 0.05; 
 	output { 
-		display map_3D  type:opengl background: #black draw_env: false  toolbar:false fullscreen:1
+		display map_3D  type:opengl background: #black draw_env: false  toolbar:false 
 		camera_pos: {-31.3849,154.8123,60.965} camera_look_pos: {39.7081,49.4125,-9.5042} camera_up_vector: {0.2711,0.4019,0.8746}
+		autosave: true
+		synchronized: true
+		fullscreen:1
 		//camera_interaction:false
 		{
 			species cell aspect: dark_aspect;			
@@ -564,7 +567,7 @@ experiment ABValuationDemo type: gui autorun:true{
                 draw string("Low") at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18); 
                 
                 y <- y + 75#px;
-                draw string("Comutting Cost") at: { 0#px, y + 4#px } color: #white font: font("Helvetica", 32);
+                draw string("Commuting Cost") at: { 0#px, y + 4#px } color: #white font: font("Helvetica", 32);
                 y <- y + 25#px;
                 draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
                 draw rectangle(2#px,10#px) at: { commutingCost*100#px, y } color: #white;
@@ -588,7 +591,8 @@ experiment ABValuationDemo type: gui autorun:true{
 						
 
 		}
-		display map_2D  type:opengl background: #black draw_env: false fullscreen:0 toolbar:false
+		display map_2D  type:opengl background: #black draw_env: false 
+		toolbar:false
 		camera_pos: {50.0,50.0025,145.6542} camera_look_pos: {50.0,50.0,0.0} camera_up_vector: {0.0,1.0,0.0}
 		{
 			species cell aspect: dark_aspect;			
