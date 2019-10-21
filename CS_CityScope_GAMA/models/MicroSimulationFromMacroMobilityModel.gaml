@@ -101,7 +101,6 @@ global {
 			loop l over: list(lo) {
 				map m <- map(l);
 				create people with: [type::int(m["type"]), mode::int(m["mode"]), home::point(m["home_ll"]), work::point(m["work_ll"]), start_time::int(m["start_time"])] {
-					location <- home;
 					home <- point(to_GAMA_CRS(home, "EPSG:4326"));
 					work <- point(to_GAMA_CRS(work, "EPSG:4326"));
 			        location<-home;
@@ -124,7 +123,8 @@ global {
 			test <+ "mode"::mode;
 			test<+"path"::locs;
 			//test<+locs;
-			t <- "{\n\"mode\": "+mode+",\n\"path\": [";
+			t <- "{\n\"mode\": ["+ mode + ","+type+    "],\n\"path\": [";
+			//t <- "{\n\"mode\": "+mode+"\n\"type\": "+type+ ",\n\"segments\": [";
 			int curLoc<-0;
 			loop l over: locs {
 				
@@ -176,11 +176,6 @@ global {
 	}
 }
 
-
-
-
-
-
 species people skills:[moving,pedestrian]{
 	int mode;
 	int type;
@@ -189,6 +184,7 @@ species people skills:[moving,pedestrian]{
 	point work;
 	bool macro;
 	point current_target;
+
 	
 	rgb color <- rnd_color(255);
 	list<point> locs;
@@ -203,7 +199,9 @@ species people skills:[moving,pedestrian]{
 					
 		}
 		if(time mod saveLocationInterval = 0 and time>1 and location!=work){
-		 	locs << {location.x,location.y,time};
+		 	if(location !=home){
+		 	  locs << {location.x,location.y,time};	
+		 	}
 		}
 		if(time>start_time and location=work and type!=2){//The people that only lives here are not shown as micro agent as there are not in the table anymore.
 			macro<-false;
