@@ -2,7 +2,7 @@ model microFromMacro
 
 global {
 
-	string city<-'Detroit';
+	string city<-'Hamburg';
 	map<string, string> table_name_per_city <- ['Detroit'::'corktown', 'Hamburg'::'grasbrook'];
 	string city_io_table<-table_name_per_city[city];
 
@@ -21,7 +21,7 @@ global {
 	graph cycling_graph;
 	graph driving_graph;
 	graph pt_graph;
-	map<int, graph> graph_map <-[0::driving_graph, 1::cycling_graph, 2::walking_graph, 3::pt_graph];
+	map<int, graph> graph_map; 
 	
 	
 	geometry shape <- envelope(meta_grid_file);
@@ -40,6 +40,10 @@ global {
 	map<string, rgb> string_type_per_landuse_Simple <- ["B"::rgb(0,0,255),"M"::rgb(255,0,0),"P"::rgb(0,255,0),"R"::rgb(255,255,0),"S"::rgb(0,255,255),nil::#black];
 	map<string, string> detailed_to_simple_landuse <- ["B1"::"B","B2"::"B","B3"::"B","B4"::"B","B5"::"B","B6"::"B","M1"::"M","M2"::"M","M3"::"M","M4"::"M","M5"::"M",
 	"P1"::"P","PC"::"P","PCA"::"P","PD"::"P","PR"::"P","R1"::"R","R2"::"R","R3"::"R","R4"::"R","R5"::"R","R6"::"R","SD1"::"S","SD2"::"S","SD4"::"S","SD5"::"S","TM"::"S","W1"::"S"];
+	
+	
+	
+	map<int,rgb> interactive_bloc_color <-[0::rgb("#373F51"),1::rgb("#002DD5"),2::rgb("#008DD5"),3::rgb("#E43F0F"),4::rgb("#F51476")];
 	
 	//MODE PARAMETERS
 	map<int, rgb> color_type_per_mode <- [0::#black, 1::#gamared, 2::#gamablue, 3::#gamaorange];
@@ -60,7 +64,7 @@ global {
 	init {
 		create areas from: table_area_file;
 		create portal from: portals_file;
-		create block from:meta_grid_file with:[land_use::read("land_use")]{
+		create block from:meta_grid_file with:[land_use::read("land_use"), interactive::bool(read("interactive"))]{
 			if(simple_landuse){
 				land_use<-detailed_to_simple_landuse[land_use];
 			}
@@ -84,6 +88,7 @@ global {
 		cycling_graph <- as_edge_graph(road where (each.type=1));
 		walking_graph <- as_edge_graph(road where (each.type=2));
 		pt_graph <- as_edge_graph(road where (each.type=3));
+		graph_map <-[0::driving_graph, 1::cycling_graph, 2::walking_graph, 3::pt_graph];
 		do initiatePeople;	
 			
 	}
@@ -100,25 +105,26 @@ global {
 					home <- point(to_GAMA_CRS(home, "EPSG:4326"));
 					work <- point(to_GAMA_CRS(work, "EPSG:4326"));
 			        location<-home;
+			        macro<-true;
 				}
 			}
 		  }	
-		  create pedestrian number:200{
-		  	location<-any_location_in(one_of(areas));
-		  }
+		  /*create people number:100{
+		  	location<-any_location_in(one_of(block where (each.interactive=true)));
+		  	macro<-false;
+		  	mode<-2;
+		  }*/
     }
 	//6AM to 12pm=> 
 	reflex save_results when: (cycle=6480){//(time = 8640/(2*step))  {
 		string t;
 		map<string, unknown> test;
-		
-		
 		save "[" to: "result.json";
-		ask pedestrian {
+		ask people {
 			test <+ "mode"::mode;
 			test<+"path"::locs;
 			//test<+locs;
-			t <- "{\n\"mode\": "+rnd(2)+",\n\"path\": [";
+			t <- "{\n\"mode\": "+mode+",\n\"path\": [";
 			int curLoc<-0;
 			loop l over: locs {
 				
@@ -147,7 +153,7 @@ global {
 			
 			
 			t<- t+ "\n}";
-			if (int(self) < (length(pedestrian) - 1)) {
+			if (int(self) < (length(people) - 1)) {
 				t <- t + ",";
 			}
 			save t to: "result.json" rewrite: false;
@@ -171,14 +177,106 @@ global {
 }
 
 
+
+
+
+
+species people skills:[moving,pedestrian]{
+	int mode;
+	int type;
+	int start_time;
+	point home;
+	point work;
+	bool macro;
+	point current_target;
+	
+	rgb color <- rnd_color(255);
+	list<point> locs;
+		
+	reflex move_macro when:(macro=true){
+		if(time>start_time and location!=work){
+			if(mode=2){
+			  do walk target: work bounds: free_space speed:0.01;	
+			}else{
+			   do goto target:work speed:0.01 * speed_per_mode[mode] on: graph_map[mode];	
+			}
+					
+		}
+		if(time mod saveLocationInterval = 0 and time>1 and location!=work){
+		 	locs << {location.x,location.y,time};
+		}
+		if(time>start_time and location=work and type!=2){//The people that only lives here are not shown as micro agent as there are not in the table anymore.
+			macro<-false;
+		}	
+	}
+	
+	reflex choose_target_pedestrian when: (current_target = nil and macro=false) {
+		current_target <- any_location_in(one_of(block where (each.interactive=true)));
+	}
+	reflex move_pedestrian when: (current_target != nil and macro=false){
+		do walk target: current_target bounds: free_space speed:0.01;
+		if (self distance_to current_target < 0.1) {
+			current_target <- any_location_in(one_of(block where (each.interactive=true)));
+		}
+		if(time mod saveLocationInterval = 0 and time>1){
+		 	locs << {location.x,location.y,time};
+		}	
+	}
+	
+	reflex saveLoc{
+		
+	}
+
+	aspect base {
+		if(macro){
+		  if(showMode){
+		  	draw circle(5#m) color: color_type_per_mode[mode] border:color_type_per_mode[mode]-50;	
+		  }else{
+		    draw circle(5#m) color: color_type_per_type[type] border:color_type_per_mode[mode]-50;	
+		  }	
+		}else{
+			if(showMode){
+		  	draw triangle(5#m) color: color_type_per_mode[mode] border:color_type_per_mode[mode]-50;	
+		  	
+		  }else{
+		    draw triangle(5#m) color: color_type_per_type[type] border:color_type_per_mode[mode]-50;	
+		  }
+		}
+	}
+}
+
+
+species pedestrian skills: [pedestrian]{
+	point current_target;
+	int mode<-2;
+	list<point> locs;
+	reflex choose_target when: current_target = nil {
+		current_target <- any_location_in(one_of(block where (each.land_use="M")));
+	}
+	reflex move when: current_target != nil{
+		do walk target: current_target bounds: free_space speed:0.01*10;
+		if (self distance_to current_target < 0.1) {
+			current_target <- any_location_in(one_of(block where (each.land_use="M")));
+		}
+		if(time mod saveLocationInterval = 0 and time>1){
+		 	locs << {location.x,location.y,time};
+		}	
+	}
+	
+	aspect base{
+		draw triangle(10) color:#gamablue border:#gamablue-50;
+	}
+}
+
+
 species block{
 	string land_use;
+	bool interactive;
 	aspect base {
 		if(showLandUse){
 		  draw shape color: simple_landuse ? string_type_per_landuse_Simple[land_use]: string_type_per_landuse[land_use];	
 		}
 	}
-	
 }
 
 species areas {
@@ -192,66 +290,9 @@ species areas {
 
 species portal{
 	aspect base {
-		draw circle(50#m) color: #gamablue;
+		draw circle(25#m) color: #gamablue;
 	}
 }
-
-
-species people skills:[moving]{
-	int mode;
-	int type;
-	int start_time;
-	point home;
-	point work;
-	
-	rgb color <- rnd_color(255);
-	list<point> locs;
-		
-	reflex move{
-		if(time>start_time and location!=work){
-			if (mode=0) {do goto target:work speed:0.01 * speed_per_mode[mode] on: driving_graph;}
-			else if (mode=1) {do goto target:work speed:0.01 * speed_per_mode[mode] on: cycling_graph;}
-			else if (mode=2) {do goto target:work speed:0.01 * speed_per_mode[mode] on: walking_graph;}
-			else if (mode=3) {do goto target:work speed:0.01 * speed_per_mode[mode] on: pt_graph;} 
-		}
-		if(time mod saveLocationInterval = 0 and time>1 and location!=work){
-		 	locs << {location.x,location.y,time};
-		}	
-	}
-
-	aspect base {
-		if(showMode){
-		  draw circle(10#m) color: color_type_per_mode[mode] border:color_type_per_mode[mode]-50;	
-		}else{
-		  draw circle(10#m) color: color_type_per_type[type] border:color_type_per_mode[mode]-50;	
-		}
-		
-	}
-}
-
-
-species pedestrian skills: [pedestrian]{
-	point current_target;
-	int mode<-2;
-	list<point> locs;
-	reflex choose_target when: current_target = nil {
-		current_target <- any_location_in(one_of(people));
-	}
-	reflex move when: current_target != nil{
-		do walk target: current_target bounds: free_space speed:0.01;
-		if (self distance_to current_target < 0.1) {
-			current_target <- any_location_in(one_of(people));
-		}
-		if(time mod saveLocationInterval = 0 and time>1){
-		 	locs << {location.x,location.y,time};
-		}	
-	}
-	
-	aspect base{
-		draw triangle(10) color:#gamablue border:#gamablue-50;
-	}
-}
-
 species road schedules: [] {
 	int type;
 	aspect default {
@@ -262,11 +303,11 @@ species road schedules: [] {
 }
 
 
-experiment Dev type: gui autorun:true{
+experiment Dev type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black{	
 			//species areas refresh:false;
-			species block aspect:base;
+			species block aspect:base transparency:0.75;
 			species road;
 			species people aspect:base;
 			species pedestrian aspect:base;	
