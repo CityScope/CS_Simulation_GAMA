@@ -30,14 +30,16 @@ global{
 	float commutingCostCar <- 0.3;
 	float commutingCostCarFixed <- 0.5;
 	float landUtilityParameter <- 10.0;
+	float shareLowIncome <- 0.1;
 	
 	int nAgents <- int(0.95*(unitsPerBuilding)*((grid_width+1)*(grid_height+1)-1));
 	
 	// Update parameters (non-equilibrium)
 	float rentSplit<- 0.75;
 	float rentDelta <- 0.05;
-	float sizeDelta <- 0.05;
+	float sizeDelta <- 0.01;
 	float randomMoveRate <- 0.001;
+	float advertiseRatioGlobal <- 0.01;
 	
 	// Display parameters
 	bool controlBool;
@@ -48,33 +50,49 @@ global{
 	rgb servicesColor<-rgb('#a50f15');
 	rgb manufactoringColor<-rgb('#fc9272');
 	
-	action change_color 
-	{
-		write "change color";
-	}
-	
-
-	reflex update_pop when: (reflexPause=false) {
-//		loop while: (length(worker)<nAgents) {
-////			Create people
-//		}
-//		if (length(worker)<nAgents) {
-////			Create people
-//		}
+	reflex updateAgents when: (reflexPause=false) {
+		write "Share low income: "+shareLowIncome;
+		if (length(firm where (each.skillType=0))!=0) {
+			int lowSkilledTarget <- int(nAgents*shareLowIncome);			
+			loop while: (length(worker where (each.skillType=0))<lowSkilledTarget) {
+				worker toSwitch <- one_of(worker where (each.skillType=1));
+				toSwitch.skillType <- 0;
+				if (toSwitch.myFirm.skillType>toSwitch.skillType) {
+					ask toSwitch {
+						do forceFirmUpdate;
+					}
+				}
+			}
+			loop while: (length(worker where (each.skillType=0))>lowSkilledTarget) {
+				worker toSwitch <- one_of(worker where (each.skillType=0));
+				toSwitch.skillType <- 1;
+			}
+		} else {
+			ask (worker where (each.skillType=0)) {
+				self.skillType<-1;
+			}
+		}		
 	}
 	
 	action create_firm {
 		if (firmDeleteMode=false) {
 			building toKill<- (building closest_to(#user_location));
+			reflexPause<-true;
 			create firm {
 				myCity<-one_of(city);
 				shape<-square(0.95*cell_width);
-				myType<-firmTypeToAdd;
+				if (firmTypeToAdd='high') {
+					skillType<-1;
+				} else {
+					skillType<-0;
+				}
+				
 				wage<-wageRatio*globalWage;	
 				location <- toKill.location;
 				nbWorkers<-0;
+				advertiseRatio<-advertiseRatioGlobal;
+				do advertise;
 			}
-			reflexPause<-true;
 			ask worker {
 				if (myBuilding=toKill) {
 					do forceBuildingUpdate;				
@@ -87,6 +105,14 @@ global{
 		} else {
 			if (length(firm)>1) {
 				firm toKill<- (firm closest_to(#user_location));
+				
+				reflexPause<-true;
+				list<firm> remainingLowSkilledFirms<-(firm where (each!=toKill and each.skillType=0));
+				if (length(remainingLowSkilledFirms)=0) {
+					ask (worker where (each.skillType=0)) {
+						skillType<-1;
+					}  
+				}
 				create building {
 					myCity<-one_of(city);
 					shape<-square(0.95*cell_width);
@@ -98,12 +124,10 @@ global{
 				
 					location <- toKill.location;
 				}
-				reflexPause<-true;
-				ask worker {
-					if (myFirm=toKill) {
-						do forceFirmUpdate;
-					}
-				}				
+				
+				ask (worker where (each.myFirm=toKill)) {
+					do forceFirmUpdate;
+				}
 				ask toKill {
 					do die;
 				}
@@ -144,18 +168,24 @@ global{
 		create firm {
 			myCity<-one_of(city);
 			shape<-square(0.95*cell_width);
-			myType<-'high';
+			skillType<-1;
 			wage<-globalWage;
 			location <- {cell_width*firm_pos_1,cell_height*firm_pos_1};
 			nbWorkers<-0;
+			advertiseRatio<-advertiseRatioGlobal;
 		}
 		
 		create worker number:nAgents {
-			myFirm <- one_of(firm);
-			myFirm.nbWorkers <- myFirm.nbWorkers+1;
+			skillType<-1;
+			list<firm> possibleFirms<-(firm where (each.skillType=skillType));
+			if (length(possibleFirms)!=0) {
+				myFirm <- one_of(possibleFirms);
+				myFirm.nbWorkers <- myFirm.nbWorkers+1;
+			} else {
+				
+			}
 			
 			list<building> possibleBuildings<-(building where (each.vacant>0));
-			
 			if (length(possibleBuildings)!=0) {
 				myBuilding <- one_of(possibleBuildings);
 				myBuilding.vacant <- myBuilding.vacant-myBuilding.unitSize;
@@ -193,16 +223,29 @@ species city {
 
 species firm{
 	int nbWorkers;
-	string myType;
+	int skillType;
 	float wage;
 	city myCity;
+	float advertiseRatio;
+	
+	action advertise {
+		int nEmployees <- int(advertiseRatio*length(worker where (each.skillType>=skillType)));
+		int i<-0;
+		loop while: (i<nEmployees) {
+			worker targetWorker <- one_of(worker where (each.skillType>=skillType));
+			ask targetWorker {
+				do attemptFirmUpdate(myself);
+			}
+			i<-i+1;
+		}
+	}
 
 	aspect base{
 		draw shape color:#blue;
 	}
 	
 	reflex updateWage when: (reflexPause=false) {
-		if (myType='high') {
+		if (skillType=1) {
 			wage <- wageRatio*globalWage;
 		} else {
 			wage <- globalWage;
@@ -210,7 +253,7 @@ species firm{
 	}
 	
 	aspect threeD {
-		if (myType='high') {
+		if (skillType=1) {
 			color <- servicesColor;
 		} else {
 			color <- manufactoringColor;
@@ -218,7 +261,7 @@ species firm{
 		draw shape color: color depth: 2+nbWorkers/nAgents*20;
 	}
 	aspect twoD {
-		if (myType='high') {
+		if (skillType=1) {
 			color <- servicesColor;
 		} else {
 			color <- manufactoringColor;
@@ -298,6 +341,7 @@ species worker {
 	firm myFirm;
 	bool useCar;
 	float currentUtility;
+	int skillType;
 
 	float myUtility (building referenceBuilding, firm referenceFirm, bool useCarLocal, float myUnitSize<-nil) {
 		float utility;
@@ -325,24 +369,26 @@ species worker {
 	}
 	
 	action checkMyStuff {
+		do checkSkillFirm;
 		if (myFirm=nil){
-			myFirm <- one_of(firm);
+			myFirm <- one_of(firm where (each.skillType=skillType));
 		}
 		if (myBuilding=nil){
 			myBuilding <- one_of(building);
 		}
 	}
 	
-	action forceFirmUpdate {
-		bool updateSuccess<-false;
-		firm newFirm;
-		loop while: (updateSuccess=false) {
-			newFirm <- one_of(firm);
-			if (newFirm!=myFirm) {
-				do attemptFirmUpdate(newFirm);
-				updateSuccess<-true;
-			} 
+	action checkSkillFirm {
+		if (length(firm where (each.skillType<=skillType))=0) {
+			write "kill skilltype: "+skillType;
+			skillType<-1;
 		}
+	}
+	
+	action forceFirmUpdate {
+		firm newFirm;
+		newFirm <- one_of(firm where (each.skillType<=skillType and each!=myFirm));
+		do attemptFirmUpdate(newFirm);
 	}
 	
 	action forceBuildingUpdate {
@@ -364,9 +410,12 @@ species worker {
 	}
 		
 	action attemptFirmUpdate (firm newFirm) {
-		myFirm.nbWorkers<-myFirm.nbWorkers-1;
-		newFirm.nbWorkers<-newFirm.nbWorkers+1;
-		myFirm <- newFirm;
+		if (newFirm!=nil) {
+			myFirm.nbWorkers<-myFirm.nbWorkers-1;
+			newFirm.nbWorkers<-newFirm.nbWorkers+1;
+			myFirm <- newFirm;
+		}
+		
 	}
 	
 	action attemptBuildingUpdate (building newBuilding, float utilityChange<-0.0) {
@@ -414,10 +463,12 @@ species worker {
 	reflex updateWork when: (reflexPause=false) {	
 		do checkMyStuff;	
 		float utility <- myUtility(myBuilding,myFirm,useCar);
-		firm possibleFirm <- one_of(firm);
-		float possibleUtility<- myUtility(myBuilding,possibleFirm,useCar);
-		if (possibleUtility>utility){
-			do attemptFirmUpdate(possibleFirm);
+		firm possibleFirm <- one_of(firm where (each.skillType<=self.skillType and each!=myFirm));
+		if (possibleFirm!=nil) {
+			float possibleUtility<- myUtility(myBuilding,possibleFirm,useCar);
+			if (possibleUtility>utility){
+				do attemptFirmUpdate(possibleFirm);
+			}
 		}
 	}
 	
@@ -429,9 +480,10 @@ species worker {
 	}
 	
 	reflex updateWorkRandom when: (reflexPause=false) {
+		do checkMyStuff;
 		if (rnd(1.0)<randomMoveRate) {
 			firm possibleFirm;
-			possibleFirm <- one_of(firm);
+			possibleFirm <- one_of(firm where (each.skillType<=self.skillType and each!=myFirm));
 			do attemptFirmUpdate(possibleFirm);
 		}
 	}
@@ -480,7 +532,7 @@ species worker {
 	}
 	
 	aspect wage_aspect {
-		if (myFirm.myType='high') {
+		if (myFirm.skillType=1) {
 			color<-rgb('#08519c');
 		} else {
 			color<-rgb('#6baed6');
@@ -489,7 +541,7 @@ species worker {
 	}
 	
 	aspect threeD {
-		if (myFirm.myType='high') {
+		if (myFirm.skillType=1) {
 			color<-rgb('#08519c');
 		} else {
 			color<-rgb('#6baed6');
@@ -510,7 +562,7 @@ experiment ABValuationDemo type: gui autorun:true{
 	output { 
 		display map_3D  type:opengl background: #black draw_env: false  toolbar:false 
 		camera_pos: {-31.3849,154.8123,60.965} camera_look_pos: {39.7081,49.4125,-9.5042} camera_up_vector: {0.2711,0.4019,0.8746}
-		autosave: true
+//		autosave: true
 		synchronized: true
 		fullscreen:1
 		//camera_interaction:false
@@ -520,14 +572,11 @@ experiment ABValuationDemo type: gui autorun:true{
 			species firm aspect: threeD transparency: 0.25;
 			species building aspect:threeD transparency: 0.35;
 			
-			
-			event "e" action: {controlBool <- !controlBool;}; //<- Do this in the aspect (aspect++ will allow you to show aspects)
-
 			event mouse_down action: create_firm;
 			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
 			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
-			event "u" action: {if(wageRatio<10.0){wageRatio<-wageRatio+0.1;}};
-			event "e" action: {if(wageRatio>1.0){wageRatio<-wageRatio-0.1;}};
+			event "u" action: {if(shareLowIncome<1.0){shareLowIncome<-shareLowIncome+0.1;}};
+			event "e" action: {if(shareLowIncome>0.0){shareLowIncome<-shareLowIncome-0.1;}};
 			event "s" action: {updateUnitSize<-!updateUnitSize;};
 			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
 			event "l" action: {firmTypeToAdd<-'low'; firmDeleteMode<-false;};
@@ -570,13 +619,13 @@ experiment ABValuationDemo type: gui autorun:true{
                 draw string("Commuting Cost") at: { 0#px, y + 4#px } color: #white font: font("Helvetica", 32);
                 y <- y + 25#px;
                 draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
-                draw rectangle(2#px,10#px) at: { commutingCost*100#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { 5#px+commutingCost*90#px, y } color: #white;
 
                 y <- y + 25#px;
-                draw string("Inequality") at: { 0#px, y + 4#px } color: #white font: font("Helvetica", 32);
+                draw string("Share of low income") at: { 0#px, y + 4#px } color: #white font: font("Helvetica", 32);
                 y <- y + 25#px;
                 draw rectangle(200#px,2#px) at: { 50#px, y } color: #white;
-                draw rectangle(2#px,10#px) at: { wageRatio*0.1*100#px, y } color: #white;
+                draw rectangle(2#px,10#px) at: { shareLowIncome*90#px, y } color: #white;
                 
                 y <- y + 25#px;
                 float x<-0#px;
@@ -599,14 +648,12 @@ experiment ABValuationDemo type: gui autorun:true{
 			species worker aspect:threeD;
 			species building aspect:twoD transparency: 0.5;
 			species firm aspect: twoD transparency: 0.5;
-			
-			event "e" action: {controlBool <- !controlBool;}; //<- Do this in the aspect (aspect++ will allow you to show aspects)
 
 			event mouse_down action: create_firm;
 			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
 			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
-			event "u" action: {if(wageRatio<10.0){wageRatio<-wageRatio+0.1;}};
-			event "e" action: {if(wageRatio>1.0){wageRatio<-wageRatio-0.1;}};
+			event "u" action: {if(shareLowIncome<1.0){shareLowIncome<-shareLowIncome+0.1;}};
+			event "e" action: {if(shareLowIncome>0.0){shareLowIncome<-shareLowIncome-0.1;}};
 			event "s" action: {updateUnitSize<-!updateUnitSize;};
 			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
 			event "l" action: {firmTypeToAdd<-'low'; firmDeleteMode<-false;};
