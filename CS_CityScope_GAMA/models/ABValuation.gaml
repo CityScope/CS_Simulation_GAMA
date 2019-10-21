@@ -575,7 +575,7 @@ experiment ABValuationDemo type: gui autorun:true{
 			event mouse_down action: create_firm;
 			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
 			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
-			event "u" action: {if(shareLowIncome<1.0){shareLowIncome<-shareLowIncome+0.1;}};
+			event "u" action: {if(shareLowIncome<0.9){shareLowIncome<-shareLowIncome+0.1;}};
 			event "e" action: {if(shareLowIncome>0.0){shareLowIncome<-shareLowIncome-0.1;}};
 			event "s" action: {updateUnitSize<-!updateUnitSize;};
 			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
@@ -652,7 +652,7 @@ experiment ABValuationDemo type: gui autorun:true{
 			event mouse_down action: create_firm;
 			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
 			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
-			event "u" action: {if(shareLowIncome<1.0){shareLowIncome<-shareLowIncome+0.1;}};
+			event "u" action: {if(shareLowIncome<0.9){shareLowIncome<-shareLowIncome+0.1;}};
 			event "e" action: {if(shareLowIncome>0.0){shareLowIncome<-shareLowIncome-0.1;}};
 			event "s" action: {updateUnitSize<-!updateUnitSize;};
 			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
