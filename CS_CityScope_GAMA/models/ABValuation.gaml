@@ -51,7 +51,6 @@ global{
 	rgb manufactoringColor<-rgb('#fc9272');
 	
 	reflex updateAgents when: (reflexPause=false) {
-		write "Share low income: "+shareLowIncome;
 		if (length(firm where (each.skillType=0))!=0) {
 			int lowSkilledTarget <- int(nAgents*shareLowIncome);			
 			loop while: (length(worker where (each.skillType=0))<lowSkilledTarget) {
