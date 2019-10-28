@@ -54,7 +54,7 @@ global {
 	map<int, string> string_type_per_type <- [0::"live and works here ", 1::"works here", 2::"lives here"];
 	
 	float step <- 10 #sec;
-	int saveLocationInterval<-500;
+	int saveLocationInterval<-100;
 	
 	bool showLegend parameter: 'Show Legend' category: "Parameters" <-true;
 	bool showLandUse parameter: 'Show Landuse' category: "Parameters" <-true; 
@@ -115,7 +115,7 @@ global {
 		  }*/
     }
 	//6AM to 12pm=> 
-	reflex save_results when: (cycle=6480){//(time = 8640/(2*step))  {
+	reflex save_results when: (cycle mod 648 = 0){//(time = 8640/(2*step))  {
 		string t;
 		map<string, unknown> test;
 		save "[" to: "result.json";
@@ -162,13 +162,14 @@ global {
 		save "]" to: "result.json" rewrite: false;
 		file JsonFileResults <- json_file("./result.json");
         map<string, unknown> c <- JsonFileResults.contents;
-        write "c" + c;
-        write "test" + test;
+        write "push to cityIO" + c;
+        //write "test" + test;
 		try{			
 	  	  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/ABM", c));		
 	  	}catch{
 	  	  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 	  	}
+	  	do initiatePeople;
 	}
 	
 	reflex updateSimulationStatus{
@@ -184,7 +185,7 @@ species people skills:[moving,pedestrian]{
 	point work;
 	bool macro;
 	point current_target;
-
+	bool moving<-false;
 	
 	rgb color <- rnd_color(255);
 	list<point> locs;
@@ -192,10 +193,11 @@ species people skills:[moving,pedestrian]{
 	reflex move_macro when:(macro=true){
 		if(time>start_time and location!=work){
 			if(mode=2){
-			  do walk target: work bounds: free_space speed:0.01;	
+			  do walk target: work speed:0.01 * speed_per_mode[2];	
 			}else{
 			   do goto target:work speed:0.01 * speed_per_mode[mode] on: graph_map[mode];	
 			}
+			do goto target:work speed:0.01 * speed_per_mode[mode] on: graph_map[mode];
 					
 		}
 		if(time mod saveLocationInterval = 0 and time>1 and location!=work){
@@ -212,7 +214,7 @@ species people skills:[moving,pedestrian]{
 		current_target <- any_location_in(one_of(block where (each.interactive=true)));
 	}
 	reflex move_pedestrian when: (current_target != nil and macro=false){
-		do walk target: current_target bounds: free_space speed:0.01;
+		do walk target: current_target  speed:0.01 * speed_per_mode[2];
 		if (self distance_to current_target < 0.1) {
 			current_target <- any_location_in(one_of(block where (each.interactive=true)));
 		}
