@@ -55,6 +55,7 @@ global {
 	
 	float step <- 10 #sec;
 	int saveLocationInterval<-100;
+	int totalTime<-6480;
 	
 	bool showLegend parameter: 'Show Legend' category: "Parameters" <-true;
 	bool showLandUse parameter: 'Show Landuse' category: "Parameters" <-true; 
@@ -115,7 +116,7 @@ global {
 		  }*/
     }
 	//6AM to 12pm=> 
-	reflex save_results when: (cycle mod 648 = 0){//(time = 8640/(2*step))  {
+	reflex save_results when: (cycle mod (totalTime/10) = 0){//(time = 8640/(2*step))  {
 		string t;
 		map<string, unknown> test;
 		save "[" to: "result.json";
@@ -259,7 +260,7 @@ species pedestrian skills: [pedestrian]{
 			current_target <- any_location_in(one_of(block where (each.land_use="M")));
 		}
 		if(time mod saveLocationInterval = 0 and time>1){
-		 	locs << {location.x,location.y,time};
+		 	locs << {location.x,location.y,time mod (totalTime*10)};
 		}	
 	}
 	
