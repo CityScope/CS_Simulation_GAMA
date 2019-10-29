@@ -54,8 +54,8 @@ global {
 	map<int, string> string_type_per_type <- [0::"live and works here ", 1::"works here", 2::"lives here"];
 	
 	float step <- 10 #sec;
-	int saveLocationInterval<-100;
-	int totalTime<-6480;
+	int saveLocationInterval<-200;
+	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
 	
 	bool showLegend parameter: 'Show Legend' category: "Parameters" <-true;
 	bool showLandUse parameter: 'Show Landuse' category: "Parameters" <-true; 
@@ -95,9 +95,12 @@ global {
 	}
 	
 	action initiatePeople{
+		  write "initiate People";
+		  write "kill exisitng people";
 		  ask people{
 		    do die;
 		  }
+		  write "create new people start";
 		  loop lo over: od_file {
 			loop l over: list(lo) {
 				map m <- map(l);
@@ -109,21 +112,17 @@ global {
 				}
 			}
 		  }	
-		  /*create people number:100{
-		  	location<-any_location_in(one_of(block where (each.interactive=true)));
-		  	macro<-false;
-		  	mode<-2;
-		  }*/
+		  write "create new people done";
     }
-	//6AM to 12pm=> 
-	reflex save_results when: (cycle mod (totalTime/10) = 0){//(time = 8640/(2*step))  {
+
+	reflex save_results when: (cycle mod (totalTimeInSec/10) = 0 and cycle>1)  {
 		string t;
 		map<string, unknown> test;
 		save "[" to: "result.json";
 		ask people {
 			test <+ "mode"::mode;
 			test<+"path"::locs;
-			//test<+locs;
+			test<+locs;
 			t <- "{\n\"mode\": ["+ mode + ","+type+    "],\n\"path\": [";
 			//t <- "{\n\"mode\": "+mode+"\n\"type\": "+type+ ",\n\"segments\": [";
 			int curLoc<-0;
@@ -192,7 +191,7 @@ species people skills:[moving,pedestrian]{
 	list<point> locs;
 		
 	reflex move_macro when:(macro=true){
-		if(time>start_time and location!=work){
+		if(time mod totalTimeInSec >start_time and location!=work){
 			if(mode=2){
 			  do walk target: work speed:0.01 * speed_per_mode[2];	
 			}else{
@@ -201,12 +200,12 @@ species people skills:[moving,pedestrian]{
 			do goto target:work speed:0.01 * speed_per_mode[mode] on: graph_map[mode];
 					
 		}
-		if(time mod saveLocationInterval = 0 and time>1 and location!=work){
+		if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1 and (location!=work)){
 		 	if(location !=home){
-		 	  locs << {location.x,location.y,time};	
+		 	  locs << {location.x,location.y,time mod totalTimeInSec};	
 		 	}
 		}
-		if(time>start_time and location=work and type!=2){//The people that only lives here are not shown as micro agent as there are not in the table anymore.
+		if(time mod totalTimeInSec>start_time and location=work and type!=2){//The people that only lives here are not shown as micro agent as there are not in the table anymore.
 			macro<-false;
 		}	
 	}
@@ -219,8 +218,8 @@ species people skills:[moving,pedestrian]{
 		if (self distance_to current_target < 0.1) {
 			current_target <- any_location_in(one_of(block where (each.interactive=true)));
 		}
-		if(time mod saveLocationInterval = 0 and time>1){
-		 	locs << {location.x,location.y,time};
+		if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1){
+		 	locs << {location.x,location.y,time mod totalTimeInSec};
 		}	
 	}
 	
@@ -245,30 +244,6 @@ species people skills:[moving,pedestrian]{
 		}
 	}
 }
-
-
-species pedestrian skills: [pedestrian]{
-	point current_target;
-	int mode<-2;
-	list<point> locs;
-	reflex choose_target when: current_target = nil {
-		current_target <- any_location_in(one_of(block where (each.land_use="M")));
-	}
-	reflex move when: current_target != nil{
-		do walk target: current_target bounds: free_space speed:0.01*10;
-		if (self distance_to current_target < 0.1) {
-			current_target <- any_location_in(one_of(block where (each.land_use="M")));
-		}
-		if(time mod saveLocationInterval = 0 and time>1){
-		 	locs << {location.x,location.y,time mod (totalTime*10)};
-		}	
-	}
-	
-	aspect base{
-		draw triangle(10) color:#gamablue border:#gamablue-50;
-	}
-}
-
 
 species block{
 	string land_use;
@@ -311,7 +286,6 @@ experiment Dev type: gui autorun:false{
 			species block aspect:base transparency:0.75;
 			species road;
 			species people aspect:base;
-			species pedestrian aspect:base;	
 			species portal aspect:base;
 			event["b"] action: {showLandUse<-!showLandUse;};
 			event["l"] action: {showLegend<-!showLegend;};
