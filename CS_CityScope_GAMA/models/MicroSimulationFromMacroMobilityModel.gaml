@@ -221,7 +221,7 @@ species people skills:[moving,pedestrian]{
 		 	}
 		}
 		if(time mod totalTimeInSec>start_time and location=work and type!=2){//The people that only lives here are not shown as micro agent as there are not in the table anymore.
-			//macro<-false;
+			macro<-false;
 		}	
 	}
 	
@@ -302,7 +302,7 @@ species road schedules: [] {
 }
 
 
-experiment Dev type: gui autorun:false{
+experiment Dev type: gui autorun:true{
 	output {
 		display map_mode type:opengl background:#black draw_env:false{	
 			//species areas refresh:false;
