@@ -176,8 +176,9 @@ global {
 	  	write #now +" Iteration " + int(time/totalTimeInSec)  + ": " + (date("now") - tmp_date) + "s - timestep:" + step + " s" + " - Sampling rate: " + saveLocationInterval + " s" ;
 	  	list<int> list_of_locs<-people collect length((each.locs));
 	  	list<float> list_of_distance<-people collect (each.distance);
-	  	write "Nb Agent:" + length(people) + " Trajectory: (min,max,mean): (" + min(list_of_locs) + "," + max(list_of_locs) + "," + int(mean(list_of_locs))+")" + " Modes: (car,bikes,walks,transit): (" + length(people where (each.mode = 0)) + "," + length(people where (each.mode = 1)) + "," + length(people where (each.mode = 2)) + "," + length(people where (each.mode = 3)) + ");";
-	  	write "Nb Agent:" + length(people) + " Distance: (min,max,mean): (" + min(list_of_distance)/1000 + "," + max(list_of_distance)/1000 + "," + int(mean(list_of_distance))/1000+")" + " Distance: (car,bikes,walks,transit): (" + sum(people where (each.mode = 0) collect each.distance)/1000 + "," + sum(people where (each.mode = 1) collect each.distance) + "," + sum(people where (each.mode = 2) collect each.distance)/1000 + "," + sum(people where (each.mode = 3) collect each.distance)/1000 + ");";
+	  	write "Nb Agent:" + length(people) + " Trajectory: (min,max,mean): (" + min(list_of_locs) + "," + max(list_of_locs) + "," + int(mean(list_of_locs))+")" 
+	  	+ " Modes: (car,bikes,walks,transit): (" + length(people where (each.mode = 0)) + "," + length(people where (each.mode = 1)) + "," + length(people where (each.mode = 2)) + "," + length(people where (each.mode = 3)) + ") " 
+	  	+ " Distance: (min,max,mean): (" + min(list_of_distance)/1000 + "," + max(list_of_distance)/1000 + "," + int(mean(list_of_distance))/1000+")" + " Distance: (car,bikes,walks,transit): (" + sum(people where (each.mode = 0) collect each.distance)/1000 + "," + sum(people where (each.mode = 1) collect each.distance) + "," + sum(people where (each.mode = 2) collect each.distance)/1000 + "," + sum(people where (each.mode = 3) collect each.distance)/1000 + ");";
 	  	 	  	
 	  
 	  	do initiatePeople;
