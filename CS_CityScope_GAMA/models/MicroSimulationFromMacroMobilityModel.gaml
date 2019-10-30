@@ -173,10 +173,13 @@ global {
 	  	  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 	  	}
 	  	
-	  	write #now +" Iteration " + int(time/totalTimeInSec)  + ": " + (date("now") - tmp_date) + "s - timestep:" + step + " s" + " - Sampling rate: " + saveLocationInterval + " s" + " Nb Agent:" + length(people);
-	  	/*float d <- tmp_date - date("now") - tmp_date;
-		write "duration between " + tmp_date + " and " + date("now")+ " : " + d + "s";
-	  	write "cityIO Update Successful";*/
+	  	write #now +" Iteration " + int(time/totalTimeInSec)  + ": " + (date("now") - tmp_date) + "s - timestep:" + step + " s" + " - Sampling rate: " + saveLocationInterval + " s" ;
+	  	list<int> list_of_locs<-people collect length((each.locs));
+	  	list<float> list_of_distance<-people collect (each.distance);
+	  	write "Nb Agent:" + length(people) + " Trajectory: (min,max,mean): (" + min(list_of_locs) + "," + max(list_of_locs) + "," + int(mean(list_of_locs))+")" + " Modes: (car,bikes,walks,transit): (" + length(people where (each.mode = 0)) + "," + length(people where (each.mode = 1)) + "," + length(people where (each.mode = 2)) + "," + length(people where (each.mode = 3)) + ");";
+	  	write "Nb Agent:" + length(people) + " Distance: (min,max,mean): (" + min(list_of_distance)/1000 + "," + max(list_of_distance)/1000 + "," + int(mean(list_of_distance))/1000+")" + " Distance: (car,bikes,walks,transit): (" + sum(people where (each.mode = 0) collect each.distance)/1000 + "," + sum(people where (each.mode = 1) collect each.distance) + "," + sum(people where (each.mode = 2) collect each.distance)/1000 + "," + sum(people where (each.mode = 3) collect each.distance)/1000 + ");";
+	  	 	  	
+	  
 	  	do initiatePeople;
 	  	current_machine_time<-machine_time;
 	  	tmp_date<-date("now");
@@ -199,6 +202,7 @@ species people skills:[moving,pedestrian]{
 	
 	rgb color <- rnd_color(255);
 	list<point> locs;
+	float distance;
 		
 	reflex move_macro when:(macro=true){
 		if(time mod totalTimeInSec >start_time and location!=work){
@@ -213,10 +217,11 @@ species people skills:[moving,pedestrian]{
 		if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1 and (location!=work)){
 		 	if(location !=home){
 		 	  locs << {location.x,location.y,time mod totalTimeInSec};	
+		 	  distance <- line(locs).perimeter;
 		 	}
 		}
 		if(time mod totalTimeInSec>start_time and location=work and type!=2){//The people that only lives here are not shown as micro agent as there are not in the table anymore.
-			macro<-false;
+			//macro<-false;
 		}	
 	}
 	
@@ -230,6 +235,7 @@ species people skills:[moving,pedestrian]{
 		}
 		if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1){
 		 	locs << {location.x,location.y,time mod totalTimeInSec};
+		 	distance <- line(locs).perimeter;
 		}	
 	}
 	
@@ -296,7 +302,7 @@ species road schedules: [] {
 }
 
 
-experiment Dev type: gui autorun:true{
+experiment Dev type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black draw_env:false{	
 			//species areas refresh:false;
