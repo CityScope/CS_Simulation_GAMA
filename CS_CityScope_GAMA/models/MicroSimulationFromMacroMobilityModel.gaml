@@ -53,16 +53,22 @@ global {
 	map<int, rgb> color_type_per_type <- [0::#gamared, 1::#gamablue, 2::#gamaorange];
 	map<int, string> string_type_per_type <- [0::"live and works here ", 1::"works here", 2::"lives here"];
 	
-	float step <- 10 #sec;
-	int saveLocationInterval<-200;
+	float step <- 100 #sec;
+	float saveLocationInterval<-step*2;
 	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
 	
 	bool showLegend parameter: 'Show Legend' category: "Parameters" <-true;
 	bool showLandUse parameter: 'Show Landuse' category: "Parameters" <-true; 
 	bool showMode parameter: 'Show Mode' category: "Parameters" <-true; 
     bool showRoad parameter: 'Show Road' category: "Parameters" <-true; 
+    
+    date initial_date;
+    date tmp_date;
+    float current_machine_time;
 	
 	init {
+		initial_date<-date("now");
+		tmp_date<- date("now");
 		create areas from: table_area_file;
 		create portal from: portals_file;
 		create block from:meta_grid_file with:[land_use::read("land_use"), interactive::bool(read("interactive"))]{
@@ -95,12 +101,10 @@ global {
 	}
 	
 	action initiatePeople{
-		  write "initiate People";
-		  write "kill exisitng people";
+		  //write "People Initialization";
 		  ask people{
 		    do die;
 		  }
-		  write "create new people start";
 		  loop lo over: od_file {
 			loop l over: list(lo) {
 				map m <- map(l);
@@ -112,10 +116,9 @@ global {
 				}
 			}
 		  }	
-		  write "create new people done";
     }
 
-	reflex save_results when: (cycle mod (totalTimeInSec/10) = 0 and cycle>1)  {
+	reflex save_results when: (cycle mod (totalTimeInSec/step) = 0 and cycle>1)  {
 		string t;
 		map<string, unknown> test;
 		save "[" to: "result.json";
@@ -162,14 +165,21 @@ global {
 		save "]" to: "result.json" rewrite: false;
 		file JsonFileResults <- json_file("./result.json");
         map<string, unknown> c <- JsonFileResults.contents;
-        write "push to cityIO" + c;
-        //write "test" + test;
+       // write "push to cityIO" + c;
+        
 		try{			
 	  	  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/ABM", c));		
 	  	}catch{
 	  	  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 	  	}
+	  	
+	  	write #now +" Iteration " + int(time/totalTimeInSec)  + ": " + (date("now") - tmp_date) + "s - timestep:" + step + " s" + " - Sampling rate: " + saveLocationInterval + " s" + " Nb Agent:" + length(people);
+	  	/*float d <- tmp_date - date("now") - tmp_date;
+		write "duration between " + tmp_date + " and " + date("now")+ " : " + d + "s";
+	  	write "cityIO Update Successful";*/
 	  	do initiatePeople;
+	  	current_machine_time<-machine_time;
+	  	tmp_date<-date("now");
 	}
 	
 	reflex updateSimulationStatus{
