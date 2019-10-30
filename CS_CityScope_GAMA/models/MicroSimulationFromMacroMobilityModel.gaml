@@ -263,6 +263,13 @@ species block{
 		  draw shape color: simple_landuse ? string_type_per_landuse_Simple[land_use]: string_type_per_landuse[land_use];	
 		}
 	}
+	aspect white {
+		if(showLandUse){
+		  if(land_use != nil){
+		    draw shape color: #white border:#gray;		
+		  }
+		}
+	}
 }
 
 species areas {
@@ -289,11 +296,11 @@ species road schedules: [] {
 }
 
 
-experiment Dev type: gui autorun:false{
+experiment Dev type: gui autorun:true{
 	output {
-		display map_mode type:opengl background:#black{	
+		display map_mode type:opengl background:#black draw_env:false{	
 			//species areas refresh:false;
-			species block aspect:base transparency:0.75;
+			species block aspect:white;
 			species road;
 			species people aspect:base;
 			species portal aspect:base;
