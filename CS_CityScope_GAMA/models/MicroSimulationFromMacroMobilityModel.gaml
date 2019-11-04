@@ -15,6 +15,11 @@ global {
 	file pt_net_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/pt_net.geojson");
 	file portals_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/portals.geojson");
 	
+	map<string, unknown> hashes;
+	file hash_acess_file<-json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/");
+	string current_hash;
+	bool reinit<-true;
+	
 	
 	
 	graph walking_graph;
@@ -67,6 +72,8 @@ global {
     float current_machine_time;
 	
 	init {
+		hashes<-hash_acess_file.contents;
+		current_hash<-hashes["access"];
 		initial_date<-date("now");
 		tmp_date<- date("now");
 		create areas from: table_area_file;
@@ -96,12 +103,10 @@ global {
 		walking_graph <- as_edge_graph(road where (each.type=2));
 		pt_graph <- as_edge_graph(road where (each.type=3));
 		graph_map <-[0::driving_graph, 1::cycling_graph, 2::walking_graph, 3::pt_graph];
-		do initiatePeople;	
-			
+		do initiatePeople;		
 	}
 	
 	action initiatePeople{
-		  //write "People Initialization";
 		  ask people{
 		    do die;
 		  }
@@ -117,6 +122,8 @@ global {
 			}
 		  }	
     }
+    
+
 
 	reflex save_results when: (cycle mod (totalTimeInSec/step) = 0 and cycle>1)  {
 		string t;
@@ -130,7 +137,6 @@ global {
 			//t <- "{\n\"mode\": "+mode+"\n\"type\": "+type+ ",\n\"segments\": [";
 			int curLoc<-0;
 			loop l over: locs {
-				
 				point loc <- CRS_transform(l).location;
 				if(curLoc<length(locs)-1){
 				t <- t + "[" + loc.x + ", " + loc.y + "],\n";	
@@ -165,30 +171,33 @@ global {
 		save "]" to: "result.json" rewrite: false;
 		file JsonFileResults <- json_file("./result.json");
         map<string, unknown> c <- JsonFileResults.contents;
-       // write "push to cityIO" + c;
-        
-		try{			
-	  	  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/ABM", c));		
-	  	}catch{
-	  	  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
-	  	}
-	  	
-	  	write #now +" Iteration " + int(time/totalTimeInSec)  + ": " + (date("now") - tmp_date) + "s - timestep:" + step + " s" + " - Sampling rate: " + saveLocationInterval + " s" ;
-	  	list<int> list_of_locs<-people collect length((each.locs));
-	  	list<float> list_of_distance<-people collect (each.distance);
-	  	write "Nb Agent:" + length(people) + " Trajectory: (min,max,mean): (" + min(list_of_locs) + "," + max(list_of_locs) + "," + int(mean(list_of_locs))+")" 
-	  	+ " Modes: (car,bikes,walks,transit): (" + length(people where (each.mode = 0)) + "," + length(people where (each.mode = 1)) + "," + length(people where (each.mode = 2)) + "," + length(people where (each.mode = 3)) + ") " 
-	  	+ " Distance: (min,max,mean): (" + min(list_of_distance)/1000 + "," + max(list_of_distance)/1000 + "," + int(mean(list_of_distance))/1000+")" + " Distance: (car,bikes,walks,transit): (" + sum(people where (each.mode = 0) collect each.distance)/1000 + "," + sum(people where (each.mode = 1) collect each.distance) + "," + sum(people where (each.mode = 2) collect each.distance)/1000 + "," + sum(people where (each.mode = 3) collect each.distance)/1000 + ");";
-	  	 	  	
+        if(reinit){    
+			try{			
+		  	  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/ABM", c));		
+		  	}catch{
+		  	  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+		  	}
+		  	write #now +" Send to cityIO - Iteration " + int(time/totalTimeInSec)  + ": " + (date("now") - tmp_date) + "s - timestep:" + step + " s" + " - Sampling rate: " + saveLocationInterval + " s" ;
+		  	list<int> list_of_locs<-people collect length((each.locs));
+		  	list<float> list_of_distance<-people collect (each.distance);
+		  	write "Nb Agent:" + length(people) + " Trajectory: (min,max,mean): (" + min(list_of_locs) + "," + max(list_of_locs) + "," + int(mean(list_of_locs))+")" 
+		  	+ " Modes: (car,bikes,walks,transit): (" + length(people where (each.mode = 0)) + "," + length(people where (each.mode = 1)) + "," + length(people where (each.mode = 2)) + "," + length(people where (each.mode = 3)) + ") " 
+		  	+ " Distance: (min,max,mean): (" + min(list_of_distance)/1000 + "," + max(list_of_distance)/1000 + "," + int(mean(list_of_distance))/1000+")" + " Distance: (car,bikes,walks,transit): (" + sum(people where (each.mode = 0) collect each.distance)/1000 + "," + sum(people where (each.mode = 1) collect each.distance) + "," + sum(people where (each.mode = 2) collect each.distance)/1000 + "," + sum(people where (each.mode = 3) collect each.distance)/1000 + ");";
+		} 	  	
 	  
 	  	do initiatePeople;
 	  	current_machine_time<-machine_time;
 	  	tmp_date<-date("now");
 	}
 	
-	reflex updateSimulationStatus{
-
-	}
+	reflex updateSimStatus when: (cycle mod (totalTimeInSec/step) = 0 and cycle>1){
+		  if(current_hash = json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/").contents["access"]){
+		  	reinit<-false;
+		  }else{
+		  	reinit<-true;
+		  	current_hash <-json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/").contents["access"];
+		  }
+    }
 }
 
 species people skills:[moving,pedestrian]{
