@@ -16,7 +16,7 @@ global {
 	file portals_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/portals.geojson");
 	
 	map<string, unknown> hashes;
-	file hash_acess_file<-json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/");
+	file hash_od_file<-json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/");
 	string current_hash;
 	bool reinit<-true;
 	
@@ -58,8 +58,8 @@ global {
 	map<int, rgb> color_type_per_type <- [0::#gamared, 1::#gamablue, 2::#gamaorange];
 	map<int, string> string_type_per_type <- [0::"live and works here ", 1::"works here", 2::"lives here"];
 	
-	float step <- 100 #sec;
-	float saveLocationInterval<-step*2;
+	float step <- 30 #sec;
+	float saveLocationInterval<-step;
 	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
 	
 	bool showLegend parameter: 'Show Legend' category: "Parameters" <-true;
@@ -72,8 +72,8 @@ global {
     float current_machine_time;
 	
 	init {
-		hashes<-hash_acess_file.contents;
-		current_hash<-hashes["access"];
+		hashes<-hash_od_file.contents;
+		current_hash<-hashes["od"];
 		initial_date<-date("now");
 		tmp_date<- date("now");
 		create areas from: table_area_file;
@@ -126,6 +126,7 @@ global {
 
 
 	reflex save_results when: (cycle mod (totalTimeInSec/step) = 0 and cycle>1)  {
+		
 		string t;
 		map<string, unknown> test;
 		save "[" to: "result.json";
@@ -191,11 +192,11 @@ global {
 	}
 	
 	reflex updateSimStatus when: (cycle mod (totalTimeInSec/step) = 0 and cycle>1){
-		  if(current_hash = json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/").contents["access"]){
+		  if(current_hash = json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/").contents["od"]){
 		  	reinit<-false;
 		  }else{
 		  	reinit<-true;
-		  	current_hash <-json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/").contents["access"];
+		  	current_hash <-json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/").contents["od"];
 		  }
     }
 }
