@@ -16,7 +16,7 @@ global {
 	file portals_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/portals.geojson");
 	
 	map<string, unknown> hashes;
-	file hash_acess_file<-json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/");
+	file hash_od_file<-json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/");
 	string current_hash;
 	bool reinit<-true;
 	
@@ -72,8 +72,8 @@ global {
     float current_machine_time;
 	
 	init {
-		hashes<-hash_acess_file.contents;
-		current_hash<-hashes["access"];
+		hashes<-hash_od_file.contents;
+		current_hash<-hashes["od"];
 		initial_date<-date("now");
 		tmp_date<- date("now");
 		create areas from: table_area_file;
@@ -191,11 +191,11 @@ global {
 	}
 	
 	reflex updateSimStatus when: (cycle mod (totalTimeInSec/step) = 0 and cycle>1){
-		  if(current_hash = json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/").contents["access"]){
+		  if(current_hash = json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/").contents["od"]){
 		  	reinit<-false;
 		  }else{
 		  	reinit<-true;
-		  	current_hash <-json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/").contents["access"];
+		  	current_hash <-json_file("https://cityio.media.mit.edu/api/table/grasbrook/meta/hashes/").contents["od"];
 		  }
     }
 }
