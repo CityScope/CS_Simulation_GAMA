@@ -210,6 +210,9 @@ species people skills:[moving,pedestrian]{
 	bool macro;
 	point current_target;
 	bool moving<-false;
+	float last_speed;
+	float last_heading;
+	bool save_sample<-false;
 	
 	rgb color <- rnd_color(255);
 	list<point> locs;
@@ -225,12 +228,16 @@ species people skills:[moving,pedestrian]{
 			do goto target:work speed:0.01 * speed_per_mode[mode] on: graph_map[mode];
 					
 		}
-		if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1 and (location!=work)){
-		 	if(location !=home){
+		if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1 and (location!=work) and (location !=home)
+		){
+			save_sample<-((abs((real_speed-last_speed)/(last_speed+1e-10))>0.05) or (abs((heading-last_heading)/(last_heading+1e-10))>0.01));
+		 	if save_sample{
 		 	  locs << {location.x,location.y,time mod totalTimeInSec};	
 		 	  distance <- line(locs).perimeter;
 		 	}
 		}
+		last_speed<-real_speed;
+		last_heading<-heading;
 		if(time mod totalTimeInSec>start_time and location=work and type!=2){//The people that only lives here are not shown as micro agent as there are not in the table anymore.
 			macro<-false;
 		}	
@@ -244,10 +251,10 @@ species people skills:[moving,pedestrian]{
 		if (self distance_to current_target < 0.1) {
 			current_target <- any_location_in(one_of(block where (each.interactive=true)));
 		}
-		if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1){
-		 	locs << {location.x,location.y,time mod totalTimeInSec};
-		 	distance <- line(locs).perimeter;
-		}	
+//		if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1){
+//		 	locs << {location.x,location.y,time mod totalTimeInSec};
+//		 	distance <- line(locs).perimeter;
+//		}	
 	}
 	
 	reflex saveLoc{
