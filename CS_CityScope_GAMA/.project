@@ -22,6 +22,21 @@
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+citymatrix_volpe</locationURI>
 		</link>
 		<link>
+			<name>external/copy of copy of meta_grid</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+grasbrook+_+meta_grid</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of portals.geojson</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/raw.githubusercontent.com+_++_+CityScope+_+CS_Mobility_Service+_+master+_+scripts+_+cities+_+Hamburg+_+clean+_+portals.geojson</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of table_area.geojson</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/raw.githubusercontent.com+_++_+CityScope+_+CS_Mobility_Service+_+master+_+scripts+_+cities+_+Hamburg+_+clean+_+table_area.geojson</locationURI>
+		</link>
+		<link>
 			<name>external/cycling_net.geojson</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/raw.githubusercontent.com+_++_+CityScope+_+CS_Mobility_Service+_+master+_+scripts+_+cities+_+Hamburg+_+clean+_+cycling_net.geojson</locationURI>
