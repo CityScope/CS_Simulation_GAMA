@@ -2,7 +2,7 @@ model microFromMacro
 
 global {
 
-	string city<-'Hamburg';
+	string city<-'Detroit';
 	map<string, string> table_name_per_city <- ['Detroit'::'corktown', 'Hamburg'::'grasbrook'];
 	string city_io_table<-table_name_per_city[city];
 
@@ -31,7 +31,11 @@ global {
 	
 	geometry shape <- envelope(meta_grid_file);
 	geometry free_space <- copy(shape);
-	bool simple_landuse<-true;
+	bool simple_landuse<-false;
+	
+	bool fuzzAgent<-true;
+	float max_dev <- 20.0;
+	float fuzzyness <- 0.5;
 	
 	
 	//LANDUSE FOR CORKTOWN (https://data.detroitmi.gov/app/parcel-viewer-2)
@@ -62,10 +66,12 @@ global {
 	float saveLocationInterval<-step;
 	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
 	
+	bool showAgent parameter: 'Show Agent' category: "Parameters" <-true;
 	bool showLegend parameter: 'Show Legend' category: "Parameters" <-true;
 	bool showLandUse parameter: 'Show Landuse' category: "Parameters" <-true; 
 	bool showMode parameter: 'Show Mode' category: "Parameters" <-true; 
     bool showRoad parameter: 'Show Road' category: "Parameters" <-true;
+    bool showPortal parameter: 'Show Portal' category: "Parameters" <-true;
     bool savePedestrian parameter: 'Save Pedestrian' category: "Parameters" <-false;  
     
     date initial_date;
@@ -119,6 +125,10 @@ global {
 					work <- point(to_GAMA_CRS(work, "EPSG:4326"));
 			        location<-home;
 			        macro<-true;
+			        if(fuzzAgent){
+			          val <- rnd(-max_dev,max_dev);	
+			        }
+			        
 				}
 			}
 		  }	
@@ -202,7 +212,7 @@ global {
     }
 }
 
-species people skills:[moving,pedestrian]{
+species people skills:[moving]{ //skills:[moving,pedestrian]
 	int mode;
 	int type;
 	int start_time;
@@ -214,19 +224,26 @@ species people skills:[moving,pedestrian]{
 	float last_speed;
 	float last_heading;
 	bool save_sample<-false;
+	float val;
 	
 	rgb color <- rnd_color(255);
 	list<point> locs;
 	float distance;
+	list<point> current_trajectory;
 		
 	reflex move_macro when:(macro=true){
 		if(time mod totalTimeInSec >start_time and location!=work){
 			if(mode=2){
-			  do walk target: work speed:0.01 * speed_per_mode[2];	
+			  //do walk target: work speed:0.01 * speed_per_mode[2];
+			  do goto target: work speed:0.01 * speed_per_mode[2];	
 			}else{
 			   do goto target:work speed:0.01 * speed_per_mode[mode] on: graph_map[mode];	
 			}
 			do goto target:work speed:0.01 * speed_per_mode[mode] on: graph_map[mode];
+			if(fuzzAgent){
+			  float val_pt <- val + rnd(-fuzzyness, fuzzyness);
+		      location <- location + {cos(heading + 90) * val_pt, sin(heading + 90) * val_pt};	
+			}
 					
 		}
 		if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1 and (location!=work) and (location !=home)
@@ -240,7 +257,8 @@ species people skills:[moving,pedestrian]{
 		last_speed<-real_speed;
 		last_heading<-heading;
 		if(time mod totalTimeInSec>start_time and location=work and type!=2){//The people that only lives here are not shown as micro agent as there are not in the table anymore.
-			macro<-false;
+			//FOR NOW REMOVE PEDESTRIAN
+			//macro<-false;
 		}	
 	}
 	
@@ -248,7 +266,8 @@ species people skills:[moving,pedestrian]{
 		current_target <- any_location_in(one_of(block where (each.interactive=true)));
 	}
 	reflex move_pedestrian when: (current_target != nil and macro=false){
-		do walk target: current_target  speed:0.01 * speed_per_mode[2];
+		//do walk target: current_target  speed:0.01 * speed_per_mode[2];
+		do goto target: current_target  speed:0.01 * speed_per_mode[2];
 		if (self distance_to current_target < 0.1) {
 			current_target <- any_location_in(one_of(block where (each.interactive=true)));
 		}
@@ -265,20 +284,23 @@ species people skills:[moving,pedestrian]{
 	}
 
 	aspect base {
-		if(macro){
+		if(showAgent){
+		  if(macro){
 		  if(showMode){
 		  	draw circle(5#m) color: color_type_per_mode[mode] border:color_type_per_mode[mode]-50;	
 		  }else{
 		    draw circle(5#m) color: color_type_per_type[type] border:color_type_per_mode[mode]-50;	
 		  }	
-		}else{
+		  }else{
 			if(showMode){
 		  	draw triangle(5#m) color: color_type_per_mode[mode] border:color_type_per_mode[mode]-50;	
-		  	
 		  }else{
 		    draw triangle(5#m) color: color_type_per_type[type] border:color_type_per_mode[mode]-50;	
 		  }
+		}	
 		}
+		
+		//draw line(current_trajectory) color: color;
 	}
 }
 
@@ -310,7 +332,9 @@ species areas {
 
 species portal{
 	aspect base {
-		draw circle(25#m) color: #gamablue;
+		if(showPortal){
+		  draw circle(25#m) color: #gamablue;	
+		}	
 	}
 }
 species road schedules: [] {
@@ -323,18 +347,20 @@ species road schedules: [] {
 }
 
 
-experiment Dev type: gui autorun:true{
+experiment Dev type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black draw_env:false{	
 			//species areas refresh:false;
 			species block aspect:white;
 			species road;
-			species people aspect:base;
+			species people aspect:base position:{0,0,0.01};//trace:2000 fading:true ;
 			species portal aspect:base;
+			event["a"] action: {showAgent<-!showAgent;};
 			event["b"] action: {showLandUse<-!showLandUse;};
 			event["l"] action: {showLegend<-!showLegend;};
 			event["m"] action: {showMode<-!showMode;};
 			event["r"] action: {showRoad<-!showRoad;};
+			event["p"] action: {showPortal<-!showPortal;};
 			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
             {
             	if(showLegend){
