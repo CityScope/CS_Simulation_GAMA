@@ -95,6 +95,10 @@ global{
 	int count_of_students <- 5000 min:0 max: 10000 parameter: "number of students" category: "user group";	
 	int count_of_visitors <- 1000 min:0 max: 5000 parameter: "number of visitors during the day" category: "user group";	
 	
+	// Interaction Graph
+//	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Interaction";
+	int distance <- 0 parameter: "Distance:" category: "Interaction" min: 0 max: 200;
+	
 	//////////////////////////////////////////
 	//Style
 	////////////////////////////////////////// 
@@ -133,6 +137,7 @@ global{
 	float total_weight_residential;	
 	geometry shape <- envelope(bound_shapefile);	
 	graph car_road_graph;
+//	graph<aalto_staff, aalto_staff> interaction_graph;
 	
 	int number_of_people <- count_of_staff + count_of_students + count_of_visitors ;
 
@@ -239,6 +244,10 @@ global{
 
 
 	}
+
+//	reflex updateGraph when: (drawInteraction = true) {
+//		interaction_graph <- graph<aalto_staff, aalto_staff>(aalto_staff as_distance_graph (distance));
+//	}
 	
 	//////////////////////////////////////////
 	//
@@ -500,9 +509,6 @@ species aalto_people skills: [moving] {
 	rgb people_color_car ;
 	rgb people_color	;
 	
-	int sim_steps_walking<-0;
-	int sim_steps_driving<-0;
-	
 	int distance_walked<-0;
 	int distance_driven<-0;
 	
@@ -560,8 +566,6 @@ species aalto_people skills: [moving] {
 	// ----- REFLEXES 	
 	
 	reflex reset_day when: current_time = (first_hour_of_day*60) {
-		sim_steps_driving <- 0 ;
-		sim_steps_walking <- 0 ;
 		distance_driven <- 0 ;
 		distance_walked <- 0 ;
 		if living_place != nil {
@@ -637,7 +641,6 @@ species aalto_people skills: [moving] {
 	}
 	reflex move when: the_target != nil {
 		if (driving_car = true){
-			sim_steps_driving<-sim_steps_driving+1;
 			distance_driven<-distance_driven+real_speed*step;
 			if (objective = "working"){
 				do goto target: the_target_parking on: car_road_graph  speed: driving_speed;
@@ -647,7 +650,6 @@ species aalto_people skills: [moving] {
 			}
 		}
 		else {
-			sim_steps_walking<-sim_steps_walking+1;
 			distance_walked<-distance_walked+real_speed*step;
 			if (objective = "working"  ){
 				do goto target: the_target on: car_road_graph speed: walking_speed;
@@ -688,7 +690,11 @@ species aalto_people skills: [moving] {
 }
 
 species aalto_staff parent: aalto_people {
-	
+	aspect interaction {
+		ask aalto_student at_distance(distance) {
+		    draw polyline([self.location,myself.location]) color:rgb(255,255,0, 125);
+		}
+	}
 }
 
 species aalto_student parent: aalto_people {
@@ -814,9 +820,12 @@ experiment parking_pressure type: gui {
 			species office aspect:base;
 			species residential aspect:base;
 			species aalto_staff aspect:show_person_type;
+			species aalto_staff aspect:interaction;
 			species aalto_student aspect:show_person_type;
 			species aalto_visitor aspect:show_person_type;
 			species gateways aspect:base;
+			
+			
 			overlay position: { 3,3 } size: { 150 #px, 80 #px } background: # gray transparency: 0.8 border: # black
 			{	
   				draw "Students " at: { 20#px, 20#px } color: people_color_map['aalto_student'] font: font("Helvetica", 20, #bold ) perspective:false;
@@ -835,14 +844,6 @@ experiment parking_pressure type: gui {
 			tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 1 label_font_style: 'bold'
 			{
 
-//				  data 'Km driven' value: (sum(aalto_student collect each.sim_steps_driving)+
-//				  							sum(aalto_staff collect each.sim_steps_driving)+
-//				  							sum(aalto_visitor collect each.sim_steps_driving)
-//				  							)*step*driving_speed color:#red;
-//				  data 'Km walked' value: (sum(aalto_student collect each.sim_steps_walking)+
-//				  							sum(aalto_staff collect each.sim_steps_walking)+
-//				  							sum(aalto_visitor collect each.sim_steps_walking)
-//				  							)*step*walking_speed color:#green;
 				  data 'Km driven' value: (sum(aalto_student collect each.distance_driven)+
 				  							sum(aalto_staff collect each.distance_driven)+
 				  							sum(aalto_visitor collect each.distance_driven)
@@ -853,6 +854,19 @@ experiment parking_pressure type: gui {
 				  							) color:#green;
 				
 			}
+
+//			graphics "interaction_graph" {
+//				if (interaction_graph != nil) {
+//					loop eg over: interaction_graph.edges {
+//						aalto_staff src <- interaction_graph source_of eg;
+//						aalto_staff target <- interaction_graph target_of eg;
+//						geometry edge_geom <- geometry(eg);
+//						draw line(edge_geom.points) color: rgb(0, 125, 0, 75);
+//					}
+//
+//				}
+//				
+//			}
 		}
 	}
 	
