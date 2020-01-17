@@ -55,7 +55,7 @@ global{
 	float driving_speed<- 30/3.6; // km/hr to m/s
 	float walking_speed<- 4/3.6; // km/hr to m/s
 	
-	float step <- 10 #mn;
+	float step <- 2 #mn;
 	int current_time update: (first_hour_of_day *60) + ((time / #mn) mod ((last_hour_of_day-first_hour_of_day) * 60));
 	
 	// Multiplication factor for reducing the number of agents
@@ -147,8 +147,8 @@ global{
 		write(step);
 		create parking from: parking_footprint_shapefile with: [
 			ID::int(read("Parking_id")),
-			capacity::(int(read("Capacity"))/multiplication_factor),
-			total_capacity::(int(read("Capacity"))/multiplication_factor), 
+			capacity::max(int(read("Capacity"))/multiplication_factor,1),
+			total_capacity::max(int(read("Capacity"))/multiplication_factor,1), 
 			excess_time::int(read("time"))
 		];
 		list_of_parkings <- list(parking);
@@ -300,36 +300,40 @@ global{
 	map<string,unknown> my_input_category;
 	map my_agent_type;
 	point mouse_location;
-	user_command Create_agents action:create_agents;
+	user_command Create_parking action:create_user_parking;
+	user_command Create_resi action:create_user_residential;
+	user_command Create_office action:create_user_office;
 	
 	action record_mouse_location {
 		mouse_location <- #user_location;
 	}
-	action create_agents 
-	{
+//	action create_agents 
+//	{
+//		mouse_location <- #user_location;
+//		write(mouse_location);
+//		my_agent_type <- user_input("please enter the agent type: [1 = parking, 2 = Residential, 3 = Office]", ["type" :: 1]);
+//		if my_agent_type at "type" = 1 {
+//			do create_user_parking(mouse_location);
+//		}
+//		else if my_agent_type at "type" = 2{
+//			do create_user_residential(mouse_location);
+//		}
+//		else if my_agent_type at "type" = 3{
+//			do create_user_office(mouse_location);
+//		}
+//		else {
+//			write("this type of agent does not exist");
+//		}
+//
+//	}
+	
+	
+	action create_user_parking {
 		mouse_location <- #user_location;
-		write(mouse_location);
-		my_agent_type <- user_input("please enter the agent type: [1 = parking, 2 = Residential, 3 = Office]", ["type" :: 1]);
-		if my_agent_type at "type" = 1 {
-			do create_user_parking(mouse_location);
-		}
-		else if my_agent_type at "type" = 2{
-			do create_user_residential(mouse_location);
-		}
-		else if my_agent_type at "type" = 3{
-			do create_user_office(mouse_location);
-		}
-		else {
-			write("this type of agent does not exist");
-		}
-
-	}
-	
-	
-	action create_user_parking(point target_location){
-		my_input_capacity <- user_input("Please specify the parking capacity", "capacity" :: 10);
-		create parking number:1 with:(location: target_location) {
-			capacity <- int(my_input_capacity at "capacity") ;
+//		my_input_capacity <- user_input("Please specify the parking capacity", "capacity" :: 10);
+		create parking number:1 with:(location: mouse_location) {
+//			capacity <- int(my_input_capacity at "capacity") ;
+			capacity<- 10;
 			total_capacity <-  int(my_input_capacity at "capacity");
 			//vacancy <- (int(my_input_capacity at "capacity")/int(my_input_capacity at "capacity"));
 			shape <- square(20);
@@ -338,23 +342,42 @@ global{
 		}
 	}
 	
-	action create_user_residential(point target_location){
-		my_input_capacity <- user_input("Please specify the count of people living in the building", "capacity" :: 10);
-		my_input_category <- user_input("Please specify the scale ['S', 'R']", "category" :: 'S');
-		create residential number:1 with:(location: target_location ) {
-			capacity <- int(my_input_capacity at "capacity");
+	action create_user_residential{
+		mouse_location <- #user_location;
+//		my_input_capacity <- user_input("Please specify the count of people living in the building", "capacity" :: 10);
+//		my_input_category <- user_input("Please specify the scale ['S', 'R']", "category" :: 'S');
+		create residential number:1 with:(location: mouse_location ) {
+//			capacity <- int(my_input_capacity at "capacity");
+			capacity<- 10;
 			usage <- "R";
-			category<-string(my_input_category at 'category');
+//			category<-string(my_input_category at 'category');
+			category<-'R';
 			shape <- square(20);
 			color <- rgb(255,255,0,50);
 			write("A building was constructed and count of dwellers are: " + char(10) + string(capacity));
 		}
 	}
 	
-	action create_user_office(point target_location){
-		my_input_capacity <- user_input("Please specify the amount of people work at the office", "capacity" :: 10);
-		create office number:1 with:(location: target_location) {
-			capacity <- int(my_input_capacity at "capacity");
+	action create_user_student_residential{
+		mouse_location <- #user_location;
+//		my_input_capacity <- user_input("Please specify the count of people living in the building", "capacity" :: 10);
+		create residential number:1 with:(location: mouse_location ) {
+//			capacity <- int(my_input_capacity at "capacity");
+			capacity<- 10;
+			usage <- "R";
+			category<-'S';
+			shape <- square(20);
+			color <- rgb(255,255,0,50);
+			write("A building was constructed and count of dwellers are: " + char(10) + string(capacity));
+		}
+	}
+	
+	action create_user_office{
+		mouse_location <- #user_location;
+//		my_input_capacity <- user_input("Please specify the amount of people work at the office", "capacity" :: 10);
+		create office number:1 with:(location: mouse_location) {
+//			capacity <- int(my_input_capacity at "capacity");
+			capacity<- 10;
 			usage <- "O";
 			color <- rgb(255,0,0,40);
 			shape <-square(25);
@@ -427,7 +450,7 @@ species parking {
 	int excess_time <- 600;
 	int pressure <- 0 ;
 	//TODO: This should be fixed, for now it prevents division by zero
-	float vacancy <- (capacity/(total_capacity + 0.0001)) update: (capacity/(total_capacity + 0.0001) );
+	float vacancy <- (capacity/(total_capacity)) update: (capacity/(total_capacity) );
 	aspect Envelope {
 		draw shape color: rgb(200 , 200 * vacancy, 200 * vacancy) ;
 	}
@@ -479,6 +502,9 @@ species aalto_people skills: [moving] {
 	
 	int sim_steps_walking<-0;
 	int sim_steps_driving<-0;
+	
+	int distance_walked<-0;
+	int distance_driven<-0;
 	
 	// ----- ACTIONS
 	
@@ -536,6 +562,8 @@ species aalto_people skills: [moving] {
 	reflex reset_day when: current_time = (first_hour_of_day*60) {
 		sim_steps_driving <- 0 ;
 		sim_steps_walking <- 0 ;
+		distance_driven <- 0 ;
+		distance_walked <- 0 ;
 		if living_place != nil {
 			ask living_place{
 				do remove_people;
@@ -583,6 +611,7 @@ species aalto_people skills: [moving] {
 	
 			}
 			else if (list_of_available_parking collect each.capacity) != 0 {
+				write('Arrived at full parking');
 				chosen_parking.pressure <- chosen_parking.pressure  + 1;
 				do Choose_parking;
 			}
@@ -591,6 +620,7 @@ species aalto_people skills: [moving] {
 				the_target <- any_location_in(living_place);
 				objective <- "resting";
 				chosen_parking <- nil;
+				write('No parking available');
 			}
 		
 		}
@@ -608,6 +638,7 @@ species aalto_people skills: [moving] {
 	reflex move when: the_target != nil {
 		if (driving_car = true){
 			sim_steps_driving<-sim_steps_driving+1;
+			distance_driven<-distance_driven+real_speed*step;
 			if (objective = "working"){
 				do goto target: the_target_parking on: car_road_graph  speed: driving_speed;
 			}
@@ -617,6 +648,7 @@ species aalto_people skills: [moving] {
 		}
 		else {
 			sim_steps_walking<-sim_steps_walking+1;
+			distance_walked<-distance_walked+real_speed*step;
 			if (objective = "working"  ){
 				do goto target: the_target on: car_road_graph speed: walking_speed;
 			}
@@ -639,17 +671,17 @@ species aalto_people skills: [moving] {
 	
 	aspect base {
 		if driving_car = true {
-			draw square(4) color: mode_color_map['drive'];
+			draw square(6) color: mode_color_map['drive'];
 		} else{
-			draw circle(3) color: mode_color_map['walk'];
+			draw circle(4) color: mode_color_map['walk'];
 		}
 		
 	}
 	aspect show_person_type {
 		if driving_car = true {
-			draw square(4) color: people_color_map[type_of_agent];
+			draw square(6) color: people_color_map[type_of_agent];
 		} else{
-			draw circle(3) color: people_color_map[type_of_agent];
+			draw circle(4) color: people_color_map[type_of_agent];
 		}
 		
 	}
@@ -756,7 +788,10 @@ experiment parking_pressure type: gui {
 			
 		// key for character C initiates the create action.
 			
-			event 'c' action: create_agents;
+//			event 'c' action: create_agents;
+			event 'p' action: create_user_parking;
+			event 'r' action: create_user_residential;
+			event 's' action: create_user_student_residential;
 			event mouse_up action: record_mouse_location;
 		}
 
@@ -800,8 +835,22 @@ experiment parking_pressure type: gui {
 			tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 1 label_font_style: 'bold'
 			{
 
-				  data 'Km driven' value: sum(aalto_student collect each.sim_steps_driving)*step*driving_speed color:#red;
-				  data 'Km walked' value: sum(aalto_student collect each.sim_steps_walking)*step*walking_speed color:#green;
+//				  data 'Km driven' value: (sum(aalto_student collect each.sim_steps_driving)+
+//				  							sum(aalto_staff collect each.sim_steps_driving)+
+//				  							sum(aalto_visitor collect each.sim_steps_driving)
+//				  							)*step*driving_speed color:#red;
+//				  data 'Km walked' value: (sum(aalto_student collect each.sim_steps_walking)+
+//				  							sum(aalto_staff collect each.sim_steps_walking)+
+//				  							sum(aalto_visitor collect each.sim_steps_walking)
+//				  							)*step*walking_speed color:#green;
+				  data 'Km driven' value: (sum(aalto_student collect each.distance_driven)+
+				  							sum(aalto_staff collect each.distance_driven)+
+				  							sum(aalto_visitor collect each.distance_driven)
+				  							) color:#red;
+				  data 'Km walked' value: (sum(aalto_student collect each.distance_walked)+
+				  							sum(aalto_staff collect each.distance_walked)+
+				  							sum(aalto_visitor collect each.distance_walked)
+				  							) color:#green;
 				
 			}
 		}
