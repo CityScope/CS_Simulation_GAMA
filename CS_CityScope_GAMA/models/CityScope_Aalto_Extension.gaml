@@ -52,10 +52,11 @@ global{
 	int seconds_per_day <- 8640;
 	int current_hour update: first_hour_of_day + (time / #hour) mod (last_hour_of_day-first_hour_of_day);
 	int current_day <- 0;
-	float driving_speed<- 30/3.6; // km/hr to m/s
-	float walking_speed<- 4/3.6; // km/hr to m/s
+//	float driving_speed<- 30/3.6; // km/hr to m/s
+//	float walking_speed<- 4/3.6; // km/hr to m/s
+	map mode_speed_map <- ["walk"::4/3.6, "drive"::30/3.6, 'pt'::20/3.6, 'cycle':: 15/3.6];
 	
-	float step <- 2 #mn;
+	float step <- 20 #mn;
 	int current_time update: (first_hour_of_day *60) + ((time / #mn) mod ((last_hour_of_day-first_hour_of_day) * 60));
 	
 	// Multiplication factor for reducing the number of agents
@@ -105,7 +106,7 @@ global{
 	////////////////////////////////////////// 
 	
 	map people_color_map <- ["aalto_student"::rgb(55,126,184), "aalto_visitor"::rgb(152,78,163),  "aalto_staff"::rgb(77,175,74)];
-	map mode_color_map <- ["walk"::#green, "drive"::#gamaorange];
+	map mode_color_map <- ["walk"::#green, "drive"::#gamaorange, 'pt'::#yellow, 'cycle':: #blue];
 	//////////////////////////////////////////
 	//
 	// 		FILES LOCATION SECTION:
@@ -197,8 +198,6 @@ global{
 		total_weight_parking <- sum(parking collect each.weight);
 		total_weight_office <- sum(office collect each.weight);
 		total_weight_residential <- sum(residential collect each.weight);
-		write(total_weight_office);		
-		write(total_weight_residential);
 
 		loop i from:0 to:length(list(office))-1{
 			office[i].total_capacity <- max(round(((office[i].weight * number_staff_and_students)/total_weight_office)/multiplication_factor),1);
@@ -247,7 +246,7 @@ global{
 		}
 		
 		
-		write(count(list(aalto_staff) , (each.could_not_find_parking = false)));
+//		write(count(list(aalto_staff) , (each.could_not_find_parking = false)));
 		
 //		do creat_headings_for_csv;
 
@@ -352,11 +351,11 @@ global{
 		create parking number:1 with:(location: mouse_location) {
 //			capacity <- int(my_input_capacity at "capacity") ;
 			capacity<- 10;
-			total_capacity <-  int(my_input_capacity at "capacity");
+			total_capacity <-  capacity;
 			//vacancy <- (int(my_input_capacity at "capacity")/int(my_input_capacity at "capacity"));
 			shape <- square(20);
 			list_of_parkings <- list(parking);
-			write("A parking was created with capacity of "+ char(10) + string(capacity) + char(10) + "and total capacity of " + char(10)+ string(total_capacity));
+//			write("A parking was created with capacity of "+ char(10) + string(capacity) + char(10) + "and total capacity of " + char(10)+ string(total_capacity));
 		}
 	}
 	
@@ -372,7 +371,7 @@ global{
 			category<-'R';
 			shape <- square(20);
 			color <- rgb(255,255,0,50);
-			write("A building was constructed and count of dwellers are: " + char(10) + string(capacity));
+//			write("A building was constructed and count of dwellers are: " + char(10) + string(capacity));
 		}
 	}
 	
@@ -386,7 +385,7 @@ global{
 			category<-'S';
 			shape <- square(20);
 			color <- rgb(255,255,0,50);
-			write("A building was constructed and count of dwellers are: " + char(10) + string(capacity));
+//			write("A building was constructed and count of dwellers are: " + char(10) + string(capacity));
 		}
 	}
 	
@@ -399,7 +398,7 @@ global{
 			usage <- "O";
 			color <- rgb(255,0,0,40);
 			shape <-square(25);
-			write("A building was constructed and count of employees are: " + char(10) + string(capacity));
+//			write("A building was constructed and count of employees are: " + char(10) + string(capacity));
 		}
 	}
 
@@ -498,8 +497,8 @@ species aalto_people skills: [moving] {
 	office working_place;
 	residential living_place;
 	
-	bool driving_car;
-	bool mode_of_transportation_is_car <- true;
+	bool driving_car<-true;
+	bool mode_of_transportation_is_car <- false;
 	bool could_not_find_parking <- false;
 	bool commuter<-false;
 	
@@ -519,13 +518,58 @@ species aalto_people skills: [moving] {
 	rgb people_color_car ;
 	rgb people_color	;
 	
-	int distance_walked<-0;
-	int distance_driven<-0;
+	map<string, int> distances_travelled<-['drive'::0, 'pt'::0,'cycle'::0,'walk'::0];
+//	int distance_walked<-0;
+//	int distance_driven<-0;
+	
+	float commute_distance<-0.0;
+	string mode_choice;
 	
 	// ----- ACTIONS
 	
 	action create_list_of_parkings{
 		list_of_available_parking <- sort_by(parking where (distance_to(each.location, working_place) < max_walking_distance  ),distance_to(each.location, working_place));
+	}
+	
+	action choose_mode{
+		driving_car <- false;
+		using topology(car_road_graph){
+		     commute_distance <- distance_to (living_place_location,working_place);
+		}
+		float ext_dist<-0;
+		if (commuter=true){
+			ext_dist<-1400*exp(gauss(2.17, 1.16));
+			// sample from lognormal distribution calibrated with survey data (straight line distance)
+			// multiply by 1.4 for approx network distance
+			commute_distance<-commute_distance+ext_dist;
+		}
+		list mode_choice_freq;
+		if (commute_distance<1000){
+			mode_choice_freq<-[5, 1, 21, 79];
+		}
+		else if (commute_distance<3000){
+			mode_choice_freq<-[21, 15, 48, 20];
+		}
+		else if (commute_distance<5000){
+			mode_choice_freq<-[14, 16, 14, 1];
+		}
+		else if (commute_distance<7000){
+			mode_choice_freq<-[10, 13, 6, 0];
+		}
+		else if (commute_distance<10000){
+			mode_choice_freq<-[11, 15, 6, 0];
+		}
+		else if (commute_distance<15000){
+			mode_choice_freq<-[14, 18, 4, 0];
+		}
+		else {
+			mode_choice_freq<-[24, 31, 1, 0];
+		}
+		mode_choice<-sample(['drive', 'pt', 'cycle', 'walk'],1,false,mode_choice_freq)[0];
+		if (mode_choice='drive'){
+			mode_of_transportation_is_car <- true ;
+		}
+		distances_travelled[mode_choice]<-distances_travelled[mode_choice]+ext_dist;
 	}
 	
 	action find_living_place {
@@ -534,14 +578,12 @@ species aalto_people skills: [moving] {
 				ask living_place {
 					do accept_people;
 			}
-			mode_of_transportation_is_car <- false ;
-			driving_car <- false;
+//			mode_of_transportation_is_car <- false ;
 			commuter<-false;
 		}
 		else {
 			living_place <- one_of(shuffle(gateways));
-			mode_of_transportation_is_car <- true;
-			driving_car <- false;
+//			mode_of_transportation_is_car <- true;
 			commuter<-true;
 		}
 	}
@@ -576,8 +618,9 @@ species aalto_people skills: [moving] {
 	// ----- REFLEXES 	
 	
 	reflex reset_day when: current_time = (first_hour_of_day*60) {
-		distance_driven <- 0 ;
-		distance_walked <- 0 ;
+//		distance_driven <- 0 ;
+//		distance_walked <- 0 ;
+		distances_travelled<-['drive'::0, 'pt'::0,'cycle'::0,'walk'::0];
 		if living_place != nil {
 			ask living_place{
 				do remove_people;
@@ -588,12 +631,9 @@ species aalto_people skills: [moving] {
 		location <- living_place_location;
 	}
 	reflex time_to_go_to_work when: current_time > time_to_work and current_time < time_to_sleep and objective = "resting" {
-		could_not_find_parking <- false;
-		
-		
-		
-		
+		could_not_find_parking <- false;		
 		do choose_working_place;
+		do choose_mode;
 		
 		if (mode_of_transportation_is_car = true) {
 			do Choose_parking;
@@ -625,7 +665,7 @@ species aalto_people skills: [moving] {
 	
 			}
 			else if (list_of_available_parking collect each.capacity) != 0 {
-				write('Arrived at full parking');
+//				write('Arrived at full parking');
 				chosen_parking.pressure <- chosen_parking.pressure  + 1;
 				do Choose_parking;
 			}
@@ -634,7 +674,7 @@ species aalto_people skills: [moving] {
 				the_target <- any_location_in(living_place);
 				objective <- "resting";
 				chosen_parking <- nil;
-				write('No parking available');
+//				write('No parking available');
 			}
 		
 		}
@@ -650,30 +690,49 @@ species aalto_people skills: [moving] {
 
 	}
 	reflex move when: the_target != nil {
+		
+		// move the agent
 		if (driving_car = true){
-			distance_driven<-distance_driven+real_speed*step;
+			
 			if (objective = "working"){
-				do goto target: the_target_parking on: car_road_graph  speed: driving_speed;
+				do goto target: the_target_parking on: car_road_graph  speed: mode_speed_map[mode_choice];
 			}
 			else{
-				do goto target: the_target on: car_road_graph speed: driving_speed;
+				do goto target: the_target on: car_road_graph speed: mode_speed_map[mode_choice];
 			}
 		}
 		else {
-			distance_walked<-distance_walked+real_speed*step;
+			
 			if (objective = "working"  ){
-				do goto target: the_target on: car_road_graph speed: walking_speed;
+				do goto target: the_target on: car_road_graph speed: mode_speed_map[mode_choice];
 			}
 			else {
 				if (mode_of_transportation_is_car = true){
-					do goto target: the_target_parking on: car_road_graph speed: walking_speed;
+					do goto target: the_target_parking on: car_road_graph speed: mode_speed_map[mode_choice];
 				}
 				else {
-					do goto target: the_target on: car_road_graph speed: walking_speed;
+					do goto target: the_target on: car_road_graph speed: mode_speed_map[mode_choice];
 				}
 			}
 		}
 		
+		// then update distances travelled
+		if (mode_of_transportation_is_car = true){
+			if (driving_car=true){
+				// is a driver and is driving right now
+				distances_travelled['drive']<-distances_travelled['drive']+real_speed*step;
+			}
+			else {
+				// is a driver but is walking now
+				distances_travelled['walk']<-distances_travelled['walk']+real_speed*step;
+			}
+		}
+		else {
+			// not a driver
+			distances_travelled[mode_choice]<-distances_travelled[mode_choice]+real_speed*step;
+		}
+		
+		// conclude trip?
       	if the_target = location {
         	the_target <- nil ;
 		}
@@ -683,15 +742,15 @@ species aalto_people skills: [moving] {
 	
 	aspect base {
 		if driving_car = true {
-			draw square(6) color: mode_color_map['drive'];
+			draw square(10) color: mode_color_map[mode_choice];
 		} else{
-			draw circle(4) color: mode_color_map['walk'];
+			draw circle(4) color: mode_color_map[mode_choice];
 		}
 		
 	}
 	aspect show_person_type {
 		if driving_car = true {
-			draw square(6) color: people_color_map[type_of_agent];
+			draw square(10) color: people_color_map[type_of_agent];
 		} else{
 			draw circle(4) color: people_color_map[type_of_agent];
 		}
@@ -701,7 +760,7 @@ species aalto_people skills: [moving] {
 
 species aalto_staff parent: aalto_people {
 	aspect interaction {
-		ask aalto_student at_distance(distance) {
+		ask (aalto_student where (each.driving_car = false)) at_distance(distance) {
 		    draw polyline([self.location,myself.location]) color:rgb(255,255,0, 125);
 		}
 	}
@@ -854,14 +913,22 @@ experiment parking_pressure type: gui {
 			tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 1 label_font_style: 'bold'
 			{
 
-				  data 'Km driven' value: (sum(aalto_student collect each.distance_driven)+
-				  							sum(aalto_staff collect each.distance_driven)+
-				  							sum(aalto_visitor collect each.distance_driven)
-				  							) color:#red;
-				  data 'Km walked' value: (sum(aalto_student collect each.distance_walked)+
-				  							sum(aalto_staff collect each.distance_walked)+
-				  							sum(aalto_visitor collect each.distance_walked)
+				  data 'Km driven' value: (sum(aalto_student collect each.distances_travelled['drive'])+
+				  							sum(aalto_staff collect each.distances_travelled['drive'])+
+				  							sum(aalto_visitor collect each.distances_travelled['drive'])
+				  							) color:#gamaorange;
+				  data 'Km walked' value: (sum(aalto_student collect each.distances_travelled['walk'])+
+				  							sum(aalto_staff collect each.distances_travelled['walk'])+
+				  							sum(aalto_visitor collect each.distances_travelled['walk'])
 				  							) color:#green;
+				  data 'Km cycled' value: (sum(aalto_student collect each.distances_travelled['cycle'])+
+				  							sum(aalto_staff collect each.distances_travelled['cycle'])+
+				  							sum(aalto_visitor collect each.distances_travelled['cycle'])
+				  							) color:#blue;
+				  data 'Km PT' value: (sum(aalto_student collect each.distances_travelled['pt'])+
+				  							sum(aalto_staff collect each.distances_travelled['pt'])+
+				  							sum(aalto_visitor collect each.distances_travelled['pt'])
+				  							) color:#yellow;
 				
 			}
 
