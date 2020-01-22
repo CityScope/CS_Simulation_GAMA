@@ -91,9 +91,10 @@ global{
 	float max_work_start<-max(min_work_start_for_staff, max_work_start_for_student, max_work_start_for_visitor);
 	
 	// Count of People for each user Groups
-	int count_of_staff <- 5000 min:0 max: 10000 parameter: "number of staff " category: 	"user group";
-	int count_of_students <- 5000 min:0 max: 10000 parameter: "number of students" category: "user group";	
-	int count_of_visitors <- 1000 min:0 max: 5000 parameter: "number of visitors during the day" category: "user group";	
+	int count_of_staff <- 11000 min:5000 max: 15000 parameter: "number of Aalto staff " category: 	"user group";
+	int count_of_students <- 5000 min:3000 max: 8000 parameter: "number of Aalto students" category: "user group";	
+	int count_of_visitors <- 1000 min:0 max: 5000 parameter: "number of visitors during the day" category: "user group";
+	int baseline_num_parking <- 3000 min:0 max: 5000 parameter: "number of parking spaces at baseline" category: "user group";	
 	
 	// Interaction Graph
 //	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Interaction";
@@ -114,7 +115,7 @@ global{
 	
 	file parking_footprint_shapefile <- file(cityGISFolder + "/parking_footprint.shp");
 	file roads_shapefile <- file(cityGISFolder + "/roads.shp");
-	file campus_buildings <- file(cityGISFolder + "/buildings_3.shp");
+	file campus_buildings <- file(cityGISFolder + "/buildings_weighting_rd.geojson");
 	file gateways_file <- file(cityGISFolder + "/gateways.shp");
 	file bound_shapefile <- file(cityGISFolder + "/Bounds.shp");
 		
@@ -134,12 +135,14 @@ global{
 	parking recording_parking_sample;
 	list<parking> list_of_parkings;
 	float total_weight_office;
+	float total_weight_parking;
 	float total_weight_residential;	
 	geometry shape <- envelope(bound_shapefile);	
 	graph car_road_graph;
 //	graph<aalto_staff, aalto_staff> interaction_graph;
 	
 	int number_of_people <- count_of_staff + count_of_students + count_of_visitors ;
+	int number_staff_and_students <- count_of_staff + count_of_students;
 
 	//////////////////////////////////////////
 	//
@@ -152,13 +155,13 @@ global{
 		write(step);
 		create parking from: parking_footprint_shapefile with: [
 			ID::int(read("Parking_id")),
-			capacity::max(int(read("Capacity"))/multiplication_factor,1),
-			total_capacity::max(int(read("Capacity"))/multiplication_factor,1), 
+			weight::int(read("Capacity")),
+//			total_capacity::max(int(read("Capacity"))/multiplication_factor,1), 
 			excess_time::int(read("time"))
 		];
 		list_of_parkings <- list(parking);
 		
-		create office from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("Weight")), category::string(read("Category"))] {
+		create office from: campus_buildings with: [usage::string(read("Usage")), scale::string(read("Scale")), weight::float(read("office_weight_rd")), category::string(read("Category"))] {
 			if usage != "O"{
 				do die;
 			}
@@ -179,7 +182,7 @@ global{
 			
 //			capacity <- 1;
 			
-			capacity <- int(capacity / multiplication_factor)+1;
+			capacity <- max(round(capacity / multiplication_factor),1);
 		}
 		
 		create gateways from: gateways_file{
@@ -191,14 +194,20 @@ global{
 		// This will produce capacity for working spaces according to their score. so the agents will distribute accordingly.
 		// If the capacity is defined by other means, this block of code should change or removed.
 		
+		total_weight_parking <- sum(parking collect each.weight);
 		total_weight_office <- sum(office collect each.weight);
 		total_weight_residential <- sum(residential collect each.weight);
 		write(total_weight_office);		
 		write(total_weight_residential);
 
 		loop i from:0 to:length(list(office))-1{
-			office[i].total_capacity <- int(((office[i].weight * number_of_people)/total_weight_office)/multiplication_factor)+1;
-			office[i].capacity <- int(((office[i].weight * number_of_people)/total_weight_office)/multiplication_factor)+1;
+			office[i].total_capacity <- max(round(((office[i].weight * number_staff_and_students)/total_weight_office)/multiplication_factor),1);
+			office[i].capacity <- max(round(((office[i].weight * number_staff_and_students)/total_weight_office)/multiplication_factor),1);
+		}
+		
+		loop i from:0 to:length(list(parking))-1{
+			parking[i].total_capacity <- max(round(((parking[i].weight * baseline_num_parking)/total_weight_parking)/multiplication_factor),1);
+			parking[i].capacity <- max(round(((parking[i].weight * baseline_num_parking)/total_weight_parking)/multiplication_factor),1);
 		}
 		
 		create car_road from: roads_shapefile;
@@ -453,9 +462,10 @@ species gateways parent:residential schedules:[] {
 }
 
 species parking {
-	int capacity;
+	int capacity<-1;
+	float weight;
 	int ID;
-	int total_capacity;
+	int total_capacity<-1;
 	int excess_time <- 600;
 	int pressure <- 0 ;
 	//TODO: This should be fixed, for now it prevents division by zero
