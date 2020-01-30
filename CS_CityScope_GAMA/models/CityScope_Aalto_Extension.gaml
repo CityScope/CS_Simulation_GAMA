@@ -56,7 +56,7 @@ global{
 //	float walking_speed<- 4/3.6; // km/hr to m/s
 	map mode_speed_map <- ["walk"::4/3.6, "drive"::30/3.6, 'pt'::20/3.6, 'cycle':: 15/3.6];
 	
-	float step <- 20 #mn;
+	float step <- 15 #mn;
 	int current_time update: (first_hour_of_day *60) + ((time / #mn) mod ((last_hour_of_day-first_hour_of_day) * 60));
 	
 	// Multiplication factor for reducing the number of agents
@@ -99,7 +99,7 @@ global{
 	
 	// Interaction Graph
 //	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Interaction";
-	int distance <- 0 parameter: "Distance:" category: "Interaction" min: 0 max: 200;
+	int distance <- 50 parameter: "Distance:" category: "Interaction" min: 0 max: 200;
 	
 	//////////////////////////////////////////
 	//Style
@@ -562,8 +562,14 @@ species aalto_people skills: [moving] {
 		else if (commute_distance<15000){
 			mode_choice_freq<-[14, 18, 4, 0];
 		}
+		else if (commute_distance<25000){
+			mode_choice_freq<-[13, 14, 1, 0];
+		}
+		else if (commute_distance<50000){
+			mode_choice_freq<-[10, 6, 0, 0];
+		}
 		else {
-			mode_choice_freq<-[24, 31, 1, 0];
+			mode_choice_freq<-[1, 1, 0, 0];
 		}
 		mode_choice<-sample(['drive', 'pt', 'cycle', 'walk'],1,false,mode_choice_freq)[0];
 		if (mode_choice='drive'){
@@ -851,16 +857,24 @@ experiment parking_pressure type: gui {
 		// 2D Display has actions for creating new agents by user interaction
 		// 3D display caused inaccuracies for user interaction.
 		
-		display mode_interface type:java2D background: #black{
+		display person_type_interface type:java2D background: #black{
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
 			species residential aspect:base;
 			species gateways aspect:base;
-			species aalto_staff aspect:base;
-			species aalto_student aspect:base;
-			species aalto_visitor aspect:base;
-			species office aspect:base;
+			species aalto_staff aspect:show_person_type;
+			species aalto_staff aspect:interaction;
+			species aalto_student aspect:show_person_type;
+			species aalto_visitor aspect:show_person_type;
+//			species office aspect:base;
 			
+			
+			overlay position: { 3,3 } size: { 150 #px, 80 #px } background: # gray transparency: 0.8 border: # black
+			{	
+  				draw "Students " at: { 20#px, 20#px } color: people_color_map['aalto_student'] font: font("Helvetica", 20, #bold ) perspective:false;
+  				draw "Staff " at: { 20#px, 40#px } color: people_color_map['aalto_staff'] font: font("Helvetica", 20, #bold ) perspective:false;
+  				draw "Visitors " at: { 20#px, 60#px } color: people_color_map['aalto_visitor'] font: font("Helvetica", 20, #bold ) perspective:false;
+            }
 		// key for character C initiates the create action.
 			
 //			event 'c' action: create_agents;
@@ -882,25 +896,25 @@ experiment parking_pressure type: gui {
 //			species aalto_visitor aspect:base;
 //			species gateways aspect:base;
 //		}
-		display Map_3D_person_type type:opengl background: #black{
+		display mode_3d_interface type:opengl background: #black{
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
 			species parking aspect: pressure;
-			species office aspect:base;
+//			species office aspect:base;
 			species residential aspect:base;
-			species aalto_staff aspect:show_person_type;
-			species aalto_staff aspect:interaction;
-			species aalto_student aspect:show_person_type;
-			species aalto_visitor aspect:show_person_type;
+			species aalto_staff aspect:base;
+			species aalto_student aspect:base;
+			species aalto_visitor aspect:base;
 			species gateways aspect:base;
 			
-			
-			overlay position: { 3,3 } size: { 150 #px, 80 #px } background: # gray transparency: 0.8 border: # black
+			overlay position: { 3,3 } size: { 150 #px, 100 #px } background: # gray transparency: 0.8 border: # black
 			{	
-  				draw "Students " at: { 20#px, 20#px } color: people_color_map['aalto_student'] font: font("Helvetica", 20, #bold ) perspective:false;
-  				draw "Staff " at: { 20#px, 40#px } color: people_color_map['aalto_staff'] font: font("Helvetica", 20, #bold ) perspective:false;
-  				draw "Visitors " at: { 20#px, 60#px } color: people_color_map['aalto_visitor'] font: font("Helvetica", 20, #bold ) perspective:false;
+  				draw "Drive " at: { 20#px, 20#px } color: mode_color_map['drive'] font: font("Helvetica", 20, #bold ) perspective:false;
+  				draw "Cycle " at: { 20#px, 40#px } color: mode_color_map['cycle'] font: font("Helvetica", 20, #bold ) perspective:false;
+  				draw "Walk " at: { 20#px, 60#px } color: mode_color_map['walk'] font: font("Helvetica", 20, #bold ) perspective:false;
+  				draw "PT " at: { 20#px, 80#px } color: mode_color_map['py'] font: font("Helvetica", 20, #bold ) perspective:false;
             }
+			
 			chart " " background:#black  type: pie style: ring size: {0.5,0.5} position: {world.shape.width*1.1,0} color: #white 
 			tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 1 label_font_style: 'bold'
 			{
