@@ -1000,7 +1000,7 @@ experiment parking_pressure type: gui {
 //			species aalto_visitor aspect:base;
 //			species gateways aspect:base;
 //		}
-		display mode_3d_interface type:opengl background: #black{
+		display mode_3d_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0}{
 			species grid_cell aspect: base;
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
