@@ -71,7 +71,7 @@ global{
 //	float walking_speed<- 4/3.6; // km/hr to m/s
 	map mode_speed_map <- ["walk"::4/3.6, "drive"::30/3.6, 'pt'::20/3.6, 'cycle':: 15/3.6];
 	
-	float step <- 15 #mn;
+	float step <- 5 #mn;
 	int current_time update: (first_hour_of_day *60) + ((time / #mn) mod ((last_hour_of_day-first_hour_of_day) * 60));
 	
 	// Multiplication factor for reducing the number of agents
@@ -179,8 +179,8 @@ global{
 		list grid_cell_data;
 		write('Checking hash');
 		string grid_hash <- json_file(CITY_IO_GRID_HASHES_URL).contents['grid'];
-//		if grid_hash!=last_hash{
-		if true{
+		if grid_hash!=last_hash{
+//		if true{
 			write('Fetching grid data');
 			try {
 //				cityMatrixData <- json_file(CITY_IO_URL).contents;
@@ -215,7 +215,8 @@ global{
 				     			category:: city_matrix_types[usage_id]['category'],
 				     			interactive_id::self.interactive_id,
 				     			capacity::int(city_matrix_types[usage_id]['capacity'])/multiplication_factor,
-				     			interactive::true];
+				     			interactive::true,
+				     			color::rgb(250,250,250,20)];
 						}
 						if city_matrix_types[usage_id]['usage']='Parking'{
 							create parking with: [shape::self.shape,
@@ -521,9 +522,9 @@ species Aalto_buildings schedules:[] {
 	int interactive_id<-nil;
 	string scale;
 	string category;
-	rgb color <- rgb(150,150,150,30);
+	rgb color;
 	aspect base {
-		draw shape color: color  depth:  (total_capacity / 5);
+		draw shape color: rgb(150,150,150,20)  depth:  (total_capacity / 5);
 	}
 	int capacity;
 	int total_capacity;
@@ -573,7 +574,7 @@ species parking {
 		draw shape color: rgb(200 , 200 * vacancy, 200 * vacancy) ;
 	}
 	aspect pressure {
-		draw circle(5) depth:pressure * multiplication_factor color: #orange;
+		draw circle(5) depth:pressure * multiplication_factor *5 color: #orange;
 	}
 	
 	reflex reset_the_pressure when: current_time = (first_hour_of_day*60) {
@@ -960,8 +961,8 @@ experiment parking_pressure type: gui {
 		// 2D Display has actions for creating new agents by user interaction
 		// 3D display caused inaccuracies for user interaction.
 		
-		display person_type_interface type:java2D background: #black{
-			species grid_cell aspect: base;
+		display person_type_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0}{
+//			species grid_cell aspect: base;
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
 			species residential aspect:base;
@@ -1001,7 +1002,7 @@ experiment parking_pressure type: gui {
 //			species gateways aspect:base;
 //		}
 		display mode_3d_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0}{
-			species grid_cell aspect: base;
+//			species grid_cell aspect: base;
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
 			species parking aspect: pressure;
