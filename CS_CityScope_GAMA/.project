@@ -17,9 +17,29 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>external/aalto_02</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+aalto_02</locationURI>
+		</link>
+		<link>
 			<name>external/citymatrix_volpe</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+citymatrix_volpe</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of meta_grid</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+aalto_02+_+meta_grid</locationURI>
+		</link>
+		<link>
+			<name>external/grid</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+aalto_02+_+grid</locationURI>
+		</link>
+		<link>
+			<name>external/hashes</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+aalto_02+_+meta+_+hashes</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

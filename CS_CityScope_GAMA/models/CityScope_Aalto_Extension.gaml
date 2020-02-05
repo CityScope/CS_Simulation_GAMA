@@ -14,22 +14,37 @@ global{
 	string cityGISFolder <- "./../includes/City/otaniemi";	
 	
 	// Variables used to initialize the table's grid position.
-	float angle <- -9.74;
-	point center <- {1600, 1000};
-	float brickSize <- 24.0;
-	float cityIOVersion<-2.1;
-	bool initpop <-false;
+//	float angle <- -9.74;
+//	point center <- {1600, 1000};
+//	float brickSize <- 24.0;
+//	float cityIOVersion<-2.1;
+//	bool initpop <-false;
 	
 	//	city_io
-	string CITY_IO_URL <- "https://cityio.media.mit.edu/api/table/cs_aalto_2";
+	string CITY_IO_URL <- "https://cityio.media.mit.edu/api/table/aalto_02";
+	string CITY_IO_GRID_DATA_URL <- "https://cityio.media.mit.edu/api/table/aalto_02/grid";
+	string CITY_IO_GRID_HASHES_URL <- "https://cityio.media.mit.edu/api/table/aalto_02/meta/hashes";
 	// Offline backup data to use when server data unavailable.
 	string BACKUP_DATA <- "../includes/City/otaniemi/cityIO_Aalto.json";
 	
-//    //Sliders that dont exisit in Aalto table and are only used in version 1.0 
-//	int	toggle1 <- 2;
-//	int	slider1 <-2;
-//	// TODO: Hard-coding density because the Aalto table doesnt have it.
-//	list<float> density_array<-[1.0,1.0,1.0,1.0,1.0,1.0];
+	file meta_grid_file <- geojson_file("https://cityio.media.mit.edu/api/table/aalto_02/meta_grid","EPSG:4326");
+	map<int, int> meta_grid_index_to_grid_data_index;
+	map<string, unknown> cityMatrixData;
+	
+	map<int, map<string,string>> city_matrix_types<-[
+		0:: ['usage':: 'None', 'category'::'None', 'capacity':: 'None'],
+		1:: ['usage':: 'Residential', 'category'::'R', 'capacity':: '30'],
+		2:: ['usage':: 'Residential', 'category'::'R', 'capacity':: '60'],
+		3:: ['usage':: 'Residential', 'category'::'R', 'capacity':: '90'],
+		4:: ['usage':: 'Residential', 'category'::'S', 'capacity':: '40'],
+		5:: ['usage':: 'Residential', 'category'::'S', 'capacity':: '80'],
+		6:: ['usage':: 'Residential', 'category'::'S', 'capacity':: '120'],
+		7:: ['usage':: 'Parking', 'category'::'None', 'capacity':: '15'],
+		8:: ['usage':: 'Parking', 'category'::'None', 'capacity':: '30'],
+		9:: ['usage':: 'Parking', 'category'::'None', 'capacity':: '45']	
+	];
+	string last_hash<-'0';
+
 	
 //	// TODO: mapping needs to be fixed for Aalto inputs
 //	map<int, list> citymatrix_map_settings <- [-1::["Green", "Green"], 0::["R", "L"], 1::["R", "M"], 2::["R", "S"], 3::["O", "L"], 4::["O", "M"], 5::["O", "S"], 6::["A", "Road"], 7::["A", "Plaza"], 
@@ -104,9 +119,16 @@ global{
 	//////////////////////////////////////////
 	//Style
 	////////////////////////////////////////// 
-	
-	map people_color_map <- ["aalto_student"::rgb(55,126,184), "aalto_visitor"::rgb(152,78,163),  "aalto_staff"::rgb(77,175,74)];
-	map mode_color_map <- ["walk"::#green, "drive"::#gamaorange, 'pt'::#yellow, 'cycle':: #blue];
+	map my_colors<-['red':: rgb(228,26,28),
+		'blue':: rgb(55,126,184),
+		'green':: rgb(77,175,74),
+		'purple':: rgb(152,78,163),
+		'orange':: rgb(255,127,0),
+		'yellow':: rgb(255,255,51),
+		'brown':: rgb(166,86,40)
+	];
+	map people_color_map <- ["aalto_student"::my_colors['blue'], "aalto_visitor"::my_colors['purple'],  "aalto_staff"::my_colors['green']];
+	map mode_color_map <- ["walk"::my_colors['green'], "drive"::my_colors['brown'], 'pt'::my_colors['yellow'], 'cycle':: my_colors['blue']];
 	//////////////////////////////////////////
 	//
 	// 		FILES LOCATION SECTION:
@@ -152,12 +174,72 @@ global{
 	//////////////////////////////////////////
 	
 	bool residence_type_randomness;
+	
+	action update_grid_data {
+		list grid_cell_data;
+		write('Checking hash');
+		string grid_hash <- json_file(CITY_IO_GRID_HASHES_URL).contents['grid'];
+//		if grid_hash!=last_hash{
+		if true{
+			write('Fetching grid data');
+			try {
+//				cityMatrixData <- json_file(CITY_IO_URL).contents;
+				map grid_data_map <- json_file(CITY_IO_GRID_DATA_URL).contents;
+				grid_cell_data<-grid_data_map['contents'];
+			}
+	
+			catch {
+				cityMatrixData <- json_file(BACKUP_DATA).contents;
+				grid_cell_data <- cityMatrixData["grid"];
+				write #current_error + "Connection to Internet lost or cityIO is offline - CityMatrix is a local version";
+			}
+//			write(cityMatrixData);
+			ask parking {
+				if self.interactive =true{
+					do die;
+				}
+			}
+			ask residential {
+				if self.interactive =true{
+					do die;
+				}
+			}
+			
+			ask grid_cell {
+				if self.interactive_id !=nil{
+					int usage_id<-grid_cell_data[self.interactive_id][0];
+					if city_matrix_types contains_key usage_id{
+						if city_matrix_types[usage_id]['usage']='Residential'{
+							create residential with: [shape::self.shape,
+				     			usage:: 'R',
+				     			category:: city_matrix_types[usage_id]['category'],
+				     			interactive_id::self.interactive_id,
+				     			capacity::int(city_matrix_types[usage_id]['capacity'])/multiplication_factor,
+				     			interactive::true];
+						}
+						if city_matrix_types[usage_id]['usage']='Parking'{
+							create parking with: [shape::self.shape,
+	//			     			usage:: 'P',
+	//			     			category:: city_matrix_types[usage_id]['category'],
+				     			interactive_id::self.interactive_id,
+				     			total_capacity::max(int(city_matrix_types[usage_id]['capacity'])/multiplication_factor,1),
+				     			interactive::true];
+						}
+					}
+				}
+			}
+			last_hash<-grid_hash;
+		
+		}
+			
+	}
+	
 	init {
 		write(step);
 		create parking from: parking_footprint_shapefile with: [
 			ID::int(read("Parking_id")),
 			weight::int(read("Capacity")),
-//			total_capacity::max(int(read("Capacity"))/multiplication_factor,1), 
+			total_capacity::max(int(read("Capacity"))/multiplication_factor,1), 
 			excess_time::int(read("time"))
 		];
 		list_of_parkings <- list(parking);
@@ -220,8 +302,8 @@ global{
 			time_to_work <- int((min_work_start_for_staff*60 + rnd(max_work_start_for_staff - min_work_start_for_staff)*60));
 			time_to_sleep <-int((time_to_work + min_work_duration_for_staff*60 + rnd(max_work_duration_for_staff - min_work_duration_for_staff)*60));
 			objective <- "resting";
-			people_color_car 	<- rgb(184,213,67)  ;
-			people_color		<- rgb(238,147,36)  ;
+//			people_color_car 	<- rgb(184,213,67)  ;
+//			people_color		<- rgb(238,147,36)  ;
 			type_of_agent <- "aalto_staff";
 		}		
 		
@@ -230,8 +312,8 @@ global{
 			time_to_work <- int((min_work_start_for_student*60 + rnd(max_work_start_for_student - min_work_start_for_student)*60));
 			time_to_sleep <-int((time_to_work + min_work_duration_for_student*60 + rnd(max_work_duration_for_student - min_work_duration_for_student)*60));
 			objective <- "resting";
-			people_color_car 	<- rgb(106,189,69)  ;
-			people_color		<- rgb(230,77,61)  ;
+//			people_color_car 	<- rgb(106,189,69)  ;
+//			people_color		<- rgb(230,77,61)  ;
 			type_of_agent <- "aalto_student";
 		}		
 		
@@ -240,12 +322,15 @@ global{
 			time_to_work <- int((min_work_start_for_visitor*60 + rnd(max_work_start_for_visitor - min_work_start_for_visitor)*60));
 			time_to_sleep <-int((time_to_work + min_work_duration_for_visitor*60 + rnd(max_work_duration_for_visitor - min_work_duration_for_visitor)*60));
 			objective <- "resting";
-			people_color_car 	<- rgb(31,179,90)  ;
-			people_color		<- rgb(151,26,47) ;
+//			people_color_car 	<- rgb(31,179,90)  ;
+//			people_color		<- rgb(151,26,47) ;
 			type_of_agent <- "aalto_visitor";
 		}
 		
+		// CITY_IO Initialisation
+		create grid_cell from:meta_grid_file with: [interactive_id::int(read("interactive_id"))];
 		
+//		do update_grid_data;
 //		write(count(list(aalto_staff) , (each.could_not_find_parking = false)));
 		
 //		do creat_headings_for_csv;
@@ -343,7 +428,9 @@ global{
 //		}
 //
 //	}
-	
+	reflex restart_day when: current_time = (first_hour_of_day*60){
+		do update_grid_data;
+	}
 	
 	action create_user_parking {
 		mouse_location <- #user_location;
@@ -408,6 +495,8 @@ global{
 	////////////////////////////////////////
 	//
 	// 		BUILT ENVIRONMENT:
+	
+
 
 species building schedules: [] {
 	string usage;
@@ -418,9 +507,18 @@ species building schedules: [] {
 	float area;
 	float perimeter;
 	}
+	
+species grid_cell {
+	int interactive_id;
+	aspect base {
+		draw shape border: rgb(250,250,250,100) empty: true;
+	}
+}
 
 species Aalto_buildings schedules:[] {
+	bool interactive<-false;
 	string usage;
+	int interactive_id<-nil;
 	string scale;
 	string category;
 	rgb color <- rgb(150,150,150,30);
@@ -461,10 +559,12 @@ species gateways parent:residential schedules:[] {
 }
 
 species parking {
-	int capacity<-1;
+	int interactive_id<-nil;
+	bool interactive<-false;
 	float weight;
 	int ID;
-	int total_capacity<-1;
+	int total_capacity;
+	int capacity<-total_capacity;
 	int excess_time <- 600;
 	int pressure <- 0 ;
 	//TODO: This should be fixed, for now it prevents division by zero
@@ -574,6 +674,9 @@ species aalto_people skills: [moving] {
 		mode_choice<-sample(['drive', 'pt', 'cycle', 'walk'],1,false,mode_choice_freq)[0];
 		if (mode_choice='drive'){
 			mode_of_transportation_is_car <- true ;
+		}
+		else {
+			mode_of_transportation_is_car <- false ;
 		}
 		distances_travelled[mode_choice]<-distances_travelled[mode_choice]+ext_dist;
 	}
@@ -858,6 +961,7 @@ experiment parking_pressure type: gui {
 		// 3D display caused inaccuracies for user interaction.
 		
 		display person_type_interface type:java2D background: #black{
+			species grid_cell aspect: base;
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
 			species residential aspect:base;
@@ -897,6 +1001,7 @@ experiment parking_pressure type: gui {
 //			species gateways aspect:base;
 //		}
 		display mode_3d_interface type:opengl background: #black{
+			species grid_cell aspect: base;
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
 			species parking aspect: pressure;
