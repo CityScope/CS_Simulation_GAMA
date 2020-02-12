@@ -161,7 +161,7 @@ global{
 	float total_weight_office;
 	float total_weight_parking;
 	float total_weight_residential;	
-	geometry shape <- envelope(bound_shapefile);	
+	geometry shape <- envelope(table_shapefile);	
 	graph car_road_graph;
 //	graph<aalto_staff, aalto_staff> interaction_graph;
 	
@@ -966,7 +966,7 @@ experiment parking_pressure type: gui {
 		// 2D Display has actions for creating new agents by user interaction
 		// 3D display caused inaccuracies for user interaction.
 		
-		display person_type_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0}{
+		display person_type_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0} rotate: 45{
 //			species grid_cell aspect: base;
 			species table aspect: base ;
 			species car_road aspect: base ;
@@ -1007,7 +1007,7 @@ experiment parking_pressure type: gui {
 //			species aalto_visitor aspect:base;
 //			species gateways aspect:base;
 //		}
-		display mode_3d_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0}{
+		display mode_3d_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0} rotate: 45{
 //			species grid_cell aspect: base;
 			species car_road aspect: base ;
 			species table aspect: base ;
