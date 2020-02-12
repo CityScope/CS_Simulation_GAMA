@@ -141,6 +141,7 @@ global{
 	file campus_buildings <- file(cityGISFolder + "/buildings_weighting_rd.geojson");
 	file gateways_file <- file(cityGISFolder + "/gateways.shp");
 	file bound_shapefile <- file(cityGISFolder + "/Bounds.shp");
+	file table_shapefile <- file(cityGISFolder + "/table_bounds.shp");
 		
 	//checking time
 	//This line ensures that whenever time is changed the clock will be written down.
@@ -273,7 +274,7 @@ global{
 			capacity <- number_of_people;
 		}
 		
-		
+		create table from: table_shapefile;
 		// ------ ADJUSTING THE WEIGHT OF THE BUILDINGS
 		// This will produce capacity for working spaces according to their score. so the agents will distribute accordingly.
 		// If the capacity is defined by other means, this block of code should change or removed.
@@ -497,7 +498,11 @@ global{
 	//
 	// 		BUILT ENVIRONMENT:
 	
-
+species table {
+	aspect base {
+		draw shape border: rgb(250,250,250,100) empty: true;
+	}
+}
 
 species building schedules: [] {
 	string usage;
@@ -963,6 +968,7 @@ experiment parking_pressure type: gui {
 		
 		display person_type_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0}{
 //			species grid_cell aspect: base;
+			species table aspect: base ;
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
 			species residential aspect:base;
@@ -1004,6 +1010,7 @@ experiment parking_pressure type: gui {
 		display mode_3d_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0}{
 //			species grid_cell aspect: base;
 			species car_road aspect: base ;
+			species table aspect: base ;
 			species parking aspect: Envelope ;
 			species parking aspect: pressure;
 //			species office aspect:base;
