@@ -971,7 +971,7 @@ experiment parking_pressure type: gui {
 		// 2D Display has actions for creating new agents by user interaction
 		// 3D display caused inaccuracies for user interaction.
 		
-		display person_type_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0} rotate: 45{
+		display person_type_interface type:opengl background: #black camera_pos: {1070,1090,1500} camera_look_pos: {1070,1090,0} rotate: 47{
 			
 			species table aspect: base ;
 			species car_road aspect: base ;
@@ -1013,7 +1013,7 @@ experiment parking_pressure type: gui {
 //			species aalto_visitor aspect:base;
 //			species gateways aspect:base;
 //		}
-		display mode_3d_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0} rotate: 45{
+		display mode_3d_interface type:opengl background: #black camera_pos: {1070,1090,1500} camera_look_pos: {1070,1090,0} rotate: 47{
 			
 			species car_road aspect: base ;
 			species table aspect: base ;
