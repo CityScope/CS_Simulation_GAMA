@@ -27,21 +27,21 @@ global{
 	// Offline backup data to use when server data unavailable.
 	string BACKUP_DATA <- "../includes/City/otaniemi/cityIO_Aalto.json";
 	
-	file meta_grid_file <- geojson_file("https://cityio.media.mit.edu/api/table/aalto_02/meta_grid","EPSG:4326");
+	file meta_grid_file <- geojson_file("https://cityio.media.mit.edu/api/table/aalto_02/GEOGRID","EPSG:4326");
 	map<int, int> meta_grid_index_to_grid_data_index;
 	map<string, unknown> cityMatrixData;
 	
 	map<int, map<string,string>> city_matrix_types<-[
-		0:: ['usage':: 'None', 'category'::'None', 'capacity':: 'None'],
-		1:: ['usage':: 'Residential', 'category'::'R', 'capacity':: '30'],
-		2:: ['usage':: 'Residential', 'category'::'R', 'capacity':: '60'],
-		3:: ['usage':: 'Residential', 'category'::'R', 'capacity':: '90'],
-		4:: ['usage':: 'Residential', 'category'::'S', 'capacity':: '40'],
-		5:: ['usage':: 'Residential', 'category'::'S', 'capacity':: '80'],
-		6:: ['usage':: 'Residential', 'category'::'S', 'capacity':: '120'],
-		7:: ['usage':: 'Parking', 'category'::'None', 'capacity':: '15'],
-		8:: ['usage':: 'Parking', 'category'::'None', 'capacity':: '30'],
-		9:: ['usage':: 'Parking', 'category'::'None', 'capacity':: '45']	
+		0:: ['usage':: 'None', 'category'::'None', 'capacity':: 'None', 'color'::rgb(50,50,50)],
+		1:: ['usage':: 'Residential', 'category'::'R', 'capacity':: '30', 'color'::rgb(0,250,0)],
+		2:: ['usage':: 'Residential', 'category'::'R', 'capacity':: '60', 'color'::rgb(0,250,0)],
+		3:: ['usage':: 'Residential', 'category'::'R', 'capacity':: '90', 'color'::rgb(0,250,0)],
+		4:: ['usage':: 'Residential', 'category'::'S', 'capacity':: '40', 'color'::rgb(0,250,0)],
+		5:: ['usage':: 'Residential', 'category'::'S', 'capacity':: '80', 'color'::rgb(0,250,0)],
+		6:: ['usage':: 'Residential', 'category'::'S', 'capacity':: '120', 'color'::rgb(0,250,0)],
+		7:: ['usage':: 'Parking', 'category'::'None', 'capacity':: '15', 'color'::rgb(0,0,250)],
+		8:: ['usage':: 'Parking', 'category'::'None', 'capacity':: '30', 'color'::rgb(0,0,250)],
+		9:: ['usage':: 'Parking', 'category'::'None', 'capacity':: '45', 'color'::rgb(0,0,250)]	
 	];
 	string last_hash<-'0';
 
@@ -116,6 +116,7 @@ global{
 //	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Interaction";
 	int distance <- 50 parameter: "Distance:" category: "Interaction" min: 0 max: 200;
 	
+	bool show_grid  <- false parameter: "Show Grid";
 	//////////////////////////////////////////
 	//Style
 	////////////////////////////////////////// 
@@ -207,14 +208,15 @@ global{
 			}
 			
 			ask grid_cell {
-				if self.interactive_id !=nil{
-					int usage_id<-grid_cell_data[self.interactive_id][0];
+				if self.tui_id !=nil{
+					int usage_id<-grid_cell_data[self.tui_id][0];
 					if city_matrix_types contains_key usage_id{
+						self.base_color<-city_matrix_types[usage_id]['color'];
 						if city_matrix_types[usage_id]['usage']='Residential'{
 							create residential with: [shape::self.shape,
 				     			usage:: 'R',
 				     			category:: city_matrix_types[usage_id]['category'],
-				     			interactive_id::self.interactive_id,
+				     			tui_id::self.tui_id,
 				     			capacity::int(city_matrix_types[usage_id]['capacity'])/multiplication_factor,
 				     			interactive::true,
 				     			color::rgb(250,250,250,20)];
@@ -223,7 +225,7 @@ global{
 							create parking with: [shape::self.shape,
 	//			     			usage:: 'P',
 	//			     			category:: city_matrix_types[usage_id]['category'],
-				     			interactive_id::self.interactive_id,
+				     			tui_id::self.tui_id,
 				     			total_capacity::max(int(city_matrix_types[usage_id]['capacity'])/multiplication_factor,1),
 				     			interactive::true];
 						}
@@ -330,7 +332,7 @@ global{
 		}
 		
 		// CITY_IO Initialisation
-		create grid_cell from:meta_grid_file with: [interactive_id::int(read("interactive_id"))];
+		create grid_cell from:meta_grid_file with: [tui_id::int(read("tui_id"))];
 		
 //		do update_grid_data;
 //		write(count(list(aalto_staff) , (each.could_not_find_parking = false)));
@@ -515,16 +517,19 @@ species building schedules: [] {
 	}
 	
 species grid_cell {
-	int interactive_id;
+	int tui_id;
+	rgb base_color<-city_matrix_types[0]['color'];
 	aspect base {
-		draw shape border: rgb(250,250,250,100) empty: true;
-	}
+//		draw shape border: base_color empty: true;
+		if (show_grid=true){
+			draw shape color: base_color;}
+		}
 }
 
 species Aalto_buildings schedules:[] {
 	bool interactive<-false;
 	string usage;
-	int interactive_id<-nil;
+	int tui_id<-nil;
 	string scale;
 	string category;
 	rgb color;
@@ -565,7 +570,7 @@ species gateways parent:residential schedules:[] {
 }
 
 species parking {
-	int interactive_id<-nil;
+	int tui_id<-nil;
 	bool interactive<-false;
 	float weight;
 	int ID;
@@ -967,7 +972,7 @@ experiment parking_pressure type: gui {
 		// 3D display caused inaccuracies for user interaction.
 		
 		display person_type_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0} rotate: 45{
-//			species grid_cell aspect: base;
+			
 			species table aspect: base ;
 			species car_road aspect: base ;
 			species parking aspect: Envelope ;
@@ -978,6 +983,7 @@ experiment parking_pressure type: gui {
 			species aalto_student aspect:show_person_type;
 			species aalto_visitor aspect:show_person_type;
 //			species office aspect:base;
+			species grid_cell aspect: base;
 			
 			
 			overlay position: { 3,3 } size: { 150 #px, 80 #px } background: # gray transparency: 0.8 border: # black
@@ -1008,7 +1014,7 @@ experiment parking_pressure type: gui {
 //			species gateways aspect:base;
 //		}
 		display mode_3d_interface type:opengl background: #black camera_pos: {1400,1200,3000} camera_look_pos: {1400,1200,0} rotate: 45{
-//			species grid_cell aspect: base;
+			
 			species car_road aspect: base ;
 			species table aspect: base ;
 			species parking aspect: Envelope ;
@@ -1019,6 +1025,7 @@ experiment parking_pressure type: gui {
 			species aalto_student aspect:base;
 			species aalto_visitor aspect:base;
 			species gateways aspect:base;
+			species grid_cell aspect: base;
 			
 			overlay position: { 3,3 } size: { 150 #px, 100 #px } background: # gray transparency: 0.8 border: # black
 			{	
