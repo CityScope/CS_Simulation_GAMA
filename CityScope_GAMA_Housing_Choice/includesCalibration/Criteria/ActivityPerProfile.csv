@@ -1,0 +1,9 @@
+﻿ 00:00 , 01:00 , 02:00 , 03:00 , 04:00 , 05:00 , 06:00 , 07:00 , 08:00 , 09:00 , 10:00 , 11:00 , 12:00 , 13:00 , 14:00 , 15:00 , 16:00 , 17:00 , 18:00 , 19:00 , 20:00 , 21:00 , 22:00 , 23:00 
+<$30000,R,R, R , R , R , R , R ,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni, R , R , R , R 
+$30000 - $44999,R,R, R , R , R , R , R ,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni,A|Uni, R , R , R , R 
+$45000 - $59999, R|Night|restaurant , R|Night|restaurant , R , R , R , R , R ,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A, R , R , R , R 
+$60000 - $99999, R|Night|restaurant , R|Night|restaurant , R , R , R , R , R ,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,R|Cultural|restaurant,R|Cultural|restaurant, R|Night|restaurant , R|Night|restaurant 
+$100000 - $124999, R|Night|restaurant , R|Night|restaurant , R , R , R , R , R ,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,OS|A,R|Cultural|restaurant,R|Cultural|restaurant, R|Night|restaurant , R|Night|restaurant 
+$125000 - $149999, R|Night|restaurant , R|Night|restaurant , R , R , R , R , R ,OS,OS,OS,OS,OS,OS,OS,OS,OS,OS,OS,OS,OS,R|Cultural|restaurant, R|Night|restaurant , R|Night|restaurant 
+$150000 - $199999,R|Night|restaurant,R|Night|restaurant, R , R , R , R , R ,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,R|Night|restaurant,R|Night|restaurant
+>$200000,R|Night|restaurant,R|Night|restaurant, R , R , R , R , R ,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,OL,R|Night|restaurant,R|Night|restaurant

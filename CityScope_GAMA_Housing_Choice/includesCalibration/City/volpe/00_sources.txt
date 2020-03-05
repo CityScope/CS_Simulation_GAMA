@@ -1,0 +1,13 @@
+roads, buildings, boundaries shapefile -> https://www.cambridgema.gov/GIS/gisdatadictionary/Basemap
+MBTA transportation shapefile -> https://docs.digital.mass.gov/dataset/massgis-data-mbta-rapid-transit
+Census Block shapefile -> https://catalog.data.gov/dataset/tiger-line-shapefile-2019-2010-state-massachusetts-2010-census-block-state-based
+Census BlockGroups shapefile -> https://www2.census.gov/geo/tiger/TIGER2015/BG/
+Statistical group cbsa shapefile -> https://catalog.data.gov/dataset/tiger-line-shapefile-2017-nation-u-s-current-metropolitan-statistical-area-micropolitan-statist
+Bus stops shapefile -> https://docs.digital.mass.gov/dataset/massgis-data-mbta-bus-routes-and-stops
+MA towns shapefile ->  https://docs.digital.mass.gov/dataset/massgis-data-community-boundaries-towns-survey-points
+Somerville neighbourhoods shapefile -> https://data.somervillema.gov/GIS-data/Neighborhoods/n5md-vqta/data
+Cambridge neighbourhoods shapefile -> https://www.cambridgema.gov/GIS/gisdatadictionary/Boundary/BOUNDARY_CDDNeighborhoods
+Boston neighbourhoods shapefile -> https://bostonopendata-boston.opendata.arcgis.com/datasets/3525b0ee6e6b427f9aab5d0a1d0a1a28_0
+
+
+
