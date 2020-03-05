@@ -1,4 +1,4 @@
-﻿/***
+/***
 * Name: calibrationModel
 * Author: mireia yurrita
 * Description: 

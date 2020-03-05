@@ -1,11 +1,12 @@
-﻿/***
-* Name: calibrateData
+/***
+* Name: calibrateDataPercentage
 * Author: mireia yurrita
 * Description: 
 * Tags: Tag1, Tag2, TagN
 ***/
 
-model calibrateData
+model calibrateDataPercentage
+
 
 
 global{
@@ -30,6 +31,11 @@ global{
 	geometry shape<-envelope(T_lines_shapefile);
 	
 	list<string> list_neighbourhoods <- ["Area 2/MIT",'The Port','Neighborhood Nine','East Cambridge','Cambridgeport','Riverside','Mid-Cambridge','Wellington-Harrington','Cambridge Highlands','Strawberry Hill','West Cambridge','North Cambridge','BOSTON','ARLINGTON','SOMERVILLE','WEYMOUTH','MARBLEHEAD','DANVERS','SALEM','BEVERLY','LYNN','NORTH ANDOVER','BOXFORD','IPSWICH','MIDDLETON','TOPSFIELD','LAWRENCE','ESSEX','WENHAM','HAMILTON','MANCHESTER','PEABODY','NORTH READING','LYNNFIELD','ANDOVER','GEORGETOWN','ROWLEY','METHUEN','HAVERHILL','NEWBURY','GROVELAND','WEST NEWBURY','MERRIMAC','NEWBURYPORT','ROCKPORT','GLOUCESTER','READING','WAKEFIELD','SAUGUS','AMESBURY','FOXBOROUGH','SHARON','QUINCY','WELLESLEY','NEEDHAM','DOVER','CANTON','WESTWOOD','NORWOOD','HULL','COHASSET','HINGHAM','SCITUATE','MEDFIELD','MILTON','SHERBORN','NATICK','FRAMINGHAM','GROTON','LITTLETON','AYER','TEWKSBURY','WILMINGTON','RANDOLPH','AVON','HOLBROOK','NORFOLK','WRENTHAM','WALPOLE','MILLIS','MEDWAY','HOLLISTON','BURLINGTON','MEDFORD','BROOKLINE','DEDHAM','BRAINTREE','BELLINGHAM','FRANKLIN','TYNGSBOROUGH','WESTFORD','CHELSEA','REVERE','EVERETT','NEWTON','WATERTOWN','MALDEN','STOUGHTON','WINTHROP','ABINGTON','ROCKLAND','CONCORD','CARLISLE','BILLERICA','BEDFORD','STONEHAM','MELROSE','LOWELL','WALTHAM','STOW','ACTON','CHELMSFORD','LINCOLN','SUDBURY','WESTON','MAYNARD','MARLBOROUGH','HUDSON','NORWELL','HANOVER','PEMBROKE','HANSON','BROCKTON','WEST BRIDGEWATER','DRACUT','BELMONT','ASHLAND','HOPKINTON','PEPPERELL','TOWNSEND','MARSHFIELD','WHITMAN','WOBURN','WINCHESTER','EAST BRIDGEWATER','MIDDLEBOROUGH','PLYMPTON','BRIDGEWATER','LAKEVILLE','KINGSTON','WAREHAM','PLYMOUTH','LEXINGTON','DUXBURY','CARVER','MARION','MATTAPOISETT','SWAMPSCOTT','SALISBURY','NAHANT','OUTSKIRTS'];
+	map<string, map<string,float>> neighbourhoods_real <- map([]);
+	map<string, map<string,int>> neighbourhoods_real_int <- map([]);
+	map<string, map<string,float>> neighbourhoods_now <- map([]);
+	map<string, map<string,int>> neighbourhoods_now_int <- map([]);
+	
 	
 	int nb_people <- 996; //for example. Nearly x2 of vacant spaces in Kendall
 	float maxRent;
@@ -48,12 +54,19 @@ global{
 	float meanDiver <- 0.0;
 	float meanDiverNorm <- 0.0;
 	float propCar;
+	int intCar;
 	float propBike;
+	int intBike;
 	float propTransit;
+	int intTransit;
 	float propWalking;
+	int intWalking;
 	float mobilityError;
+	int mobilityErrorInt;
 	float housingErrorTotal;
+	float housingErrorTotalInt;
 	float meanHousingError;
+	matrix kendall_real_pop;
 	
 	float price_main_trip_30000 <- -0.95;
 	float price_main_trip_30000_44999 <- -0.9;
@@ -175,6 +188,7 @@ global{
 	map<string,map<string,float>> propPeople_per_mobility_type <- map([]);
 	list<string> allPossibleMobilityModes;
 	map<string,float> people_per_Mobility_now;
+	map<string,int> people_per_Mobility_now_int;
 
 		
 	init{
@@ -222,6 +236,7 @@ global{
 		write "mobility data imported";
 		do countMobility;
 		do updateMeanDiver;
+		do calculateRealPercentages;
 		do computeErrorHousing;
 	}
 	
@@ -518,8 +533,13 @@ global{
 				write "rentApartment with no associatedBlockGroup " + self + "my GEOID " + GEOIDAp;
 			}
 		}
-		ask rentApartment where(each.associatedBlockGroup.inKendall = false and (each.associatedBuilding) = nil){
-			associatedBuilding <- associatedBlockGroup.buildingsInMe[0];
+		
+		ask rentApartment {
+			if(associatedBlockGroup != nil){
+				if(associatedBlockGroup.inKendall = false and (associatedBuilding) = nil){
+					associatedBuilding <- associatedBlockGroup.buildingsInMe[0];
+				}
+			}
 		}
 	}
 	
@@ -737,7 +757,7 @@ global{
 	
 	action createPopulation{
 		
-		matrix kendall_real_pop <- matrix(real_Kendall_data_file);
+		kendall_real_pop <- matrix(real_Kendall_data_file);
 		string name <- kendall_real_pop[0,0];
 		kendall_real_pop[0,0] <- copy_between(name, 1, length(name));
 		//write "kendal_real_pop " + kendall_real_pop;
@@ -771,8 +791,7 @@ global{
 					location <- any_location_in(living_place.associatedBlockGroup);
 				}
 				
-				housingError <- distance_to(realBlockGroup.location, living_place.associatedBlockGroup.location);
-				
+			
 				living_place.vacantSpaces <- living_place.vacantSpaces - 1*agent_per_point;
 				living_place.associatedBlockGroup.vacantSpaces <- living_place.associatedBlockGroup.vacantSpaces - 1*agent_per_point;
 				living_place.associatedBlockGroup.totalPeople <- living_place.associatedBlockGroup.totalPeople + 1*agent_per_point;
@@ -840,20 +859,32 @@ global{
 	action import_mobility_data{
 		matrix kendall_real_mobility <- matrix(real_mobility_data_file);
 		propCar <- kendall_real_mobility[1,2];
+		intCar <- propCar * nb_people;
 		propBike <- kendall_real_mobility[1,1];
+		intBike <- propBike * nb_people;
 		propTransit <- kendall_real_mobility[1,0];
+		intTransit <- propTransit * nb_people;
 		propWalking <- kendall_real_mobility[1,3];
+		intWalking <- propWalking * nb_people;
 	}
 	
 	action countMobility{
 		mobilityError <- 0.0;
+		mobilityErrorInt <- 0;
 		float errorPropCar;
+		int errorIntCar;
 		float errorPropTransit;
+		int errorIntTransit;
 		float errorPropBike;
+		int errorIntBike;
 		float errorPropWalking;
+		int errorIntWalking;
 		float propBus;
+		int intBus;
 		float propT;
+		int intT;
 		float propTransitNow;
+		int intTransitNow;
 		
 		propPeople_per_mobility_type <- map([]);	
 		loop i from: 0 to: length(allPossibleMobilityModes) - 1{
@@ -863,29 +894,40 @@ global{
 					nPeople <- nPeople + agent_per_point;
 				}
 				
-				people_per_Mobility_now[allPossibleMobilityModes[i]] <- nPeople/nb_people;			
+				people_per_Mobility_now[allPossibleMobilityModes[i]] <- nPeople/nb_people;	
+				people_per_Mobility_now_int[allPossibleMobilityModes[i]] <- nPeople;		
 			}
 		}
 		loop i from: 0 to: length(people_per_Mobility_now) - 1{
 			if (people_per_Mobility_now.keys[i] = "walking"){
-				errorPropWalking <- (people_per_Mobility_now.values[i] - propWalking)^2;				
+				errorPropWalking <- (people_per_Mobility_now.values[i] - propWalking)^2;
+				errorIntWalking <- (people_per_Mobility_now_int.values[i] - intWalking)^2;				
 			}
 			else if(people_per_Mobility_now.keys[i] = "car"){
 				errorPropCar <- (people_per_Mobility_now.values[i] - propCar)^2;
+				errorIntCar <- (people_per_Mobility_now_int.values[i] - intCar)^2;
 			}
 			else if(people_per_Mobility_now.keys[i] = "bike"){
 				errorPropBike <- (people_per_Mobility_now.values[i] - propBike)^2; 
+				errorIntBike <- (people_per_Mobility_now_int.values[i] - intBike)^2;
 			}
 			else if (people_per_Mobility_now.keys[i] = "bus"){
 				propBus <- people_per_Mobility_now.values[i];
+				intBus <- people_per_Mobility_now_int.values[i];
 			}
 			else if (people_per_Mobility_now.keys[i] = "T"){
 				propT <- people_per_Mobility_now.values[i];
+				intT <- people_per_Mobility_now_int.values[i];
 			}
 		}
 		propTransitNow <- propBus + propT;
+		intTransitNow <- intBus + intT;
 		errorPropTransit <- (propTransitNow - propTransit)^2;
+		errorIntTransit <- (intTransitNow - intTransit)^2;
 		mobilityError <- 1/4*(errorPropWalking + errorPropCar + errorPropBike + errorPropTransit);
+		mobilityErrorInt <- 1/2*(errorIntWalking + errorIntCar + errorIntBike + errorIntTransit);
+		mobilityError <- sqrt(mobilityError);
+		mobilityErrorInt <- sqrt(mobilityErrorInt);
 
 	}
 	
@@ -894,13 +936,98 @@ global{
 		meanDiver <- mean(blockGroup where(each.totalPeople != 0) collect each.diversity);
 	}
 	
-	action computeErrorHousing{
-		housingErrorTotal <- 0.0;
-		ask people{
-			housingErrorTotal <- housingErrorTotal + housingError^2; 
+	action calculateRealPercentages{
+		loop i from: 0 to: length(list_neighbourhoods) - 1{
+			map<string, float> local_neighbourhoods_real <- map([]);
+			map<string, float> local_neighbourhoods_now <- map([]);
+			map<string, int> local_neighbourhoods_real_int <- map([]);
+			map<string, int> local_neighbourhoods_now_int <- map([]);
+			loop j from: 0 to: length(type_people)- 1{
+				local_neighbourhoods_real[type_people[j]] <- 0;
+				local_neighbourhoods_now[type_people[j]] <- 0;
+				local_neighbourhoods_real_int[type_people[j]] <- 0;
+				local_neighbourhoods_now_int[type_people[j]] <- 0;
+			}
+			add local_neighbourhoods_real to: neighbourhoods_real at: list_neighbourhoods[i];
+			add local_neighbourhoods_now to: neighbourhoods_now at: list_neighbourhoods[i];
+			add local_neighbourhoods_real_int to: neighbourhoods_real_int at: list_neighbourhoods[i];
+			add local_neighbourhoods_now_int to: neighbourhoods_now_int at: list_neighbourhoods[i];
 		}
-		meanHousingError <- mean(people collect each.housingError);
-		housingErrorTotal <- housingErrorTotal / nb_people;
+		
+		loop i from:0 to: kendall_real_pop.rows - 1{
+			blockGroup blockGroupNow <- one_of(blockGroup where(each.GEOID = kendall_real_pop[0,i]));
+			string blockGroupNeighbourhood <- blockGroupNow.neighbourhood;
+			int nPeopleHere <- kendall_real_pop[1,i];
+			string typePeopleHere <- kendall_real_pop[2,i];
+			
+			map<string, int> extract_neighbourhoods_real_int <- map([]);	
+			map<string,float> extract_neighbourhoods_real <- map([]); 		
+			extract_neighbourhoods_real_int <- neighbourhoods_real_int[blockGroupNeighbourhood];	
+			extract_neighbourhoods_real <- neighbourhoods_real[blockGroupNeighbourhood];		
+			extract_neighbourhoods_real_int[typePeopleHere] <- extract_neighbourhoods_real_int[typePeopleHere] + nPeopleHere;
+			extract_neighbourhoods_real[typePeopleHere] <- extract_neighbourhoods_real_int[typePeopleHere] / nb_people;	
+			add extract_neighbourhoods_real_int to: neighbourhoods_real_int at: blockGroupNeighbourhood;
+			add extract_neighbourhoods_real  to: neighbourhoods_real at: blockGroupNeighbourhood;
+		}
+	}
+	
+	action computeErrorHousing{
+		housingErrorTotal <- 0.0;		
+		ask people{
+			 map<string, int> extract_map_neighbourhoods_now_int <- map([]);			
+			 extract_map_neighbourhoods_now_int <- neighbourhoods_now_int[actualNeighbourhood];
+			 extract_map_neighbourhoods_now_int[type] <- extract_map_neighbourhoods_now_int[type] + 1*agent_per_point;
+			 add extract_map_neighbourhoods_now_int to: neighbourhoods_now_int at: actualNeighbourhood;
+			 
+		}
+		//write "neighbourhoods_now_int " + neighbourhoods_now_int;
+		//write "neighbourhoods_real_int " + neighbourhoods_real_int;
+		float localHousingError <- 0.0;
+		int localHousingErrorInt <- 0;
+		loop i from:0 to: length(list_neighbourhoods) - 1{
+			//write "i " + i;
+			//write "list_neighbourhoods[i] " + list_neighbourhoods[i];
+			map<string, float> extract_neighbourhoods_now <- map([]);
+			map<string, float> extract_neighbourhoods_real <- map([]);
+			map<string, int> extract_neighbourhoods_now_int <- map([]);
+			map<string, int> extract_neighbourhoods_real_int <- map([]);
+			extract_neighbourhoods_now <- neighbourhoods_now[list_neighbourhoods[i]];
+			extract_neighbourhoods_real <- neighbourhoods_real[list_neighbourhoods[i]];
+			extract_neighbourhoods_now_int <- neighbourhoods_now_int[list_neighbourhoods[i]];
+			extract_neighbourhoods_real_int <- neighbourhoods_real_int[list_neighbourhoods[i]];
+			
+			/***write "extract_neighbourhoods_now " + extract_neighbourhoods_now;
+			write "extract_neighbourhoods_real " + extract_neighbourhoods_real;
+			write "extract_neighbourhoods_now_int " + extract_neighbourhoods_now_int;
+			write "extract_neighbourhoods_real_int " + extract_neighbourhoods_real_int;
+			write "nb_people " + nb_people;***/
+			
+			loop j from: 0 to: length(type_people) - 1{
+				extract_neighbourhoods_now[type_people[j]] <- extract_neighbourhoods_now_int[type_people[j]] / nb_people;				
+				
+				localHousingError <- (extract_neighbourhoods_now[type_people[j]] - extract_neighbourhoods_real[type_people[j]])^2;
+				localHousingErrorInt <- (extract_neighbourhoods_now_int[type_people[j]] - extract_neighbourhoods_real_int[type_people[j]])^2;
+			}
+			add extract_neighbourhoods_now to: neighbourhoods_now at: list_neighbourhoods[i] ;
+			/***write "extract_neighbourhoods_now " + extract_neighbourhoods_now;
+			write "extract_neighbourhoods_real " + extract_neighbourhoods_real;
+			write "extract_neighbourhoods_now_int " + extract_neighbourhoods_now_int;
+			write "extract_neighbourhoods_real_int " + extract_neighbourhoods_real_int;
+			write "neighbourhoods_now " + neighbourhoods_now;
+			write "neighbourhoods_real " + neighbourhoods_real;***/
+			housingErrorTotal <- housingErrorTotal + localHousingError;
+			/**write "localHousingTotal " + localHousingError;
+			write "housingErrorTotal "  + housingErrorTotal;***/
+			housingErrorTotalInt <- housingErrorTotalInt + localHousingErrorInt;
+			/***write "localHousingErrorInt " + localHousingErrorInt;
+			write "housingErrorTotalInt " + housingErrorTotalInt;***/
+		}
+		//write "neighbourhoods_now " + neighbourhoods_now;
+		//write "neighbourhoods_real " + neighbourhoods_real;
+		housingErrorTotal <- sqrt(housingErrorTotal / (length(list_neighbourhoods) - 1));
+		housingErrorTotalInt <- sqrt(housingErrorTotalInt) / (length(list_neighbourhoods) - 1);
+		//write "housingErrorTotal " + housingErrorTotal;
+		//write "housingErrorTotalInt " + housingErrorTotalInt;
 	}
 	
 	reflex peopleMove{
@@ -1082,7 +1209,6 @@ species people{
 	string mobility_mode_main_activity;
 	string real_GEOID;
 	blockGroup realBlockGroup;
-	float housingError; //distance error between their house choice and their real home
 	
 	float calculate_patternWeight(string possibleNeighbourhood){
 		float possible_patternWeight;
@@ -1295,10 +1421,7 @@ species people{
 			possibleMoveBuilding.associatedBlockGroup.sthHasChanged <- true;
 			possibleMoveBuilding.associatedBlockGroup.peopleInMe << self;
 			living_place <- possibleMoveBuilding;
-			housingError <- distance_to(realBlockGroup.location, living_place.associatedBlockGroup.location);
-			
-			
-			
+				
 			if(living_place.satellite = true){
 				location <- any_location_in(living_place.associatedBlockGroup);
 			}
@@ -1347,22 +1470,28 @@ experiment gui_lets_see type: gui{
 			//species busStop aspect: default;
 			species people aspect: default;	}	
 			
-			display ErrorEvolution{
-				chart "Housing Error Total Evolution" type: series background: #white position:{0,0.0} size: {1.0,0.3}{
+			display HousingErrorEvolution{
+				chart "Housing Error Total Evolution" type: series background: #white position:{0,0.0} size: {1.0,0.5}{
 					data "HousingErrorTotal" value: housingErrorTotal color: #green;
 				}
-				chart "Mean Housing Error Evolution" type: series background: #white position:{0,0.3} size: {1.0,0.3}{
-					data "Mean housing error" value: meanHousingError color: #red;
-				}
-				chart "Mobility Error Evolution" type: series background: #white position: {0,0.6} size: {1.0,0.3}{
-					data "MobilityError" value: mobilityError color: #orange;
-				}		
-			}	
-			display PopulationEvolution{
-				chart "Moving People Evolution" type: series background: #white position:{0,0} size: {1.0,0.5}{
-					data "Moving People Evolution " value: movingPeople color: #blue;
+				chart "Housing Error Total Int Evolution" type: series background: #white position: {0,0.5} size: {1.0,0.5}{
+					data "HousingErrorTotalInt" value: housingErrorTotalInt color: #red;
 				}
 			}
+			display MobilityErrorEvolution{
+				chart "Mobility Error Evolution" type: series background: #white position: {0,0.0} size: {1.0,0.5}{
+					data "MobilityError" value: mobilityError color: #green;
+				}
+				chart "Mobility Error Evolution Int" type:series background: #white position:{0,0.5} size:{1.0,0.5}{
+					data "MobilityErrorInt" value: mobilityErrorInt color: #red;
+				}
+			}
+			display MovingPeople{
+				chart "Moving People Evolution" type: series background: #white position:{0,0.0} size: {1.0,0.5}{
+					data "Moving People Evolution " value: movingPeople color: #blue;
+				}		
+			}	
+			
 		monitor "Number of people moving" value: movingPeople;
 		monitor "Housing Error Total" value: housingErrorTotal;	
 		monitor "Mobility Error" value: mobilityError;
@@ -1443,16 +1572,17 @@ experiment exploration type: batch repeat: 2 keep_seed: true until: (movingPeopl
 	parameter "Pattern Weight home >$200000 " var: pattern_home_200000 min: 0 max: 1 step: 0.1;
 	
     
-    method exhaustive minimize: sqrt(housingErrorTotal + mobilityError);
+    method exhaustive minimize: (housingErrorTotal + mobilityError);
+    //method exhaustive minimize: (housingErrorTotalInt + mobilityErrorInt);
     /***method annealing 
     	temp_init: 100 temp_end:1
     	temp_decrease: 0.5 nb_iter_cst_temp: 5
-    	minimize: sqrt(housingErrorTotal + mobilityError);***/
+    	minimize: (housingErrorTotal + mobilityError);***/
     /***method reactive_tabu
     	iter_max: 50 tabu_list_size_init: 5 tabu_list_size_min: 2 tabu_list_size_max: 10
     	nb_tests_wthout_col_max: 20 cycle_size_min: 2 cycle_size_max: 20 
-        maximize: exhaustive minimize: sqrt(housingErrorTotal + mobilityError);***/
-    /***method genetic maximize: sqrt(housingErrorTotal + mobilityError) 
+        maximize: exhaustive minimize: (housingErrorTotal + mobilityError);***/
+    /***method genetic minimize: (housingErrorTotal + mobilityError) 
         pop_dim: 5 crossover_prob: 0.7 mutation_prob: 0.1 
         nb_prelim_gen: 1 max_gen: 20; ***/
     
