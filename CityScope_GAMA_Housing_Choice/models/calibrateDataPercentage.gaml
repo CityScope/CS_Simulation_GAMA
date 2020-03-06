@@ -192,6 +192,8 @@ global{
 
 		
 	init{
+		write "price_main_trip_30000 " + price_main_trip_30000;
+		write "list_price_main_trip " + price_main_trip_list;
 		do createTlines;
 		write "T lines created";
 		do createTstops;
@@ -1555,8 +1557,9 @@ experiment exploration type: batch repeat: 2 keep_seed: true until: (movingPeopl
 	parameter "Pattern Weight home >$200000 " var: pattern_home_200000 min: 0 max: 1 step: 0.1;
 	
     
-    method exhaustive minimize: (housingErrorTotal + mobilityError);
+    //method exhaustive minimize: (housingErrorTotal + mobilityError);
     //method exhaustive minimize: (housingErrorTotalInt + mobilityErrorInt);
+    method hill_climbing iter_max: 100 minimize: housingErrorTotal + mobilityError;
     /***method annealing 
     	temp_init: 100 temp_end:1
     	temp_decrease: 0.5 nb_iter_cst_temp: 5
@@ -1567,16 +1570,16 @@ experiment exploration type: batch repeat: 2 keep_seed: true until: (movingPeopl
         maximize: exhaustive minimize: (housingErrorTotal + mobilityError);***/
     /***method genetic minimize: (housingErrorTotal + mobilityError) 
         pop_dim: 5 crossover_prob: 0.7 mutation_prob: 0.1 
-        nb_prelim_gen: 1 max_gen: 20; ***/
+        nb_prelim_gen: 1 max_gen: 20; 
     
-    
+   ***/
    reflex save_results_explo {
         int cpt <- 0;
         ask simulations {
             save [int(self), movingPeople, housingErrorTotal, mobilityError ,price_main_trip_30000, price_main_trip_30000_44999, price_main_trip_45000_59999, price_main_trip_60000_99999, price_main_trip_100000_124999, price_main_trip_125000_149999, price_main_trip_150000_199999, price_main_trip_200000, time_main_trip_30000, time_main_trip_30000_44999, time_main_trip_45000_59999, time_main_trip_60000_99999, time_main_trip_100000_124999, time_main_trip_125000_149999, time_main_trip_150000_199999, time_main_trip_200000, pattern_main_trip_30000, pattern_main_trip_30000_44999, pattern_main_trip_45000_59999, pattern_main_trip_60000_99999, pattern_main_trip_100000_124999, pattern_main_trip_125000_149999, pattern_main_trip_150000_199999, pattern_main_trip_200000, difficulty_main_trip_30000, difficulty_main_trip_30000_44999, difficulty_main_trip_45000_59999, difficulty_main_trip_60000_99999, difficulty_main_trip_100000_124999, difficulty_main_trip_125000_149999, difficulty_main_trip_150000_199999, difficulty_main_trip_200000, price_home_30000, price_home_30000_44999, price_home_45000_59999, price_home_60000_99999, price_home_100000_124999, price_home_125000_149999, price_home_150000_199999, price_home_200000, diver_home_30000, diver_home_30000_44999, diver_home_45000_59999, diver_home_60000_99999, diver_home_100000_124999, diver_home_125000_149999, diver_home_150000_199999, diver_home_200000, zone_home_30000, zone_home_30000_44999, zone_home_45000_59999, zone_home_60000_99999, zone_home_100000_124999, zone_home_125000_149999, zone_home_150000_199999, zone_home_200000, pattern_home_30000, pattern_home_30000_44999, pattern_home_45000_59999, pattern_home_60000_99999, pattern_home_100000_124999, pattern_home_125000_149999, pattern_home_150000_199999, pattern_home_200000] 
                    to: "../results/calibrateData/exhaustive/parameterValues "+ cpt +".csv" type: "csv" rewrite: (int(self) = 0) ? true : false header: true;      
         	ask people{
-				save[type, living_place.location.x, living_place.location.y, living_place.associatedBlockGroup.GEOID, activity_place.ID, activity_place.location.x, activity_place.location.y, activity_place.lat, activity_place.long, actualNeighbourhood, actualCity, happyNeighbourhood, mobility_mode_main_activity, time_main_activity_min, distance_main_activity, CommutingCost, living_place.rentNormVacancy, agent_per_point] type:csv to:"../results/calibrateData/exhaustive/resultingPeopleChoice "+ cpt +".csv" rewrite: (int(self) = 0) ? true : false header:true;	
+				save[type, living_place.location.x, living_place.location.y, living_place.associatedBlockGroup.GEOID, activity_place.ID, activity_place.location.x, activity_place.location.y, activity_place.lat, activity_place.long, actualNeighbourhood, actualCity, happyNeighbourhood, mobility_mode_main_activity, time_main_activity_min, distance_main_activity, CommutingCost, living_place.rentNormVacancy, agent_per_point] type:csv to:"../results/calibrateData/exhaustive/resultingPeopleChoice "+ cpt + int(self) +".csv" rewrite: (int(self) = 0) ? true : false header:true;	
 			}
 			cpt <- cpt + 1;
         }   
