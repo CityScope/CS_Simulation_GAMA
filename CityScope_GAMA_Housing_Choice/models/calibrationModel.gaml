@@ -245,9 +245,7 @@ global{
 				do calculateDiversity;
 			}
 		}
-		write "list_neighbourhoods " + list_neighbourhoods;
 		int l1 <- length(list_neighbourhoods) - 1;
-		write "length list " + l1;
 	
 		
 	}
@@ -400,17 +398,13 @@ global{
 		}
 		if(empty(kendallApartmentList) = false){
 			loop while: empty(kendallApartmentList) = false {
-				//write "kendallApartmentList[0].associatedBlockGroup " + kendallApartmentList[0].associatedBlockGroup;
 				kendallApartmentList[0].associatedBuilding <- one_of(building where(each.satellite = false and each.associatedBlockGroup = kendallApartmentList[0].associatedBlockGroup));
-				//write "kendallApartmentList[0].associatedBuilding" + kendallApartmentList[0].associatedBuilding;
-				//write "(kendallApartmentList[0].associatedBuilding) is building" + (kendallApartmentList[0].associatedBuilding) is building;
 				if((kendallApartmentList[0].associatedBuilding) is building != true){
 					kendallApartmentList[0].associatedBuilding <- building where(each.satellite = false) closest_to (self);
 					kendallApartmentList[0].associatedBlockGroup.apartmentsInMe >- kendallApartmentList[0];
 					kendallApartmentList[0].associatedBlockGroup  <- kendallApartmentList[0].associatedBuilding.associatedBlockGroup;
 					kendallApartmentList[0].associatedBlockGroup.apartmentsInMe << kendallApartmentList[0];
 					kendallApartmentList[0].associatedBuilding.apartmentsInMe << kendallApartmentList[0];
-					//write "kendallApartmentList[0].associatedBuilding" + kendallApartmentList[0].associatedBuilding;
 				}
 				
 				if(empty(kendallApartmentList[0].associatedBuilding) = false and empty(kendallApartmentList) = false){				
@@ -443,8 +437,12 @@ global{
 			}
 		}
 		
-		ask rentApartment where(each.associatedBlockGroup.inKendall = false and (each.associatedBuilding) = nil){
-			associatedBuilding <- associatedBlockGroup.buildingsInMe[0];
+		ask rentApartment {
+			if(associatedBlockGroup != nil){
+				ask rentApartment where(each.associatedBlockGroup.inKendall = false and (each.associatedBuilding) = nil){
+					associatedBuilding <- associatedBlockGroup.buildingsInMe[0];
+				}
+			}
 		}
 	}
 	
@@ -542,8 +540,7 @@ global{
 				speed_per_mobility[mobility_type]<- float(mode_matrix[9,i]);
 				weather_coeff_per_mobility[mobility_type]<- float(mode_matrix[10,i]);
 			}
-		}
-		//write "allPossibleMobilityModes" + allPossibleMobilityModes;		
+		}		
 	}
 	
 	action profils_data_import{
@@ -686,7 +683,6 @@ global{
 		bool wasItSplit <- false;
 		string main_activity;
 		loop type_i over:type_people {
-			//write "type_i" + type_i;
 			if (main_activity_map[type_i] contains "|" = true){
 				list<string> name_list;
 				loop cat over: main_activity_map[type_i] split_with "|"{
@@ -864,10 +860,6 @@ global{
 				else if (j = 0 and peopleInMainCity = 0){
 					peopleProportionInMainCity[type_people[i]] <- 0.0;
 				}
-				
-				if(list_neighbourhoods[j] = "outskirts"){
-					write "outskirts: " + type_people[i] + number_peopleProfile_here;
-				}
 			}
 			add peoplePerNeighbourhoodPartialMap at: type_people[i] to: peoplePerNeighbourhoodMap;
 		}
@@ -929,7 +921,6 @@ global{
 				add propPeople_per_mobility_indiv at: allPossibleMobilityModes[i] to: propPeople_per_mobility_type;				
 			}
 		}
-		//write "propPeople_per_mobility_type" + propPeople_per_mobility_type;
 		meanTimeToMainActivity <- 0;
 		meanDistanceToMainActivity <- 0;
 		ask people{
@@ -948,7 +939,6 @@ global{
 			}
 			meanTimeToMainActivity_perProfile[type_people[k]] <- meanTimeToMainActivity_perProfile[type_people[k]] / nPeople_perProfile[type_people[k]];
 			meanDistanceToMainActivity_perProfile[type_people[k]] <- meanDistanceToMainActivity_perProfile[type_people[k]] / nPeople_perProfile[type_people[k]];
-			
 		}
 		
 		do updateCommutingCosts;
@@ -1205,7 +1195,6 @@ species people{
 		if (flip(proba_bike_per_type[type]) = true){
 			possibleMobModes << "bike";
 		}
-		//possibleMobModes << "bus";
 	}
 	
 	
@@ -1244,6 +1233,9 @@ species people{
 					using topology(graph_per_mobility[mode]){
 						distance <- distance_to(nearestTstopHome.location, nearestTstopWork.location); //nearly straight lines
 					}
+					if (distance > 100000){ //error with the map
+						distance <- distance_to(nearestTstopHome.location, nearestTstopWork.location) * 1.25;
+					}
 				}			
 				if(mode = 'bus'){
 					busStop nearestBusStopHome <- busStop closest_to living_place;
@@ -1251,10 +1243,16 @@ species people{
 					using topology(graph_per_mobility[mode]){						
 						distance <- distance_to(nearestBusStopHome.location, nearestBusStopWork.location); //far from straight lines
 					}
+					if (distance > 100000){ //error with the map
+						distance <- distance_to(nearestBusStopHome.location, nearestBusStopWork.location) * 1.25;
+					}
 				}
 				if(mode != 'T' and mode!= 'bus'){
 					using topology(graph_per_mobility[mode]){
 						distance <- distance_to(origin_location,destination.location);
+					}
+					if (distance > 100000){ //error with the map
+						distance <- distance_to(origin_location, destination.location) * 1.25;
 					}
 				}
 		
@@ -1378,41 +1376,17 @@ species people{
 		int choice <- weighted_means_DM(cands,criteria_WM);
 		
 		if (choice = 0){
-			
-			//write "living_place que abandono" + living_place;
-			//write "living_place anterior satellite¿?" + living_place.satellite;
-			//write "living_place anterior vacantes antes de irme " + living_place.vacantSpaces;
 			living_place.vacantSpaces <- living_place.vacantSpaces + 1*agent_per_point;
-			//write "living_place anterior vacantes ahora que me voy " + living_place.vacantSpaces;
-			//write "living_placeBlockGroup anterior vacantes antes de irme " + living_place.associatedBlockGroup.vacantSpaces;
 			living_place.associatedBlockGroup.vacantSpaces <- living_place.associatedBlockGroup.vacantSpaces + 1*agent_per_point;
-			//write "living_placeBlockGroup anterior vacantes ahora que me voy " + living_place.associatedBlockGroup.vacantSpaces;
 			living_place.associatedBlockGroup.totalPeople <- living_place.associatedBlockGroup.totalPeople - 1*agent_per_point;
-			//write "living_placeBlockGroup ID " + living_place.associatedBlockGroup;
-			//write "living_placeBlockGroup anterior populationBlockGroup antes de irme " + living_place.associatedBlockGroup.populationBlockGroup;
 			living_place.associatedBlockGroup.populationBlockGroup[type] <- living_place.associatedBlockGroup.populationBlockGroup[type] - 1 * agent_per_point;
-			//write "living_placeBlockGroup anterior populationBlockGroup despues de irme " + living_place.associatedBlockGroup.populationBlockGroup;
 			living_place.associatedBlockGroup.peopleInMe >- self;
 			living_place.associatedBlockGroup.sthHasChanged <- true;
-			//write "living_place anterior tenia T ?? " + living_place.associatedBlockGroup.hasT;
-			//write "living_place anterior tenia Bus ¿? " + living_place.associatedBlockGroup.hasBus;
-			//write "actvity_place tiene T ¿? " + activity_place.associatedBlockGroup.hasT;
-			//write "activity_place tiene bus¿? " + activity_place.associatedBlockGroup.hasBus;
-			
-			//write "living_place que cojo" + possibleMoveBuilding;
-			//write "living_place nuevo satellite¿?" + possibleMoveBuilding.satellite;
-			//write "living_place nuevo vacantes antes de incorporarme " + possibleMoveBuilding.vacantSpaces;
 			possibleMoveBuilding.vacantSpaces <- possibleMoveBuilding.vacantSpaces - 1*agent_per_point;	
-			//write "living_place nuevo vacantes despues de incorporarme " + possibleMoveBuilding.vacantSpaces;
-			//write "living_placeBlockGroup nuevo vacantes antes de incorporarme " + possibleMoveBuilding.associatedBlockGroup.vacantSpaces;
 			possibleMoveBuilding.associatedBlockGroup.vacantSpaces <- possibleMoveBuilding.associatedBlockGroup.vacantSpaces - 1*agent_per_point;
-			//write "living_placeBlockGroup nuevo vacantes despues de incorporarme " + possibleMoveBuilding.associatedBlockGroup.vacantSpaces;
 			possibleMoveBuilding.associatedBlockGroup.totalPeople <- possibleMoveBuilding.associatedBlockGroup.totalPeople + 1*agent_per_point;
 			
-			//write "living_placeBlockGroup ID " + possibleMoveBuilding.associatedBlockGroup;
-			//write "living_placeBlockGroup actual populationBlockGroup antes de venir " + possibleMoveBuilding.associatedBlockGroup.populationBlockGroup;
 			possibleMoveBuilding.associatedBlockGroup.populationBlockGroup[type] <- possibleMoveBuilding.associatedBlockGroup.populationBlockGroup[type] + 1 * agent_per_point;
-			//write "living_placeBlockGroup actual populationBlockGroup despues de venir " + possibleMoveBuilding.associatedBlockGroup.populationBlockGroup;
 			possibleMoveBuilding.associatedBlockGroup.sthHasChanged <- true;
 			possibleMoveBuilding.associatedBlockGroup.peopleInMe << self;
 			living_place <- possibleMoveBuilding;
@@ -1426,34 +1400,16 @@ species people{
 				location <- any_location_in(living_place);
 			}
 			
-			movingPeople <- movingPeople + 1*agent_per_point;	
-			//write "patternWeight antes de mudarme" + actualPatternWeight;	
+			movingPeople <- movingPeople + 1*agent_per_point;		
 			actualPatternWeight <- possiblePatternWeight;
-			//write "patternWeight despues de incoporarme" + actualPatternWeight;
-			//write "neighbourhood antes de incorporarm" + actualNeighbourhood;
 			actualNeighbourhood <- living_place.associatedBlockGroup.neighbourhood;
-			//write "neighbourhood despues de incorporarm" + actualNeighbourhood;
-			//write "ciudad antes de incorporarm" + actualCity;
 			actualCity <- living_place.associatedBlockGroup.city;
-			//write "citi antes de incorporarm" + actualCity;
-			//write "time a main activity antes de mudarme " + time_main_activity_min;
 			time_main_activity <- possibleTime;
 			time_main_activity_min <- possibleTimeMin;
-			//write "time a main activity despues de mudarme " + time_main_activity_min;
-			//write "distancia antes de mudarme " + distance_main_activity;
 			distance_main_activity <- possibleDistance;
-			//write "distancia despues de mudarme " + distance_main_activity;
-			//write "mobility mode antes " + mobility_mode_main_activity;
 			mobility_mode_main_activity <- possibleMobility;
-			//write "mobility mode ahora " + mobility_mode_main_activity;
-			//write "living_place ahora tiene T ¿? " + living_place.associatedBlockGroup.hasT;
-			//write "living_place ahora tiene bus ¿? " + living_place.associatedBlockGroup.hasBus;
-			//write "commuting cost antes " + CommutingCost;
 			CommutingCost <- possibleCommutingCost;
-			//write "commuting cost despues "+ CommutingCost;
-			//write "paying Rent antes " + payingRent;
 			payingRent <- possibleLivingCost;
-			//write "paying rent despues " + payingRent;
 			
 			list<string> extract_list <- pattern_list[type];
 			if(living_place.neighbourhood = extract_list[0]){
@@ -1521,9 +1477,6 @@ experiment show type: gui{
 					data type_people[i] value: meanRent_perProfile[type_people[i]] color: color_per_type[type_people[i]];
 				}
  			}
-			//chart "Number of buildings changing rents" type:series background: #white position:{0,0.3} size:{1.0,0.3}{
-				//data "Number of buildings increasing rent because of demand" value: NumberofChangingRents color: #black;
-			//}
 			chart "Mean CommutingCost" type:series background: #white position:{0,0.3} size:{1.0,0.3}{
 				data "Mean CommutingCost" value: meanCommutingCostGlobal color: #black;
 				loop i from: 0 to: length(type_people) - 1 {
@@ -1561,10 +1514,7 @@ experiment show type: gui{
 		display MobilityChartsCarsBikes{	
 
 			chart "Proportion of people using cars" type: series background: #white position:{0,0.0} size: {1.0,0.5}{
-				//list<float> mobModesMeanValues <- people_per_Mobility_now['car'];
-				//if (mobModesMeanValues != []){
-					//data "Mean proportion of people" value: mobModesMeanValues color: #black;
-				//}	
+				
 				if (propPeople_per_mobility_type['car'] != nil){
 					loop i from: 0 to:length(type_people) - 1{
 						data type_people[i] value: propPeople_per_mobility_type['car'].values[i] color: color_per_type[type_people[i]];
@@ -1572,10 +1522,6 @@ experiment show type: gui{
 				}
 			}
 			chart "Proportion of people using bikes" type: series background: #white position:{0,0.5} size: {1.0,0.5}{
-				//list<float> mobModesMeanValues <- people_per_Mobility_now['bike'];
-				//if (mobModesMeanValues != []){
-					//data "Mean proportion of people" value: mobModesMeanValues color: #black;
-				//}
 				if (propPeople_per_mobility_type['bike'] != nil){
 					loop i from: 0 to:length(type_people) - 1{
 						data type_people[i] value: propPeople_per_mobility_type['bike'].values[i] color: color_per_type[type_people[i]];
@@ -1584,11 +1530,7 @@ experiment show type: gui{
 			}	
 		}
 		display MobilityChartsBusWalking{
-			chart "Proportion of people using bus" type: series background: #white position:{0,0.0} size: {1.0,0.5}{
-				//list<float> mobModesMeanValues <- people_per_Mobility_now['bus'];
-				//if (mobModesMeanValues != []){
-					//data "Mean proportion of people" value: mobModesMeanValues color: #black;
-				//}			
+			chart "Proportion of people using bus" type: series background: #white position:{0,0.0} size: {1.0,0.5}{		
 				if (propPeople_per_mobility_type['bus'] != nil){
 					loop i from: 0 to:length(type_people) - 1{
 						data type_people[i] value: propPeople_per_mobility_type['bus'].values[i] color: color_per_type[type_people[i]];
@@ -1597,10 +1539,6 @@ experiment show type: gui{
 			}
 			
 			chart "Proportion of people walking" type: series background: #white position:{0,0.5} size: {1.0,0.5}{
-				//list<float> mobModesMeanValues <- people_per_Mobility_now['walking'];
-				//if (mobModesMeanValues != []){
-					//data "Mean proportion of people" value: mobModesMeanValues color: #black;
-				//}
 				if (propPeople_per_mobility_type['walking'] != nil){
 					loop i from: 0 to:length(type_people) - 1{
 						data type_people[i] value: propPeople_per_mobility_type['walking'].values[i] color: color_per_type[type_people[i]];
@@ -1610,10 +1548,6 @@ experiment show type: gui{
 		}
 		display MobilityChartsT{
 			chart "Proportion of people using T" type: series background: #white position:{0,0.0} size: {1.0,0.5}{
-				//list<float> mobModesMeanValues <- people_per_Mobility_now['T'];
-				//if (mobModesMeanValues != []){
-					//data "Mean proportion of people" value: mobModesMeanValues color: #black;
-				//}
 				if (propPeople_per_mobility_type['T'] != nil){
 					loop i from: 0 to:length(type_people) - 1{
 						data type_people[i] value: propPeople_per_mobility_type['T'].values[i] color: color_per_type[type_people[i]];

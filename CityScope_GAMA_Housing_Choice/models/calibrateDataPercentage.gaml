@@ -717,7 +717,6 @@ global{
 		bool wasItSplit <- false;
 		string main_activity;
 		loop type_i over:type_people {
-			//write "type_i" + type_i;
 			if (main_activity_map[type_i] contains "|" = true){
 				list<string> name_list;
 				loop cat over: main_activity_map[type_i] split_with "|"{
@@ -760,7 +759,6 @@ global{
 		kendall_real_pop <- matrix(real_Kendall_data_file);
 		string name <- kendall_real_pop[0,0];
 		kendall_real_pop[0,0] <- copy_between(name, 1, length(name));
-		//write "kendal_real_pop " + kendall_real_pop;
 		
 		loop i from: 0 to: kendall_real_pop.rows - 1{
 			create people number: kendall_real_pop[1,i]{
@@ -980,13 +978,11 @@ global{
 			 add extract_map_neighbourhoods_now_int to: neighbourhoods_now_int at: actualNeighbourhood;
 			 
 		}
-		//write "neighbourhoods_now_int " + neighbourhoods_now_int;
-		//write "neighbourhoods_real_int " + neighbourhoods_real_int;
+		
 		float localHousingError <- 0.0;
 		int localHousingErrorInt <- 0;
 		loop i from:0 to: length(list_neighbourhoods) - 1{
-			//write "i " + i;
-			//write "list_neighbourhoods[i] " + list_neighbourhoods[i];
+			
 			map<string, float> extract_neighbourhoods_now <- map([]);
 			map<string, float> extract_neighbourhoods_real <- map([]);
 			map<string, int> extract_neighbourhoods_now_int <- map([]);
@@ -996,11 +992,6 @@ global{
 			extract_neighbourhoods_now_int <- neighbourhoods_now_int[list_neighbourhoods[i]];
 			extract_neighbourhoods_real_int <- neighbourhoods_real_int[list_neighbourhoods[i]];
 			
-			/***write "extract_neighbourhoods_now " + extract_neighbourhoods_now;
-			write "extract_neighbourhoods_real " + extract_neighbourhoods_real;
-			write "extract_neighbourhoods_now_int " + extract_neighbourhoods_now_int;
-			write "extract_neighbourhoods_real_int " + extract_neighbourhoods_real_int;
-			write "nb_people " + nb_people;***/
 			
 			loop j from: 0 to: length(type_people) - 1{
 				extract_neighbourhoods_now[type_people[j]] <- extract_neighbourhoods_now_int[type_people[j]] / nb_people;				
@@ -1009,25 +1000,11 @@ global{
 				localHousingErrorInt <- (extract_neighbourhoods_now_int[type_people[j]] - extract_neighbourhoods_real_int[type_people[j]])^2;
 			}
 			add extract_neighbourhoods_now to: neighbourhoods_now at: list_neighbourhoods[i] ;
-			/***write "extract_neighbourhoods_now " + extract_neighbourhoods_now;
-			write "extract_neighbourhoods_real " + extract_neighbourhoods_real;
-			write "extract_neighbourhoods_now_int " + extract_neighbourhoods_now_int;
-			write "extract_neighbourhoods_real_int " + extract_neighbourhoods_real_int;
-			write "neighbourhoods_now " + neighbourhoods_now;
-			write "neighbourhoods_real " + neighbourhoods_real;***/
 			housingErrorTotal <- housingErrorTotal + localHousingError;
-			/**write "localHousingTotal " + localHousingError;
-			write "housingErrorTotal "  + housingErrorTotal;***/
 			housingErrorTotalInt <- housingErrorTotalInt + localHousingErrorInt;
-			/***write "localHousingErrorInt " + localHousingErrorInt;
-			write "housingErrorTotalInt " + housingErrorTotalInt;***/
 		}
-		//write "neighbourhoods_now " + neighbourhoods_now;
-		//write "neighbourhoods_real " + neighbourhoods_real;
 		housingErrorTotal <- sqrt(housingErrorTotal / (length(list_neighbourhoods) - 1));
 		housingErrorTotalInt <- sqrt(housingErrorTotalInt) / (length(list_neighbourhoods) - 1);
-		//write "housingErrorTotal " + housingErrorTotal;
-		//write "housingErrorTotalInt " + housingErrorTotalInt;
 	}
 	
 	reflex peopleMove{
@@ -1213,9 +1190,6 @@ species people{
 	float calculate_patternWeight(string possibleNeighbourhood){
 		float possible_patternWeight;
 		string extract_list <- pattern_map[type];
-		//write "pattern_map " + pattern_map;
-		//write "extract_list " + extract_list;
-		//write "type " + type;
 		int donde <- 1000;
 		
 		if (possibleNeighbourhood = extract_list){
@@ -1275,6 +1249,9 @@ species people{
 					using topology(graph_per_mobility[mode]){
 						distance <- distance_to(nearestTstopHome.location, nearestTstopWork.location); //nearly straight lines
 					}
+					if (distance > 100000){ //error with the map
+						distance <- distance_to(nearestTstopHome.location, nearestTstopWork.location) * 1.25;
+					}
 				}			
 				if(mode = 'bus'){
 					busStop nearestBusStopHome <- busStop closest_to living_place;
@@ -1282,10 +1259,16 @@ species people{
 					using topology(graph_per_mobility[mode]){						
 						distance <- distance_to(nearestBusStopHome.location, nearestBusStopWork.location); //far from straight lines
 					}
+					if (distance > 100000){ //error with the map
+						distance <- distance_to(nearestBusStopHome.location, nearestBusStopWork.location) * 1.25;
+					}
 				}
 				if(mode != 'T' and mode!= 'bus'){
 					using topology(graph_per_mobility[mode]){
 						distance <- distance_to(origin_location,destination.location);
+					}
+					if (distance > 100000){ //error with the map
+						distance <- distance_to(origin_location, destination.location) * 1.25;
 					}
 				}
 		

@@ -697,7 +697,6 @@ global{
 		bool wasItSplit <- false;
 		string main_activity;
 		loop type_i over:type_people {
-			//write "type_i" + type_i;
 			if (main_activity_map[type_i] contains "|" = true){
 				list<string> name_list;
 				loop cat over: main_activity_map[type_i] split_with "|"{
@@ -740,7 +739,6 @@ global{
 		matrix kendall_real_pop <- matrix(real_Kendall_data_file);
 		string name <- kendall_real_pop[0,0];
 		kendall_real_pop[0,0] <- copy_between(name, 1, length(name));
-		//write "kendal_real_pop " + kendall_real_pop;
 		
 		loop i from: 0 to: kendall_real_pop.rows - 1{
 			create people number: kendall_real_pop[1,i]{
@@ -1087,9 +1085,6 @@ species people{
 	float calculate_patternWeight(string possibleNeighbourhood){
 		float possible_patternWeight;
 		string extract_list <- pattern_map[type];
-		//write "pattern_map " + pattern_map;
-		//write "extract_list " + extract_list;
-		//write "type " + type;
 		int donde <- 1000;
 		
 		if (possibleNeighbourhood = extract_list){
@@ -1149,6 +1144,9 @@ species people{
 					using topology(graph_per_mobility[mode]){
 						distance <- distance_to(nearestTstopHome.location, nearestTstopWork.location); //nearly straight lines
 					}
+					if (distance > 100000){ //error with the map
+						distance <- distance_to(nearestTstopHome.location, nearestTstopWork.location) * 1.25;
+					}
 				}			
 				if(mode = 'bus'){
 					busStop nearestBusStopHome <- busStop closest_to living_place;
@@ -1156,10 +1154,16 @@ species people{
 					using topology(graph_per_mobility[mode]){						
 						distance <- distance_to(nearestBusStopHome.location, nearestBusStopWork.location); //far from straight lines
 					}
+					if (distance > 100000){ //error with the map
+						distance <- distance_to(nearestBusStopHome.location, nearestBusStopWork.location) * 1.25;
+					}
 				}
 				if(mode != 'T' and mode!= 'bus'){
 					using topology(graph_per_mobility[mode]){
 						distance <- distance_to(origin_location,destination.location);
+					}
+					if (distance > 100000){ //error with the map
+						distance <- distance_to(origin_location, destination.location) * 1.25;
 					}
 				}
 		
