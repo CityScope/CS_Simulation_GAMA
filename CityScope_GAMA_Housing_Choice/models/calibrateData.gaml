@@ -62,7 +62,7 @@ global{
 	float price_main_trip_100000_124999 <- -0.6;
 	float price_main_trip_125000_149999 <- -0.4;
 	float price_main_trip_150000_199999 <- -0.3;
-	float price_main_trip_200000 <- 0;
+	float price_main_trip_200000 <- 0.0;
 	
 	list<float> price_main_trip_list <- [price_main_trip_30000, price_main_trip_30000_44999, price_main_trip_45000_59999, price_main_trip_60000_99999, price_main_trip_100000_124999, price_main_trip_125000_149999, price_main_trip_150000_199999, price_main_trip_200000];
 	
@@ -73,12 +73,12 @@ global{
 	float time_main_trip_100000_124999 <- -0.9;
 	float time_main_trip_125000_149999 <- -0.95;
 	float time_main_trip_150000_199999 <- -0.95;
-	float time_main_trip_200000 <- -1;
+	float time_main_trip_200000 <- -1.0;
 	
 	list<float> time_main_trip_list <- [time_main_trip_30000, time_main_trip_30000_44999, time_main_trip_45000_59999, time_main_trip_60000_99999, time_main_trip_100000_124999, time_main_trip_125000_149999, time_main_trip_150000_199999, time_main_trip_200000];
 	
-	float pattern_main_trip_30000 <- 1;
-	float pattern_main_trip_30000_44999 <- 1;
+	float pattern_main_trip_30000 <- 1.0;
+	float pattern_main_trip_30000_44999 <- 1.0;
 	float pattern_main_trip_45000_59999 <- 0.95;
 	float pattern_main_trip_60000_99999 <- 0.8;
 	float pattern_main_trip_100000_124999 <- 0.7;
@@ -95,7 +95,7 @@ global{
 	float difficulty_main_trip_100000_124999 <- -0.8;
 	float difficulty_main_trip_125000_149999 <- -0.85;
 	float difficulty_main_trip_150000_199999 <- -0.9;
-	float difficulty_main_trip_200000 <- -1;
+	float difficulty_main_trip_200000 <- -1.0;
 	
 	list<float> difficulty_main_trip_list <- [difficulty_main_trip_30000, difficulty_main_trip_30000_44999, difficulty_main_trip_45000_59999, difficulty_main_trip_60000_99999, difficulty_main_trip_100000_124999, difficulty_main_trip_125000_149999, difficulty_main_trip_150000_199999, difficulty_main_trip_200000];
 	
@@ -380,11 +380,11 @@ global{
 		list<string> kendallBlockListString;
 		
 		loop i from: 0 to: kendall_blocks.columns - 1{
-			string name <- kendall_blocks[i,0];
+			string name_block <- kendall_blocks[i,0];
 			if(i = 0){
-				name <- copy_between(name, 1, length(name));
+				name_block <- copy_between(name_block, 1, length(name_block));
 			}
-			kendallBlockListString << name;
+			kendallBlockListString << name_block;
 			ask blockGroup{
 				if(GEOID = kendallBlockListString[i]){
 					inKendall <- true;
@@ -408,7 +408,7 @@ global{
 				if (associatedBlockGroup.GEOID = '250173661003'){
 					vacantSpaces <- #infinity;
 					outskirts <- true;
-					rentNormVacancy <- 1;
+					rentNormVacancy <- 1.0;
 					neighbourhood <-  "outskirts";
 					associatedBlockGroup.city <- "outskirts";
 					associatedBlockGroup.neighbourhood <- "outskirts";
@@ -426,7 +426,7 @@ global{
 			}
 			if(empty(apartmentsInMe) = false){
 				loop i from:0 to: length(apartmentsInMe) - 1{
-					apartmentsInMe[i].associatedBuilding <- self.buildingsInMe;
+					apartmentsInMe[i].associatedBuilding <- self.buildingsInMe[0];
 				}
 			}
 		}
@@ -527,7 +527,7 @@ global{
 	
 	action createTlines{
 		create Tline from: T_lines_shapefile with: [line:: string(read("colorLine"))]{
-			color <- line;	
+			color <- rgb(line);	
 		}
 	}
 	
@@ -537,7 +537,7 @@ global{
 			loop cat over: line split_with "/"{
 				color_list << cat; 
 			}
-			color <- first(color_list);
+			color <- first(rgb(color_list));
 		}
 		
 	}
@@ -739,8 +739,8 @@ global{
 	action createPopulation{
 		
 		matrix kendall_real_pop <- matrix(real_Kendall_data_file);
-		string name <- kendall_real_pop[0,0];
-		kendall_real_pop[0,0] <- copy_between(name, 1, length(name));
+		string name_pop <- kendall_real_pop[0,0];
+		kendall_real_pop[0,0] <- copy_between(name_pop, 1, length(name_pop));
 		
 		loop i from: 0 to: kendall_real_pop.rows - 1{
 			create people number: kendall_real_pop[1,i]{
@@ -1376,59 +1376,59 @@ experiment gui_lets_see type: gui{
 }
 
 experiment exploration type: batch repeat: 2 keep_seed: true until: (movingPeople < 0.1*nb_people ) or ( cycle > 29 ) {
-	parameter "Price Importance main trip <$30000 " var: price_main_trip_30000 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance main trip $300000 - $44999 " var: price_main_trip_30000_44999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance main trip $45000 - $59999 " var: price_main_trip_45000_59999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance main trip $60000 - $99999 " var: price_main_trip_60000_99999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance main trip $100000- $124999 " var: price_main_trip_100000_124999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance main trip $125000 - $149999 " var: price_main_trip_125000_149999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance main trip $150000 - $199999 " var: price_main_trip_150000_199999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance main trip >$200000 " var: price_main_trip_200000 min: -1 max: 0 step: 0.1;
+	parameter "Price Importance main trip <$30000 " var: price_main_trip_30000 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance main trip $300000 - $44999 " var: price_main_trip_30000_44999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance main trip $45000 - $59999 " var: price_main_trip_45000_59999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance main trip $60000 - $99999 " var: price_main_trip_60000_99999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance main trip $100000- $124999 " var: price_main_trip_100000_124999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance main trip $125000 - $149999 " var: price_main_trip_125000_149999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance main trip $150000 - $199999 " var: price_main_trip_150000_199999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance main trip >$200000 " var: price_main_trip_200000 min: -1.0 max: 0.0 step: 0.1;
 	
-	parameter "Time Importance main trip <$30000 " var: time_main_trip_30000 min: -1 max: 0 step: 0.1;
-	parameter "Time Importance main trip $300000 - $44999 " var: time_main_trip_30000_44999 min: -1 max: 0 step: 0.1;
-	parameter "Time Importance main trip $45000 - $59999 " var: time_main_trip_45000_59999 min: -1 max: 0 step: 0.1;
-	parameter "Time Importance main trip $60000 - $99999 " var: time_main_trip_60000_99999 min: -1 max: 0 step: 0.1;
-	parameter "Time Importance main trip $100000- $124999 " var: time_main_trip_100000_124999 min: -1 max: 0 step: 0.1;
-	parameter "Time Importance main trip $125000 - $149999 " var: time_main_trip_125000_149999 min: -1 max: 0 step: 0.1;
-	parameter "Time Importance main trip $150000 - $199999 " var: time_main_trip_150000_199999 min: -1 max: 0 step: 0.1;
-	parameter "Time Importance main trip >$200000 " var: time_main_trip_200000 min: -1 max: 0 step: 0.1;
+	parameter "Time Importance main trip <$30000 " var: time_main_trip_30000 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Time Importance main trip $300000 - $44999 " var: time_main_trip_30000_44999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Time Importance main trip $45000 - $59999 " var: time_main_trip_45000_59999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Time Importance main trip $60000 - $99999 " var: time_main_trip_60000_99999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Time Importance main trip $100000- $124999 " var: time_main_trip_100000_124999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Time Importance main trip $125000 - $149999 " var: time_main_trip_125000_149999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Time Importance main trip $150000 - $199999 " var: time_main_trip_150000_199999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Time Importance main trip >$200000 " var: time_main_trip_200000 min: -1.0 max: 0.0 step: 0.1;
 	
-	parameter "Pattern Importance main trip <$30000 " var: pattern_main_trip_30000 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Importance main trip $300000 - $44999 " var: pattern_main_trip_30000_44999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Importance main trip $45000 - $59999 " var: pattern_main_trip_45000_59999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Importance main trip $60000 - $99999 " var: pattern_main_trip_60000_99999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Importance main trip $100000- $124999 " var: pattern_main_trip_100000_124999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Importance main trip $125000 - $149999 " var: pattern_main_trip_125000_149999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Importance main trip $150000 - $199999 " var: pattern_main_trip_150000_199999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Importance main trip >$200000 " var: pattern_main_trip_200000 min: 0 max: 1 step: 0.1;
+	parameter "Pattern Importance main trip <$30000 " var: pattern_main_trip_30000 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Importance main trip $300000 - $44999 " var: pattern_main_trip_30000_44999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Importance main trip $45000 - $59999 " var: pattern_main_trip_45000_59999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Importance main trip $60000 - $99999 " var: pattern_main_trip_60000_99999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Importance main trip $100000- $124999 " var: pattern_main_trip_100000_124999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Importance main trip $125000 - $149999 " var: pattern_main_trip_125000_149999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Importance main trip $150000 - $199999 " var: pattern_main_trip_150000_199999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Importance main trip >$200000 " var: pattern_main_trip_200000 min: 0.0 max: 1.0 step: 0.1;
 	
-	parameter "Difficulty Importance main trip <$30000 " var: difficulty_main_trip_30000 min: -1 max: 0 step: 0.1;
-	parameter "Difficulty Importance main trip $300000 - $44999 " var: difficulty_main_trip_30000_44999 min: -1 max: 0 step: 0.1;
-	parameter "Difficulty Importance main trip $45000 - $59999 " var: difficulty_main_trip_45000_59999 min: -1 max: 0 step: 0.1;
-	parameter "Difficulty Importance main trip $60000 - $99999 " var: difficulty_main_trip_60000_99999 min: -1 max: 0 step: 0.1;
-	parameter "Difficulty Importance main trip $100000- $124999 " var: difficulty_main_trip_100000_124999 min: -1 max: 0 step: 0.1;
-	parameter "Difficulty Importance main trip $125000 - $149999 " var: difficulty_main_trip_125000_149999 min: -1 max: 0 step: 0.1;
-	parameter "Difficulty Importance main trip $150000 - $199999 " var: difficulty_main_trip_150000_199999 min: -1 max: 0 step: 0.1;
-	parameter "Difficulty Importance main trip >$200000 " var: difficulty_main_trip_200000 min: -1 max: 0 step: 0.1;
+	parameter "Difficulty Importance main trip <$30000 " var: difficulty_main_trip_30000 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Difficulty Importance main trip $300000 - $44999 " var: difficulty_main_trip_30000_44999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Difficulty Importance main trip $45000 - $59999 " var: difficulty_main_trip_45000_59999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Difficulty Importance main trip $60000 - $99999 " var: difficulty_main_trip_60000_99999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Difficulty Importance main trip $100000- $124999 " var: difficulty_main_trip_100000_124999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Difficulty Importance main trip $125000 - $149999 " var: difficulty_main_trip_125000_149999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Difficulty Importance main trip $150000 - $199999 " var: difficulty_main_trip_150000_199999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Difficulty Importance main trip >$200000 " var: difficulty_main_trip_200000 min: -1.0 max: 0.0 step: 0.1;
 	
-	parameter "Price Importance home <$30000 " var: price_home_30000 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance home $300000 - $44999 " var: price_home_30000_44999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance home $45000 - $59999 " var: price_home_45000_59999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance home $60000 - $99999 " var: price_home_60000_99999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance home $100000- $124999 " var: price_home_100000_124999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance home $125000 - $149999 " var: price_home_125000_149999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance home $150000 - $199999 " var: price_home_150000_199999 min: -1 max: 0 step: 0.1;
-	parameter "Price Importance home >$200000 " var: price_home_200000 min: -1 max: 0 step: 0.1;
+	parameter "Price Importance home <$30000 " var: price_home_30000 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance home $300000 - $44999 " var: price_home_30000_44999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance home $45000 - $59999 " var: price_home_45000_59999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance home $60000 - $99999 " var: price_home_60000_99999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance home $100000- $124999 " var: price_home_100000_124999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance home $125000 - $149999 " var: price_home_125000_149999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance home $150000 - $199999 " var: price_home_150000_199999 min: -1.0 max: 0.0 step: 0.1;
+	parameter "Price Importance home >$200000 " var: price_home_200000 min: -1.0 max: 0.0 step: 0.1;
 	
-	parameter "Diversity Acceptance home <$30000 " var: diver_home_30000 min: -1 max: 1 step: 0.2;
-	parameter "Diversity Acceptance home $300000 - $44999 " var: diver_home_30000_44999 min: -1 max: 1 step: 0.2;
-	parameter "Diversity Acceptance home $45000 - $59999 " var: diver_home_45000_59999 min: -1 max: 1 step: 0.2;
-	parameter "Diversity Acceptance home $60000 - $99999 " var: diver_home_60000_99999 min: -1 max: 1 step: 0.2;
-	parameter "Diversity Acceptance home $100000- $124999 " var: diver_home_100000_124999 min: -1 max: 1 step: 0.2;
-	parameter "Diversity Acceptance home $125000 - $149999 " var: diver_home_125000_149999 min: -1 max: 1 step: 0.2;
-	parameter "Diversity Acceptance home $150000 - $199999 " var: diver_home_150000_199999 min: -1 max: 1 step: 0.2;
-	parameter "Diversity Acceptance home >$200000 " var: diver_home_200000 min: -1 max: 1 step: 0.2;
+	parameter "Diversity Acceptance home <$30000 " var: diver_home_30000 min: -1.0 max: 1.0 step: 0.2;
+	parameter "Diversity Acceptance home $300000 - $44999 " var: diver_home_30000_44999 min: -1.0 max: 1.0 step: 0.2;
+	parameter "Diversity Acceptance home $45000 - $59999 " var: diver_home_45000_59999 min: -1.0 max: 1.0 step: 0.2;
+	parameter "Diversity Acceptance home $60000 - $99999 " var: diver_home_60000_99999 min: -1.0 max: 1.0 step: 0.2;
+	parameter "Diversity Acceptance home $100000- $124999 " var: diver_home_100000_124999 min: -1.0 max: 1.0 step: 0.2;
+	parameter "Diversity Acceptance home $125000 - $149999 " var: diver_home_125000_149999 min: -1.0 max: 1.0 step: 0.2;
+	parameter "Diversity Acceptance home $150000 - $199999 " var: diver_home_150000_199999 min: -1.0 max: 1.0 step: 0.2;
+	parameter "Diversity Acceptance home >$200000 " var: diver_home_200000 min: -1.0 max: 1.0 step: 0.2;
 	
 	parameter "Preferred zone home <$30000 " var: zone_home_30000 min: 0 max: 150 step: 1;
 	parameter "Preferred zone home $300000 - $44999 " var: zone_home_30000_44999 min: 0 max: 150 step: 1;
@@ -1439,14 +1439,14 @@ experiment exploration type: batch repeat: 2 keep_seed: true until: (movingPeopl
 	parameter "Preferred zone home $150000 - $199999 " var: zone_home_150000_199999 min: 0 max: 150 step: 1;
 	parameter "Preferred zone home >$200000 " var: zone_home_200000 min: 0 max: 0 step: 1;
 	
-	parameter "Pattern Weight home <$30000 " var: pattern_home_30000 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Weight home $300000 - $44999 " var: pattern_home_30000_44999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Weight home $45000 - $59999 " var: pattern_home_45000_59999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Weight home $60000 - $99999 " var: pattern_home_60000_99999 min:0 max: 1 step: 0.1;
-	parameter "Pattern Weight home $100000- $124999 " var: pattern_home_100000_124999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Weight home $125000 - $149999 " var: pattern_home_125000_149999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Weight home $150000 - $199999 " var: pattern_home_150000_199999 min: 0 max: 1 step: 0.1;
-	parameter "Pattern Weight home >$200000 " var: pattern_home_200000 min: 0 max: 1 step: 0.1;
+	parameter "Pattern Weight home <$30000 " var: pattern_home_30000 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Weight home $300000 - $44999 " var: pattern_home_30000_44999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Weight home $45000 - $59999 " var: pattern_home_45000_59999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Weight home $60000 - $99999 " var: pattern_home_60000_99999 min:0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Weight home $100000- $124999 " var: pattern_home_100000_124999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Weight home $125000 - $149999 " var: pattern_home_125000_149999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Weight home $150000 - $199999 " var: pattern_home_150000_199999 min: 0.0 max: 1.0 step: 0.1;
+	parameter "Pattern Weight home >$200000 " var: pattern_home_200000 min: 0.0 max: 1.0 step: 0.1;
 	
     
     method exhaustive minimize: sqrt(housingErrorTotal + mobilityError);

@@ -324,22 +324,22 @@ global{
 	
 	action identifyKendallBlocks{
 		matrix kendall_blocks <- matrix(kendallBlocks_file);
-		write "matrix kendall blocks " + kendall_blocks;
+		//write "matrix kendall blocks " + kendall_blocks;
 		list<string> kendallBlockListString;
 		
 		loop i from: 0 to: kendall_blocks.columns - 1{
 			//string name <- kendall_blocks[0,i];
-			string name <- kendall_blocks[i,0];
-			write "name blockGroup kendall " + name;
+			string name_block <- kendall_blocks[i,0];
+			//write "name blockGroup kendall " + name_block;
 			if (i = 0){
-				name <- copy_between(name, 1, length(name));
+				name_block <- copy_between(name_block, 1, length(name_block));
 			}
-			kendallBlockListString << name;
+			kendallBlockListString << name_block;
 			ask blockGroup{
 				if(GEOID = kendallBlockListString[i]){
 					inKendall <- true;
 					kendallBlockList << self;
-					write "im kendall block " + self;
+					//write "im kendall block " + self;
 				}
 			}
 		}
@@ -359,7 +359,7 @@ global{
 				if (associatedBlockGroup.GEOID = '250173661003'){
 					vacantSpaces <- #infinity;
 					outskirts <- true;
-					rentNormVacancy <- 1;
+					rentNormVacancy <- 1.0;
 					neighbourhood <-  "outskirts";
 					associatedBlockGroup.city <- "outskirts";
 					associatedBlockGroup.neighbourhood <- "outskirts";
@@ -377,7 +377,7 @@ global{
 			}
 			if(empty(apartmentsInMe) = false){
 				loop i from:0 to: length(apartmentsInMe) - 1{
-					apartmentsInMe[i].associatedBuilding <- self.buildingsInMe;
+					apartmentsInMe[i].associatedBuilding <- self.buildingsInMe[0];
 				}
 			}
 		}
@@ -490,7 +490,7 @@ global{
 	
 	action createTlines{
 		create Tline from: T_lines_shapefile with: [line:: string(read("colorLine"))]{
-			color <- line;	
+			color <- rgb(line);	
 		}
 	}
 	
@@ -500,7 +500,7 @@ global{
 			loop cat over: line split_with "/"{
 				color_list << cat; 
 			}
-			color <- first(color_list);
+			color <- first(rgb(color_list));
 		}
 		
 	}
@@ -929,11 +929,11 @@ global{
 			}
 			
 			map<string,list<float>> mobilityAndTime<- evaluate_main_trip(location,activity_place, possibilityToTakeT, possibilityToTakeBus);
-			list<float> extract_list <- mobilityAndTime[mobilityAndTime.keys[0]];
-			time_main_activity <- extract_list[0];
-			time_main_activity_min <- extract_list[3];
-			CommutingCost <- extract_list[1];
-			distance_main_activity <- extract_list[2];
+			list<float> extract_list_here <- mobilityAndTime[mobilityAndTime.keys[0]];
+			time_main_activity <- extract_list_here[0];
+			time_main_activity_min <- extract_list_here[3];
+			CommutingCost <- extract_list_here[1];
+			distance_main_activity <- extract_list_here[2];
 			mobility_mode_main_activity <- mobilityAndTime.keys[0];
 			
 			
@@ -996,7 +996,7 @@ global{
 	}
 	
 	action countHappyPeople{
-		happyNeighbourhoodPeople <- 0;
+		happyNeighbourhoodPeople <- 0.0;
 		happyNeighbourhood_perProfile <- [];
 		ask people{
 			if (happyNeighbourhood = 1){
@@ -1035,8 +1035,8 @@ global{
 				add propPeople_per_mobility_indiv at: allPossibleMobilityModes[i] to: propPeople_per_mobility_type;				
 			}
 		}
-		meanTimeToMainActivity <- 0;
-		meanDistanceToMainActivity <- 0;
+		meanTimeToMainActivity <- 0.0;
+		meanDistanceToMainActivity <- 0.0;
 		ask people{
 			meanTimeToMainActivity <- meanTimeToMainActivity + time_main_activity_min*agent_per_point;
 			meanDistanceToMainActivity <- meanDistanceToMainActivity + distance_main_activity*agent_per_point;
@@ -1059,7 +1059,7 @@ global{
 	}
 	
 	action updateCommutingCosts{
-		meanCommutingCostGlobal <- 0;
+		meanCommutingCostGlobal <- 0.0;
 		ask people{
 			meanCommutingCostGlobal <- meanCommutingCostGlobal + CommutingCost*agent_per_point;
 		}
