@@ -17,7 +17,7 @@ global{
 	file<geometry> T_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_NODE_MAss_color.shp");
 	file<geometry> bus_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_BUS_MAss.shp");
 	file<geometry> road_shapefile <- file<geometry>("./../includesCalibration/City/volpe/simplified_roads.shp");
-	file kendallBlocks_file <- file("./../includesCalibration/City/volpe/Kendall_blockGroups.csv");
+	file kendallBlocks_file <- file("./../includesCalibration/City/volpe/KendallBlockGroupstxt.txt");
 	file criteria_home_file <- file("./../includesCalibration/Criteria/CriteriaHome.csv");
 	file activity_file <- file("./../includesCalibration/Criteria/ActivityPerProfile.csv");
 	file mode_file <- file("./../includesCalibration/Criteria/Modes.csv");
@@ -379,12 +379,14 @@ global{
 		matrix kendall_blocks <- matrix(kendallBlocks_file);
 		list<string> kendallBlockListString;
 		
-		loop i from: 1 to: kendall_blocks.rows - 1{
-			string name <- kendall_blocks[0,i];
-			name <- copy_between(name, 1, length(name));
+		loop i from: 0 to: kendall_blocks.columns - 1{
+			string name <- kendall_blocks[i,0];
+			if(i = 0){
+				name <- copy_between(name, 1, length(name));
+			}
 			kendallBlockListString << name;
 			ask blockGroup{
-				if(GEOID = kendallBlockListString[i - 1]){
+				if(GEOID = kendallBlockListString[i]){
 					inKendall <- true;
 					kendallBlockList << self;
 				}

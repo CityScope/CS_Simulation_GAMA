@@ -17,7 +17,7 @@ global{
 	file<geometry> T_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_NODE_MAss_color.shp");
 	file<geometry> bus_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_BUS_MAss.shp");
 	file<geometry> road_shapefile <- file<geometry>("./../includesCalibration/City/volpe/simplified_roads.shp");
-	file kendallBlocks_file <- file("./../includesCalibration/City/volpe/Kendall_blockGroups.csv");
+	file kendallBlocks_file <- file("./../includesCalibration/City/volpe/KendallBlockGroupstxt.txt");
 	file criteria_home_file <- file("./../includesCalibration/Criteria/CriteriaHome.csv");
 	file activity_file <- file("./../includesCalibration/Criteria/ActivityPerProfile.csv");
 	file mode_file <- file("./../includesCalibration/Criteria/Modes.csv");
@@ -25,6 +25,7 @@ global{
 	file weather_coeff <- file("../includesCalibration/Criteria/weather_coeff_per_month.csv");
 	file criteria_file <- file("../includesCalibration/Criteria/CriteriaFile.csv");
 	file population_file <- file("../includesCalibration/City/censusDataGreaterBoston/censusDataClustered.csv");
+	string createdCity <- "../includesCalibration/City/volpe/city_191.json"; //provisional
 	geometry shape<-envelope(T_lines_shapefile);
 	
 	int nb_people <- 1000; //for example. Nearly x2 of vacant spaces in Kendall
@@ -44,6 +45,9 @@ global{
 	float meanRentPeople;
 	float meanDiver <- 0.0;
 	float meanDiverNorm <- 0.0;
+	float angle <- atan((899.235 - 862.12)/(1083.42 - 1062.038));
+	point startingPoint <- {1030.86, 1157.84};
+	float brickSize <- 21.3;
 	
 	map<string,int> density_map<-["S"::15,"M"::55, "L"::89];
 	list<blockGroup> kendallBlockList;
@@ -94,6 +98,8 @@ global{
 	map<string,float> meanDistanceToMainActivity_perProfile;
 	float meanCommutingCostGlobal;
 	map<string,float> meanCommutingCost_perProfile;
+	map<string, unknown> cityMatrixData;
+	list<map<string, unknown>> cityMatrixCell;
 	
 	
 	
@@ -110,6 +116,10 @@ global{
 		write "apartments created";
 		do read_criteriaHome;
 		write "criteriaHome read";
+		do initGrid;
+		write "grid initialised";
+		do createGridBuildings;
+		write "grid buildings created";
 		do calculateAverageFeatureBlockGroups;
 		write "average Features per block group calculated";
 		do identifyKendallBlocks;
@@ -258,6 +268,7 @@ global{
 		gen_apartment_list >>- [nil];
 		if(gen_apartment_list != []){		
 			float accummulated_rent <- 0.0;		
+			int numberApartmentsFromGrid <- 0;
 			loop i from: 0 to: length(gen_apartment_list) - 1{
 				int availableBedrooms <- gen_apartment_list[i].numberBedrooms;
 				int availableSpaces;
@@ -271,8 +282,21 @@ global{
 				accummulated_rent <- accummulated_rent + pricePerVacancy;
 				vacantSpaces_gen <- vacantSpaces_gen + availableSpaces;
 				vacantBedrooms_gen <- vacantBedrooms_gen + availableBedrooms;
+				if (gen_apartment_list[i].associatedBuilding != nil and empty(gen_apartment_list[i].associatedBuilding) != true){ //apartments that are not created from grid have no associatedBuilding yet
+					if (gen_apartment_list[i].associatedBuilding.fromGrid = true){
+						numberApartmentsFromGrid <- numberApartmentsFromGrid + 1;
+					}
+				}
 			}
-			rentAbsVacancy_gen <- accummulated_rent / length(gen_apartment_list);
+			if ((length(gen_apartment_list) - numberApartmentsFromGrid) != 0){
+				rentAbsVacancy_gen <- accummulated_rent / (length(gen_apartment_list) - numberApartmentsFromGrid); //these ones do not have a price yet
+			}
+			else{
+				blockGroup closestBlockGroup;
+				closestBlockGroup <- blockGroup where(each.rentAbsVacancy != 0) closest_to (gen_apartment_list[0].associatedBlockGroup);
+				rentAbsVacancy_gen <- closestBlockGroup.rentAbsVacancy;
+			}
+			 
 		}
 		else{
 			vacantBedrooms_gen <- 0;
@@ -300,16 +324,22 @@ global{
 	
 	action identifyKendallBlocks{
 		matrix kendall_blocks <- matrix(kendallBlocks_file);
+		write "matrix kendall blocks " + kendall_blocks;
 		list<string> kendallBlockListString;
 		
-		loop i from: 1 to: kendall_blocks.rows - 1{
-			string name <- kendall_blocks[0,i];
-			name <- copy_between(name, 1, length(name));
+		loop i from: 0 to: kendall_blocks.columns - 1{
+			//string name <- kendall_blocks[0,i];
+			string name <- kendall_blocks[i,0];
+			write "name blockGroup kendall " + name;
+			if (i = 0){
+				name <- copy_between(name, 1, length(name));
+			}
 			kendallBlockListString << name;
 			ask blockGroup{
-				if(GEOID = kendallBlockListString[i - 1]){
+				if(GEOID = kendallBlockListString[i]){
 					inKendall <- true;
 					kendallBlockList << self;
+					write "im kendall block " + self;
 				}
 			}
 		}
@@ -401,10 +431,12 @@ global{
 				kendallApartmentList[0].associatedBuilding <- one_of(building where(each.satellite = false and each.associatedBlockGroup = kendallApartmentList[0].associatedBlockGroup));
 				if((kendallApartmentList[0].associatedBuilding) is building != true){
 					kendallApartmentList[0].associatedBuilding <- building where(each.satellite = false) closest_to (self);
-					kendallApartmentList[0].associatedBlockGroup.apartmentsInMe >- kendallApartmentList[0];
-					kendallApartmentList[0].associatedBlockGroup  <- kendallApartmentList[0].associatedBuilding.associatedBlockGroup;
-					kendallApartmentList[0].associatedBlockGroup.apartmentsInMe << kendallApartmentList[0];
-					kendallApartmentList[0].associatedBuilding.apartmentsInMe << kendallApartmentList[0];
+					if(kendallApartmentList[0].associatedBlockGroup != nil and empty(kendallApartmentList[0].associatedBlockGroup) != true){
+						kendallApartmentList[0].associatedBlockGroup.apartmentsInMe >- kendallApartmentList[0];
+						kendallApartmentList[0].associatedBlockGroup  <- kendallApartmentList[0].associatedBuilding.associatedBlockGroup;
+						kendallApartmentList[0].associatedBlockGroup.apartmentsInMe << kendallApartmentList[0];
+						kendallApartmentList[0].associatedBuilding.apartmentsInMe << kendallApartmentList[0];
+					}
 				}
 				
 				if(empty(kendallApartmentList[0].associatedBuilding) = false and empty(kendallApartmentList) = false){				
@@ -431,6 +463,16 @@ global{
 			}
 		}	
 		
+		
+		ask rentApartment{
+			if(associatedBuilding != nil and empty(associatedBuilding) = false){
+				if (associatedBuilding.fromGrid = true){
+					rentAbs <- associatedBlockGroup.rentAbsVacancy;
+					associatedBuilding.rentNormVacancy <- associatedBlockGroup.rentNormVacancy;
+				}
+			}
+		}
+		
 		ask building where(each.satellite = false){
 			if (associatedBlockGroup = nil){
 				do die;
@@ -438,8 +480,8 @@ global{
 		}
 		
 		ask rentApartment {
-			if(associatedBlockGroup != nil){
-				ask rentApartment where(each.associatedBlockGroup.inKendall = false and (each.associatedBuilding) = nil){
+			if(associatedBlockGroup != nil and empty(associatedBlockGroup) != true){
+				if(associatedBlockGroup.inKendall = false and (associatedBuilding) = nil){
 					associatedBuilding <- associatedBlockGroup.buildingsInMe[0];
 				}
 			}
@@ -492,6 +534,75 @@ global{
 			add name_list at: type_people[i] to: pattern_list;
 			patternWeight_list << (type_people[i]::criteriaHome_matrix[6,i]);		
 			 
+		}
+	}
+	
+	action initGrid{
+		try {
+			cityMatrixData <- json_file(createdCity).contents;
+		}
+	}
+	
+	action createGridBuildings{		
+		cityMatrixCell <- cityMatrixData["grid"];
+		int i <- 0;
+		angle <- angle / 2;
+		//write startingPoint;
+		startingPoint <- {startingPoint.x - brickSize / 2, startingPoint.y - brickSize / 2};
+		//write startingPoint;
+		
+		loop l over: cityMatrixCell{
+			building imTheBuilding;
+			blockGroup imTheAssociatedBlockGroup;
+			
+			create building{
+				fromGrid <- true;
+				ID <- i;
+				int x <- l["x"];
+				int y <- l["y"];
+				point location_local_axes <- {x * brickSize + 15, y * brickSize};
+				location <- {startingPoint.x + location_local_axes.x*sin(angle) - location_local_axes.y*cos(angle), startingPoint.y - location_local_axes.y*sin(angle) - location_local_axes.x*cos(angle)};
+				shape <- square(brickSize * 0.9) at_location location;
+				usage <- l["type"];
+				scale <- l["size"];
+				category <-  l["category"];
+				area <- shape.area;
+				perimeter <- shape.perimeter;
+				nbFloors <- l["nbFloors"];
+				neighbourhood <- "East Cambridge";
+				type <- "BLDG";
+				FAR <- 4.0;
+				max_height <- 120.0;
+				satellite <- false;
+				if (density_map[scale]!=0 and usage="R"){
+					supported_people <- int(area/density_map[scale])*nbFloors;	 //change from density_map to area per micro-unit
+				}
+				else{
+					supported_people<-0;
+				}
+				vacantSpaces <- supported_people;
+				
+				imTheBuilding <- self;
+				ask blockGroup{
+					if(self overlaps imTheBuilding = true){
+						imTheAssociatedBlockGroup <- self;
+					}
+				}
+				
+				associatedBlockGroup <- imTheAssociatedBlockGroup;
+				associatedBlockGroup.buildingsInMe << self;
+				if (usage = "R"){
+					create rentApartment number: 1{ //we are considering the whole building an apartment so that we dont change the way the average features are calculated in a block group
+						GEOIDAp <- imTheAssociatedBlockGroup.GEOID;
+						associatedBlockGroup <- imTheAssociatedBlockGroup;
+						associatedBuilding <- imTheBuilding;
+						associatedBlockGroup.apartmentsInMe << self; 
+						associatedBuilding.apartmentsInMe << self;
+						numberBedrooms <- associatedBuilding.vacantSpaces;					
+					}
+				}				
+				i <- i + 1;
+			}
 		}
 	}
 	
@@ -803,6 +914,9 @@ global{
 				activity_place<-one_of(building where (each.category = principal_activity and each.satellite = false));
 			}
 			
+			//write "principal_activity " + principal_activity;
+			//write "activity_place " + activity_place;
+			
 			do calculate_possibleMobModes;
 			
 			bool possibilityToTakeT <- false;
@@ -1106,6 +1220,7 @@ species building{
 	string GEOIDBuild;
 	bool satellite <- false;
 	bool outskirts <- false;
+	bool fromGrid <- false;
 	
 	aspect default{
 		draw shape color: rgb(50,50,50);
