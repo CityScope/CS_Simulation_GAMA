@@ -46,8 +46,9 @@ global{
 	float meanDiver <- 0.0;
 	float meanDiverNorm <- 0.0;
 	float angle <- atan((899.235 - 862.12)/(1083.42 - 1062.038));
-	point startingPoint <- {1030.86, 1157.84};
+	point startingPoint <- {13844.4839, 8313.163};
 	float brickSize <- 21.3;
+	bool boolGrid;
 	
 	map<string,int> density_map<-["S"::15,"M"::55, "L"::89];
 	list<blockGroup> kendallBlockList;
@@ -116,10 +117,12 @@ global{
 		write "apartments created";
 		do read_criteriaHome;
 		write "criteriaHome read";
-		do initGrid;
-		write "grid initialised";
-		do createGridBuildings;
-		write "grid buildings created";
+		if(boolGrid = true){
+			do initGrid;
+			write "grid initialised";
+			do createGridBuildings;
+			write "grid buildings created";
+		}		
 		do calculateAverageFeatureBlockGroups;
 		write "average Features per block group calculated";
 		do identifyKendallBlocks;
@@ -205,7 +208,12 @@ global{
 			if(empty(associatedBlockGroup) = true){
 				write "estoy vacio" + self;
 			}
-			associatedBlockGroup.apartmentsInMe << self;
+			if (associatedBlockGroup.city = 'DUXBURY'){
+				do die; //outliers. Normalisation affected
+			}
+			else{
+				associatedBlockGroup.apartmentsInMe << self;
+			}
 		}
 	}
 	
@@ -368,6 +376,7 @@ global{
 					neighbourhood <- associatedBlockGroup.neighbourhood;
 					vacantSpaces <- associatedBlockGroup.vacantSpaces;
 					rentNormVacancy <- associatedBlockGroup.rentNormVacancy;
+					rentAbsVacancy <- associatedBlockGroup.rentAbsVacancy;
 				}
 				
 				satellite <- true;
@@ -569,7 +578,6 @@ global{
 				area <- shape.area;
 				perimeter <- shape.perimeter;
 				nbFloors <- l["nbFloors"];
-				neighbourhood <- "East Cambridge";
 				type <- "BLDG";
 				FAR <- 4.0;
 				max_height <- 120.0;
@@ -590,6 +598,7 @@ global{
 				}
 				
 				associatedBlockGroup <- imTheAssociatedBlockGroup;
+				neighbourhood <- associatedBlockGroup.neighbourhood;
 				associatedBlockGroup.buildingsInMe << self;
 				if (usage = "R"){
 					create rentApartment number: 1{ //we are considering the whole building an apartment so that we dont change the way the average features are calculated in a block group
@@ -598,7 +607,8 @@ global{
 						associatedBuilding <- imTheBuilding;
 						associatedBlockGroup.apartmentsInMe << self; 
 						associatedBuilding.apartmentsInMe << self;
-						numberBedrooms <- associatedBuilding.vacantSpaces;					
+						numberBedrooms <- associatedBuilding.vacantSpaces;	
+						location <- associatedBuilding.location;				
 					}
 				}				
 				i <- i + 1;
@@ -1223,7 +1233,12 @@ species building{
 	bool fromGrid <- false;
 	
 	aspect default{
-		draw shape color: rgb(50,50,50);
+		if(fromGrid = true){
+			draw shape rotated_by angle color: rgb(50,50,50);
+		}
+		else{
+			draw shape color: rgb(50,50,50);	
+		}
 		//draw shape color: #red;
 	}
 	
@@ -1545,6 +1560,7 @@ species people{
 }
 
 experiment show type: gui{
+	parameter "createGrid " var: boolGrid init: false category: "Grid / No Grid difference ";
 	output{
 		display map type: opengl draw_env: false background: #black{
 			species blockGroup aspect: default;
@@ -1745,6 +1761,8 @@ experiment show type: gui{
 	}
 	
 }
+
+//experiment batch 
 
 
 	
