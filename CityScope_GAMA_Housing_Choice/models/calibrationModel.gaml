@@ -154,12 +154,12 @@ global{
 		write "weather calculated";
 		do createPopulation;
 		write "population created";
-		do countPopulation;
+		/***do countPopulation;
 		do countPopMainCity;
 		do countNeighbourhoods; //Kendall + planetary
 		do countRent;
 		do countHappyPeople;
-		do countMobility;
+		do countMobility;***/
 		do updateMeanDiver;
 		init <- 1;
 		do save_info_cycle;
@@ -318,8 +318,11 @@ global{
 		return return_list;
 	}
 	
-	float normalise_rents(float rentAbsVacancy_gen){		
-		float rentNormVacancy_gen <- (rentAbsVacancy_gen - minRent) / (maxRent - minRent);		
+	float normalise_rents(float rentAbsVacancy_gen){
+		float rentNormVacancy_gen;		
+		if(maxRent != minRent ){
+			rentNormVacancy_gen <- (rentAbsVacancy_gen - minRent) / (maxRent - minRent);
+		}		
 		return rentNormVacancy_gen;		
 	}
 		
@@ -1004,7 +1007,13 @@ global{
 			ask people where(each.type = type_people[i]){
 				meanRent_perProfile[type_people[i]] <- meanRent_perProfile[type_people[i]] + payingRentAbs*agent_per_point;
 			}
-			meanRent_perProfile[type_people[i]] <- meanRent_perProfile[type_people[i]] / nPeople_perProfile[type_people[i]];
+			if(nPeople_perProfile[type_people[i]] != 0){
+				meanRent_perProfile[type_people[i]] <- meanRent_perProfile[type_people[i]] / nPeople_perProfile[type_people[i]];
+			}
+			else{
+				meanRent_perProfile[type_people[i]] <- 0.0;
+			}
+			
 		}
 		
 	}
@@ -1025,8 +1034,13 @@ global{
 					happyNeighbourhood_perProfile[type_people[i]] <- happyNeighbourhood_perProfile[type_people[i]] + agent_per_point;
 				}
 			}
+			if(nPeople_perProfile[type_people[i]] != 0){
+				happyNeighbourhood_perProfile[type_people[i]] <- happyNeighbourhood_perProfile[type_people[i]] / nPeople_perProfile[type_people[i]];
+			}
+			else{
+				happyNeighbourhood_perProfile[type_people[i]] <- 0;
+			}
 			
-			happyNeighbourhood_perProfile[type_people[i]] <- happyNeighbourhood_perProfile[type_people[i]] / nPeople_perProfile[type_people[i]];
 		}
 	}
 	
@@ -1044,8 +1058,12 @@ global{
 				int nPeopleEach <- 0;
 				ask people where(each.type = type_people[j] and each.mobility_mode_main_activity = allPossibleMobilityModes[i]){
 					nPeopleEach <- nPeopleEach + agent_per_point;				}
-				
-				propPeople_per_mobility_indiv[type_people[j]] <- nPeopleEach / nPeople_perProfile[type_people[j]];
+				if(nPeople_perProfile[type_people[j]] != 0){
+					propPeople_per_mobility_indiv[type_people[j]] <- nPeopleEach / nPeople_perProfile[type_people[j]];
+				}
+				else{
+					propPeople_per_mobility_indiv[type_people[j]] <- 0.0;
+				}
 				add propPeople_per_mobility_indiv at: allPossibleMobilityModes[i] to: propPeople_per_mobility_type;				
 			}
 		}
@@ -1065,8 +1083,15 @@ global{
 				meanTimeToMainActivity_perProfile[type_people[k]] <- meanTimeToMainActivity_perProfile[type_people[k]] + time_main_activity_min*agent_per_point;
 				meanDistanceToMainActivity_perProfile[type_people[k]] <- meanDistanceToMainActivity_perProfile[type_people[k]] + distance_main_activity*agent_per_point;
 			}
-			meanTimeToMainActivity_perProfile[type_people[k]] <- meanTimeToMainActivity_perProfile[type_people[k]] / nPeople_perProfile[type_people[k]];
-			meanDistanceToMainActivity_perProfile[type_people[k]] <- meanDistanceToMainActivity_perProfile[type_people[k]] / nPeople_perProfile[type_people[k]];
+			if(nPeople_perProfile[type_people[k]] != 0){
+				meanTimeToMainActivity_perProfile[type_people[k]] <- meanTimeToMainActivity_perProfile[type_people[k]] / nPeople_perProfile[type_people[k]];
+				meanDistanceToMainActivity_perProfile[type_people[k]] <- meanDistanceToMainActivity_perProfile[type_people[k]] / nPeople_perProfile[type_people[k]];
+			}
+			else{
+				meanTimeToMainActivity_perProfile[type_people[k]] <- 0.0;
+				meanTimeToMainActivity_perProfile[type_people[k]] <- 0.0;
+			}
+			
 		}
 		
 		do updateCommutingCosts;
@@ -1084,7 +1109,12 @@ global{
 			ask people where(each.type = type_people[i]){
 				meanCommutingCost_perProfile[type_people[i]] <- meanCommutingCost_perProfile[type_people[i]] + CommutingCost*agent_per_point;
 			}
-			meanCommutingCost_perProfile[type_people[i]] <- meanCommutingCost_perProfile[type_people[i]] / nPeople_perProfile[type_people[i]];
+			if(nPeople_perProfile[type_people[i]] != 0){
+				meanCommutingCost_perProfile[type_people[i]] <- meanCommutingCost_perProfile[type_people[i]] / nPeople_perProfile[type_people[i]];
+			}			
+			else{
+				meanCommutingCost_perProfile[type_people[i]] <- 0.0;
+			}
 		}
 	}
 	
@@ -1116,11 +1146,11 @@ global{
 		ask blockGroup{
 			do normaliseDiversity;
 		}
-		do countRent;
+		/***do countRent;
 		do countPopMainCity;
 		do countNeighbourhoods;
 		do countHappyPeople;
-		do countMobility;
+		do countMobility;***/
 		do updateMeanDiver;
 	}
 	

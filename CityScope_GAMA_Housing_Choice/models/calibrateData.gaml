@@ -360,8 +360,11 @@ global{
 		return return_list;
 	}
 	
-	float normalise_rents(float rentAbsVacancy_gen){		
-		float rentNormVacancy_gen <- (rentAbsVacancy_gen - minRent) / (maxRent - minRent);		
+	float normalise_rents(float rentAbsVacancy_gen){	
+		float rentNormVacancy_gen;	
+		if(maxRent != minRent){
+			rentNormVacancy_gen <- (rentAbsVacancy_gen - minRent) / (maxRent - minRent);
+		}		
 		return rentNormVacancy_gen;		
 	}
 		
