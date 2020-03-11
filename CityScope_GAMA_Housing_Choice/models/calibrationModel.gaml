@@ -28,8 +28,8 @@ global{
 	string createdCity <- "../includesCalibration/City/volpe/city_191.json"; //provisional
 	geometry shape<-envelope(T_lines_shapefile);
 	
-	int nb_people <- 1000; //for example. Nearly x2 of vacant spaces in Kendall
-	int nb_agents <- 1000; //make sure [nb_agent*max(possible_agents_per_point_list) > nb_people]
+	int nb_people <- 11585; //for example. Nearly x2 of vacant spaces in Kendall
+	int nb_agents <- 11585; //make sure [nb_agent*max(possible_agents_per_point_list) > nb_people]
 	float maxRent;
 	float minRent;
 	float maxDiversity;
@@ -49,6 +49,7 @@ global{
 	point startingPoint <- {13844.4839, 8313.163};
 	float brickSize <- 21.3;
 	bool boolGrid;
+	int init;
 	
 	map<string,int> density_map<-["S"::15,"M"::55, "L"::89];
 	list<blockGroup> kendallBlockList;
@@ -160,6 +161,8 @@ global{
 		do countHappyPeople;
 		do countMobility;
 		do updateMeanDiver;
+		init <- 1;
+		do save_info_cycle;
 	}
 	
 	action createBlockGroups{
@@ -868,6 +871,7 @@ global{
 			if (living_place != nil){
 				actualCity <- living_place.associatedBlockGroup.city;
 				payingRent <- living_place.rentNormVacancy;
+				payingRentAbs <- living_place.rentAbsVacancy;
 				actualNeighbourhood <- living_place.neighbourhood;
 									
 			}
@@ -990,15 +994,15 @@ global{
 	}
 	
 	action countRent{
-		meanRentPeople <- 0;
+		meanRentPeople <- 0.0;
 		meanRent_perProfile <- [];
 		ask people{
-			meanRentPeople <- meanRentPeople + payingRent*agent_per_point;
+			meanRentPeople <- meanRentPeople + payingRentAbs*agent_per_point;
 		}
 		meanRentPeople <- meanRentPeople / nb_people;
 		loop i from: 0 to: length(type_people) -1 {
 			ask people where(each.type = type_people[i]){
-				meanRent_perProfile[type_people[i]] <- meanRent_perProfile[type_people[i]] + payingRent*agent_per_point;
+				meanRent_perProfile[type_people[i]] <- meanRent_perProfile[type_people[i]] + payingRentAbs*agent_per_point;
 			}
 			meanRent_perProfile[type_people[i]] <- meanRent_perProfile[type_people[i]] / nPeople_perProfile[type_people[i]];
 		}
@@ -1089,6 +1093,13 @@ global{
 		meanDiver <- mean(blockGroup where(each.totalPeople != 0) collect each.diversity);
 	}
 	
+	action save_info_cycle{
+		save[init, cycle, nb_people, movingPeople, meanDiver] type:csv to:"../results/gridAddingBool/results_gral"+ boolGrid +".csv" rewrite: false header:true;
+		ask people{
+			save[init, cycle, type, living_place.associatedBlockGroup.lat, living_place.location.x, living_place.associatedBlockGroup.long, living_place.location.y, activity_place.lat, activity_place.location.x, activity_place.long, activity_place.location.y, actualNeighbourhood, actualCity, happyNeighbourhood, mobility_mode_main_activity, time_main_activity_min, distance_main_activity, payingRentAbs, CommutingCost, agent_per_point] type:csv to:"../results/gridAddingBool/results_segreg" + boolGrid +".csv" rewrite: false header:true;
+		}
+	}
+	
 	reflex peopleMove{
 		movingPeople <- 0;
 		ask blockGroup{
@@ -1112,6 +1123,12 @@ global{
 		do countMobility;
 		do updateMeanDiver;
 	}
+	
+	reflex save_info{
+		init <- 0;
+		do save_info_cycle;
+	}
+	
 }
 
 species blockGroup{
@@ -1288,6 +1305,7 @@ species people{
 	building living_place;
 	string actualCity;
 	float payingRent;
+	float payingRentAbs;
 	string actualNeighbourhood;
 	float actualPatternWeight;
 	int happyNeighbourhood;
@@ -1446,6 +1464,7 @@ species people{
 		living_cost <- payingRent;
 		//float living_cost <- living_place.rentPriceNorm;
 		float possibleLivingCost;
+		float possibleLivingCostAbs;
 		float possibleDiversity;
 		string possibleNeighbourhood;
 		float possiblePatternWeight;
@@ -1477,6 +1496,7 @@ species people{
 			
 		}		
 		possibleLivingCost <- possibleMoveBuilding.rentNormVacancy;
+		possibleLivingCostAbs <- possibleMoveBuilding.rentAbsVacancy;
 		possiblePatternWeight <- calculate_patternWeight(possibleNeighbourhood);
 			
 		bool possibilityToTakeT <- false;
@@ -1540,6 +1560,7 @@ species people{
 			mobility_mode_main_activity <- possibleMobility;
 			CommutingCost <- possibleCommutingCost;
 			payingRent <- possibleLivingCost;
+			payingRentAbs <- possibleLivingCostAbs;
 			
 			list<string> extract_list <- pattern_list[type];
 			if(living_place.neighbourhood = extract_list[0]){
@@ -1762,7 +1783,10 @@ experiment show type: gui{
 	
 }
 
-//experiment batch 
+experiment batch_save type: batch keep_seed: true until: cycle > 29 {
+	parameter "createGrid " var: boolGrid init: false category: "Grid / No Grid difference ";
+	
+}
 
 
 	
