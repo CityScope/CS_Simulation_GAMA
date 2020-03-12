@@ -1814,7 +1814,7 @@ experiment show type: gui{
 }
 
 experiment batch_save type: batch keep_seed: true until: cycle > 29 {
-	parameter "createGrid " var: boolGrid init: false category: "Grid / No Grid difference ";
+	parameter "createGrid " var: boolGrid init: true category: "Grid / No Grid difference ";
 	
 }
 
