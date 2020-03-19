@@ -6,7 +6,8 @@
 model CityScope
 
 global {
-	string cityGISFolder <- "./../includes/City/volpe";
+	string cityScopeCity<-"volpe";
+	string cityGISFolder <- "./../includes/City/"+cityScopeCity;
 	// GIS FILES
 	file bound_shapefile <- file(cityGISFolder + "/Bounds.shp");
 	file buildings_shapefile <- file(cityGISFolder + "/Buildings.shp");
