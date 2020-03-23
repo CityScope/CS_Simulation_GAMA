@@ -30,7 +30,7 @@ global {
 
 	// INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
-	bool cityMatrix <- true;
+	bool cityMatrix <- false;
 	bool onlineGrid <- true; // In case cityIOServer is not working or if no internet connection
 	bool realAmenity <- true;
 	bool initpop<-true;
@@ -114,8 +114,6 @@ global {
 		if (cityMatrix = true) {
 			do initGrid(_version);
 		}
-
-		write " width: " + world.shape.width + " height: " + world.shape.height;
 	}
 
 	action customInit (float _version){
