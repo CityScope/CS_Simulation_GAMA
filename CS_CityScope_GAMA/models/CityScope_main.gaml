@@ -148,9 +148,9 @@ global {
 
 	action createAmenityv1{
 		cityMatrixCell <- cityMatrixData["grid"];
-		density_array <- cityMatrixData["objects"]["density"];
-		toggle1 <- int(cityMatrixData["objects"]["toggle1"]);
-		slider1 <- int(cityMatrixData["objects"]["slider1"]);
+		density_array <- list<float>(map(cityMatrixData["objects"])["density"]);
+		toggle1 <- int(map(cityMatrixData["objects"])["toggle1"]);
+		slider1 <- int(map(cityMatrixData["objects"])["slider1"]);
 		loop l over: cityMatrixCell {
 			create amenity {
 				id <- int(l["type"]);
@@ -176,9 +176,9 @@ global {
 		
 	action createAmenityv2{
 		list<int> gridCells <- cityMatrixData["grid"];
-		int nrows<-int(cityMatrixData['header']['spatial']['nrows']);
-		int ncols<-int(cityMatrixData['header']['spatial']['ncols']);
-		brickSize<- float(cityMatrixData['header']['spatial']['cellsize']);
+		int nrows<-int(map(map(cityMatrixData["header"])["spatial"])["nrows"]);
+		int ncols<-int(map(map(cityMatrixData["header"])["spatial"])["ncols"]);
+		brickSize<- float(map(map(cityMatrixData['header'])['spatial'])['cellsize']);
 
 		loop i from: 0 to: ncols-1 {
 			loop j from: 0 to: nrows -1{
@@ -203,7 +203,7 @@ global {
 	}
 	
 	action updateDynamicGridAccordingToDensityArray{
-		density_array <- cityMatrixData["objects"]["density"];
+		density_array <- map(cityMatrixData["objects"])["density"];
 
 		//UPDATE POP AT RUNTIME DEPENDING ON DENSITY VALUE
 		if (cycle > 10 and dynamicPop = true) {
