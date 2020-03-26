@@ -27,9 +27,9 @@ def combine(outFname = 'test.mp4',quality=1,frameRate = '10',aspectRatio='2560x1
 		os.rename(src, dst)
 		j+=1
 
-	cmd = 'ffmpeg -r '+str(frameRate)+' -f image2 -s '+aspectRatio+' -i cycle_%0'+str(digits)+'d.png -vf scale=1280:-2 -vcodec libx264 -crf '+str(quality)+'  -pix_fmt yuv420p '+outFname
-	print(cmd)
-	os.system(cmd)
+	#cmd = 'ffmpeg -r '+str(frameRate)+' -f image2 -s '+aspectRatio+' -i cycle_%0'+str(digits)+'d.png -vf scale=1280:-2 -vcodec libx264 -crf '+str(quality)+'  -pix_fmt yuv420p '+outFname
+	#print(cmd)
+	#os.system(cmd)
 
 if __name__ == "__main__":
 	combine()

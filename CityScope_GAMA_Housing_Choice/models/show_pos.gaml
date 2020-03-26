@@ -18,7 +18,7 @@ global{
 	file resuls_false <- file("../results/gridAddingBool/results_segregfalse.csv");
 	file<geometry> T_lines_shapefile <- file<geometry>("./../includesCalibration/City/volpe/Tline_cleanedQGIS.shp");
 	list<string> type_people <- ["<$30000", "$30000 - $44999", "$45000 - $59999", "$60000 - $99999","$100000 - $124999","$125000 - $149999","$150000 - $199999", ">$200000"];
-	map<string,rgb> color_per_type <- ["<$30000"::#cyan, "$30000 - $44999"::#blue, "$45000 - $59999"::#yellow, "$60000 - $99999"::#orange, "$100000 - $124999"::#green, "$125000 - $149999"::#purple,"$150000 - $199999"::#olive, ">$200000"::#grey];
+	map<string,rgb> color_per_type <- ["<$30000"::#cyan, "$30000 - $44999"::#blue, "$45000 - $59999"::rgb(0,128,128), "$60000 - $99999"::#green, "$100000 - $124999"::#pink, "$125000 - $149999"::#purple,"$150000 - $199999"::rgb(182, 102, 210), ">$200000"::#magenta];
 	geometry shape<-envelope(T_lines_shapefile);
 	int it <- 0;
 	int initNow <- 1;
@@ -182,7 +182,7 @@ species road{
 experiment visual type:gui{
 	
 	output{
-		display map type: opengl draw_env: false fullscreen: 1 background: #black {
+		display map type: opengl draw_env: false fullscreen: 1 autosave: true background:#black {
 			species building aspect: default;
 			species road aspect: default;
 			species blockGroup aspect: default;
