@@ -192,8 +192,14 @@ global{
 
 		
 	init{
-		write "price_main_trip_30000 " + price_main_trip_30000;
 		write "list_price_main_trip " + price_main_trip_list;
+		write "time_main_trip_list" + time_main_trip_list;
+		write "pattern_main_trip_list" + pattern_main_trip_list;
+		write "difficulty_main_trip_list" + difficulty_main_trip_list;
+		write "priceImp_list" + priceImp_list;
+		write "divacc_list" + divacc_list;
+		write "pattern_list " + pattern_list;
+		write "patternWeight_list" + patternWeight_list;
 		do createTlines;
 		write "T lines created";
 		do createTstops;
@@ -1485,7 +1491,7 @@ experiment gui_lets_see type: gui{
 	}
 }
 
-experiment exploration type: batch repeat: 2 keep_seed: true until: (movingPeople < 0.1*nb_people ) or ( cycle > 29 ) {
+experiment exploration type: batch keep_seed: true until: (movingPeople < 0.1*nb_people ) or ( cycle > 9 ) {
 	parameter "Price Importance main trip <$30000 " var: price_main_trip_30000 min: -1.0 max: 0.0 step: 0.1;
 	parameter "Price Importance main trip $300000 - $44999 " var: price_main_trip_30000_44999 min: -1.0 max: 0.0 step: 0.1;
 	parameter "Price Importance main trip $45000 - $59999 " var: price_main_trip_45000_59999 min: -1.0 max: 0.0 step: 0.1;
@@ -1577,11 +1583,13 @@ experiment exploration type: batch repeat: 2 keep_seed: true until: (movingPeopl
    ***/
    reflex save_results_explo {
         int cpt <- 0;
+        int it;
         ask simulations {
+        	it <- int(self);
             save [int(self), movingPeople, housingErrorTotal, mobilityError ,price_main_trip_30000, price_main_trip_30000_44999, price_main_trip_45000_59999, price_main_trip_60000_99999, price_main_trip_100000_124999, price_main_trip_125000_149999, price_main_trip_150000_199999, price_main_trip_200000, time_main_trip_30000, time_main_trip_30000_44999, time_main_trip_45000_59999, time_main_trip_60000_99999, time_main_trip_100000_124999, time_main_trip_125000_149999, time_main_trip_150000_199999, time_main_trip_200000, pattern_main_trip_30000, pattern_main_trip_30000_44999, pattern_main_trip_45000_59999, pattern_main_trip_60000_99999, pattern_main_trip_100000_124999, pattern_main_trip_125000_149999, pattern_main_trip_150000_199999, pattern_main_trip_200000, difficulty_main_trip_30000, difficulty_main_trip_30000_44999, difficulty_main_trip_45000_59999, difficulty_main_trip_60000_99999, difficulty_main_trip_100000_124999, difficulty_main_trip_125000_149999, difficulty_main_trip_150000_199999, difficulty_main_trip_200000, price_home_30000, price_home_30000_44999, price_home_45000_59999, price_home_60000_99999, price_home_100000_124999, price_home_125000_149999, price_home_150000_199999, price_home_200000, diver_home_30000, diver_home_30000_44999, diver_home_45000_59999, diver_home_60000_99999, diver_home_100000_124999, diver_home_125000_149999, diver_home_150000_199999, diver_home_200000, zone_home_30000, zone_home_30000_44999, zone_home_45000_59999, zone_home_60000_99999, zone_home_100000_124999, zone_home_125000_149999, zone_home_150000_199999, zone_home_200000, pattern_home_30000, pattern_home_30000_44999, pattern_home_45000_59999, pattern_home_60000_99999, pattern_home_100000_124999, pattern_home_125000_149999, pattern_home_150000_199999, pattern_home_200000] 
-                   to: "../results/calibrateData/exhaustive/parameterValues "+ cpt +".csv" type: "csv" rewrite: (int(self) = 0) ? true : false header: true;      
+                   to: "../results/calibrateData/hillClimbing/parameterValues "+ cpt +".csv" type: "csv" rewrite: (int(self) = 0) ? true : false header: true;      
         	ask people{
-				save[type, living_place.location.x, living_place.location.y, living_place.associatedBlockGroup.GEOID, activity_place.ID, activity_place.location.x, activity_place.location.y, activity_place.lat, activity_place.long, actualNeighbourhood, actualCity, happyNeighbourhood, mobility_mode_main_activity, time_main_activity_min, distance_main_activity, CommutingCost, living_place.rentNormVacancy, agent_per_point] type:csv to:"../results/calibrateData/exhaustive/resultingPeopleChoice "+ cpt + int(self) +".csv" rewrite: (int(self) = 0) ? true : false header:true;	
+				save[type, living_place.location.x, living_place.location.y, living_place.associatedBlockGroup.GEOID, activity_place.ID, activity_place.location.x, activity_place.location.y, activity_place.lat, activity_place.long, actualNeighbourhood, actualCity, happyNeighbourhood, mobility_mode_main_activity, time_main_activity_min, distance_main_activity, CommutingCost, living_place.rentNormVacancy, agent_per_point] type:csv to:"../results/calibrateData/hillClimbing/resultingPeopleChoice "+ cpt + it +".csv" rewrite: (it = 0) ? true : false header:true;	
 			}
 			cpt <- cpt + 1;
         }   

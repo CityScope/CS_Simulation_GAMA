@@ -15,7 +15,7 @@ global{
 	file<geometry> buildings_shapefile <- file<geometry>("./../includesCalibration/City/volpe/BuildingsLatLongBlock.shp");
 	file<geometry> roads_shapefile <- file<geometry>("./../includesCalibration/City/volpe/simplified_roads.shp");
 	file<geometry> T_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_NODE_MAss_color.shp");
-	file resuls_false <- file("../results/gridAddingBool/results_segregfalse.csv");
+	file resuls_false <- file("../results/calibrateData/hillClimbing/resultingPeopleChoice 023.csv");
 	file<geometry> T_lines_shapefile <- file<geometry>("./../includesCalibration/City/volpe/Tline_cleanedQGIS.shp");
 	list<string> type_people <- ["<$30000", "$30000 - $44999", "$45000 - $59999", "$60000 - $99999","$100000 - $124999","$125000 - $149999","$150000 - $199999", ">$200000"];
 	map<string,rgb> color_per_type <- ["<$30000"::#cyan, "$30000 - $44999"::#blue, "$45000 - $59999"::rgb(0,128,128), "$60000 - $99999"::#green, "$100000 - $124999"::#pink, "$125000 - $149999"::#purple,"$150000 - $199999"::rgb(182, 102, 210), ">$200000"::#magenta];
@@ -72,16 +72,18 @@ global{
 	action import_resuls{
 		matrix resuls_matrix <- matrix(resuls_false);
 		loop i from: 0 to: resuls_matrix.rows - 1{
-			float location_x <- resuls_matrix[4,i];
-			float location_y <- resuls_matrix[6,i];
-			string people_type <- resuls_matrix[2,i];
+			float location_x <- resuls_matrix[1,i];
+			float location_y <- resuls_matrix[2,i];
+			string people_type <- resuls_matrix[0,i];
 			int agent_per_point <- resuls_matrix[resuls_matrix.columns - 1,i];
-			int iteracion <- resuls_matrix[1,i];
-			float living_placeBlock_lat <- resuls_matrix[3,i];
-			float living_placeBlock_long <- resuls_matrix[5,i];
+			//int iteracion <- resuls_matrix[1,i];
+			int iteracion <- 0;
+			//float living_placeBlock_lat <- resuls_matrix[3,i];
+			//float living_placeBlock_long <- resuls_matrix[5,i];
+			string GEOIDblock <- resuls_matrix[3,i];
 			int init <- resuls_matrix[0,i];
 			
-			if (iteracion = it and init = initNow){
+			if (iteracion = it){
 				create people number:1{
 					loc_x <- location_x;
 					loc_y <- location_y;
@@ -89,7 +91,8 @@ global{
 					ag_per_point <- agent_per_point;
 					color <- color_per_type[people_type];
 					
-					living_place <- one_of(blockGroup where(each.lat = living_placeBlock_lat and each.long = living_placeBlock_long));
+					//living_place <- one_of(blockGroup where(each.lat = living_placeBlock_lat and each.long = living_placeBlock_long));
+					living_place <- one_of(blockGroup where(each.GEOID = GEOIDblock));
 					location <- any_location_in(living_place);	
 					//location <- {loc_x, loc_y};		
 					
@@ -186,8 +189,8 @@ experiment visual type:gui{
 			species building aspect: default;
 			species road aspect: default;
 			species blockGroup aspect: default;
-			species Tline aspect: default;
-			species Tstop aspect: default;
+			//species Tline aspect: default;
+			//species Tstop aspect: default;
 			species people aspect: default;
 					
 			overlay position: { 5, 5 } size: { 240 #px, 340 #px } background: # black transparency: 0.5 border: #black 

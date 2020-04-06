@@ -1,9 +1,9 @@
 ﻿Column1,Column2,Column3,Column4,Column5,Column6,Column7,Column8,Column9,Column10,Column11,Column12,Column13,Column14,Column15,Column16,Column17
- Nb Criteria , 4 ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  
- Nb Trip Objective , 4 ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  
- Purpose , O|Uni|HS|A ,  ,  ,  , R ,  ,  ,  , Park|restaurant|Night|Cultural ,  ,  ,  , Shopping ,  ,  ,  
- Characteristics , Price , Time , Social Pattern , Difficulty , Price , Time , Social Pattern , Difficulty , Price , Time , Social Pattern , Difficulty , Price , Time , Social Pattern , Difficulty 
- Role ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  
+Nb Criteria,4,,,,,,,,,,,,,,,
+Nb Trip Objective,4,,,,,,,,,,,,,,,
+Purpose,O|Uni|HS|A|mixed,,,,R,,,,Park|restaurant|Night|Cultural,,,,Shopping,,,
+Characteristics,Price,Time,Social Pattern,Difficulty,Price,Time,Social Pattern,Difficulty,Price,Time,Social Pattern,Difficulty,Price,Time,Social Pattern,Difficulty
+Role,,,,,,,,,,,,,,,,
 <$30000,-0.95,-0.7,1,-0.65,-0.95,-0.7,1,-0.6,-0.8,-0.4,1,-0.45,-0.8,-0.4,1,-0.75
 $30000 - $44999,-0.9,-0.75,1,-0.65,-0.9,-75,1,-0.65,-0.75,-0.5,1,-0.5,-0.75,-0.5,1,-0.75
 $45000 - $59999,-0.8,-0.8,0.95,-0.7,-0.8,-0.8,0.95,-0.7,-0.7,-0.7,0.95,-0.6,-0.7,-0.7,0.95,-0.75

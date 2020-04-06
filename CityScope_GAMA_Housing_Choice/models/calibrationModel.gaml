@@ -25,7 +25,6 @@ global{
 	file weather_coeff <- file("../includesCalibration/Criteria/weather_coeff_per_month.csv");
 	file criteria_file <- file("../includesCalibration/Criteria/CriteriaFile.csv");
 	file population_file <- file("../includesCalibration/City/censusDataGreaterBoston/censusDataClustered.csv");
-	string createdCity <- "../includesCalibration/City/volpe/city_191.json"; //provisional
 	geometry shape<-envelope(T_lines_shapefile);
 	
 	int nb_people <- 11585; //for example. Nearly x2 of vacant spaces in Kendall
@@ -46,12 +45,15 @@ global{
 	float meanDiver <- 0.0;
 	float meanDiverNorm <- 0.0;
 	float angle <- atan((899.235 - 862.12)/(1083.42 - 1062.038));
-	point startingPoint <- {13844.4839, 8313.163};
+	point startingPoint <- {13844, 8318};
 	float brickSize <- 21.3;
-	bool boolGrid;
+	int boolGrid;
 	int init;
+	float percForResidentialGrid <- 0.50; //variable for batch experiment
+	int nbFloorsGrid <- 30; //variable for batch experiment
+	float gridPriceMarketPerc <- 1.0; //percentage of the market price that grid buildings will offer (to everyone or specific profiles??) Vble for batch experiment
 	
-	map<string,int> density_map<-["S"::15,"M"::55, "L"::89];
+	map<string,int> density_map<-["S"::15,"M"::55, "L"::89, "microUnit" :: 30]; //provisional. Ask Suleiman
 	list<blockGroup> kendallBlockList;
 	list<rentApartment> kendallApartmentList;
 	map<string,map<string,list<float>>> weights_map <- map([]);
@@ -118,9 +120,7 @@ global{
 		write "apartments created";
 		do read_criteriaHome;
 		write "criteriaHome read";
-		if(boolGrid = true){
-			do initGrid;
-			write "grid initialised";
+		if(boolGrid = 1){
 			do createGridBuildings;
 			write "grid buildings created";
 		}		
@@ -154,15 +154,15 @@ global{
 		write "weather calculated";
 		do createPopulation;
 		write "population created";
-		/***do countPopulation;
+		do countPopulation;
 		do countPopMainCity;
 		do countNeighbourhoods; //Kendall + planetary
 		do countRent;
 		do countHappyPeople;
-		do countMobility;***/
+		do countMobility;
 		do updateMeanDiver;
 		init <- 1;
-		do save_info_cycle;
+		//do save_info_cycle;
 	}
 	
 	action createBlockGroups{
@@ -482,8 +482,14 @@ global{
 		ask rentApartment{
 			if(associatedBuilding != nil and empty(associatedBuilding) = false){
 				if (associatedBuilding.fromGrid = true){
-					rentAbs <- associatedBlockGroup.rentAbsVacancy;
-					associatedBuilding.rentNormVacancy <- associatedBlockGroup.rentNormVacancy;
+					rentAbs <- associatedBlockGroup.rentAbsVacancy*gridPriceMarketPerc;
+					associatedBuilding.rentNormVacancy <- associatedBlockGroup.rentNormVacancy*gridPriceMarketPerc;
+					associatedBuilding.rentAbsVacancy <- associatedBlockGroup.rentAbsVacancy*gridPriceMarketPerc;
+					//write "rentApartment" + rentApartment;
+					//write "associatedBuilding" + associatedBuilding;
+					//write "associatedBlockGroup" + associatedBlockGroup;
+					//write "associatedBlockGroup.rentAbsVacancy" + associatedBlockGroup.rentAbsVacancy;
+					//write "associatedBuilding.rentAbsVacancy " + associatedBuilding.rentAbsVacancy ;
 				}
 			}
 		}
@@ -552,75 +558,106 @@ global{
 		}
 	}
 	
-	action initGrid{
-		try {
-			cityMatrixData <- json_file(createdCity).contents;
-		}
-	}
-	
-	action createGridBuildings{		
-		cityMatrixCell <- cityMatrixData["grid"];
-		int i <- 0;
+	action createGridBuildings{
 		angle <- angle / 2;
 		//write startingPoint;
 		startingPoint <- {startingPoint.x - brickSize / 2, startingPoint.y - brickSize / 2};
-		//write startingPoint;
-		
-		loop l over: cityMatrixCell{
-			building imTheBuilding;
-			blockGroup imTheAssociatedBlockGroup;
-			
-			create building{
-				fromGrid <- true;
-				ID <- i;
-				int x <- l["x"];
-				int y <- l["y"];
-				point location_local_axes <- {x * brickSize + 15, y * brickSize};
-				location <- {startingPoint.x + location_local_axes.x*sin(angle) - location_local_axes.y*cos(angle), startingPoint.y - location_local_axes.y*sin(angle) - location_local_axes.x*cos(angle)};
-				shape <- square(brickSize * 0.9) at_location location;
-				usage <- l["type"];
-				scale <- l["size"];
-				category <-  l["category"];
-				area <- shape.area;
-				perimeter <- shape.perimeter;
-				nbFloors <- l["nbFloors"];
-				type <- "BLDG";
-				FAR <- 4.0;
-				max_height <- 120.0;
-				satellite <- false;
-				if (density_map[scale]!=0 and usage="R"){
-					supported_people <- int(area/density_map[scale])*nbFloors;	 //change from density_map to area per micro-unit
+		//write startingPoint;	
+		int cont <- 0;			
+		bool noBuild;
+		loop i from: 0 to: 12{
+			loop j from: 0 to: 15{
+				noBuild <- false;
+				if(i = 12 and j > 11){
+					noBuild <- true;
 				}
-				else{
-					supported_people<-0;
+				if(i = 11 and j > 11){
+					noBuild <- true;
 				}
-				vacantSpaces <- supported_people;
+				if(i = 10 and j > 12){
+					noBuild <- true;
+				}
+				if(i = 9 and j > 12){
+					noBuild <- true;
+				}
+				if([8,7] contains i = true and j > 13){
+					noBuild <- true;
+				}
+				if(i = 6 and [9,10,11,14,15] contains j = true){
+					noBuild <- true;
+				}
+				if(i = 5 and [8,9,10,11,15] contains j = true){
+					noBuild <- true;
+				}
+				if(i = 4 and [7,8,9,10,11,15] contains j = true){
+					noBuild <- true;
+				}
+				if(i = 3 and [7,8,9,10,11,12,15] contains j = true){
+					noBuild <- true;
+				}
+				if([1,2] contains i = true and [7,8,9,10,11,12] contains j = true){
+					noBuild <- true;
+				}
+				if(i = 0 and [7,8,9,10,11,12,13,14,15] contains j = true){
+					noBuild <- true;
+				}
 				
-				imTheBuilding <- self;
-				ask blockGroup{
-					if(self overlaps imTheBuilding = true){
-						imTheAssociatedBlockGroup <- self;
-					}
-				}
-				
-				associatedBlockGroup <- imTheAssociatedBlockGroup;
-				neighbourhood <- associatedBlockGroup.neighbourhood;
-				associatedBlockGroup.buildingsInMe << self;
-				if (usage = "R"){
-					create rentApartment number: 1{ //we are considering the whole building an apartment so that we dont change the way the average features are calculated in a block group
-						GEOIDAp <- imTheAssociatedBlockGroup.GEOID;
+				if(noBuild != true){
+					//write "building i "+ i + " j " + j;
+					building imTheBuilding;
+					blockGroup imTheAssociatedBlockGroup;
+					create building{
+						fromGrid <- true;
+						ID <- cont;
+						int x <- j;
+						int y <- i;
+						point location_local_axes <- {x * brickSize + 15, y * brickSize};
+						location <- {startingPoint.x + location_local_axes.x*sin(angle) - location_local_axes.y*cos(angle), startingPoint.y - location_local_axes.y*sin(angle) - location_local_axes.x*cos(angle)};
+						shape <- square(brickSize * 0.9) at_location location;
+						area <- shape.area;
+						perimeter <- shape.perimeter;
+						usage <- "R";
+						scale <- "microUnit";
+						category <-  "mixed";
+						nbFloors <- nbFloorsGrid; //variable batch experiment
+						type <- "BLDG";
+						FAR <- 4.0;
+						max_height <- 120.0;
+						satellite <- false;
+						if (density_map[scale]!=0){
+							supported_people <- int(area/density_map[scale])*nbFloors*percForResidentialGrid;	 //change from density_map to area per micro-unit
+						}
+						else{
+							supported_people<-0;
+						}
+						vacantSpaces <- supported_people;
+						
+						imTheBuilding <- self;
+						ask blockGroup{
+							if(self overlaps imTheBuilding = true){
+								imTheAssociatedBlockGroup <- self;
+							}
+						}
+						
 						associatedBlockGroup <- imTheAssociatedBlockGroup;
-						associatedBuilding <- imTheBuilding;
-						associatedBlockGroup.apartmentsInMe << self; 
-						associatedBuilding.apartmentsInMe << self;
-						numberBedrooms <- associatedBuilding.vacantSpaces;	
-						location <- associatedBuilding.location;				
-					}
-				}				
-				i <- i + 1;
-			}
+						neighbourhood <- associatedBlockGroup.neighbourhood;
+						associatedBlockGroup.buildingsInMe << self;
+						create rentApartment number: 1{ //we are considering the whole building an apartment so that we dont change the way the average features are calculated in a block group
+							GEOIDAp <- imTheAssociatedBlockGroup.GEOID;
+							associatedBlockGroup <- imTheAssociatedBlockGroup;
+							associatedBuilding <- imTheBuilding;
+							associatedBlockGroup.apartmentsInMe << self; 
+							associatedBuilding.apartmentsInMe << self;
+							numberBedrooms <- associatedBuilding.vacantSpaces;	
+							location <- associatedBuilding.location;				
+						}
+						cont <- cont + 1;
+					}				
+				}
+			}	
 		}
 	}
+	
 	
 	action  criteria_file_import{
 		matrix criteria_matrix <- matrix (criteria_file);
@@ -855,8 +892,10 @@ global{
 		
 		map<string,float> proportion_per_type_now <- proportion_per_type;
 		
-		
+		int nPeople_created <- 0;
 		create people number: nb_agents{
+			nPeople_created <- nPeople_created + 1;
+			//write "nPeople_created " + nPeople_created;
 			type <- proportion_per_type_now.keys[rnd_choice(proportion_per_type.values)];
 			map<int,int> extract_map <- agent_per_point_type_map[type];
 			agent_per_point <- extract_map.keys[0];
@@ -1146,18 +1185,18 @@ global{
 		ask blockGroup{
 			do normaliseDiversity;
 		}
-		/***do countRent;
+		do countRent;
 		do countPopMainCity;
 		do countNeighbourhoods;
 		do countHappyPeople;
-		do countMobility;***/
+		do countMobility;
 		do updateMeanDiver;
 	}
 	
-	reflex save_info{
+	/***reflex save_info{
 		init <- 0;
 		do save_info_cycle;
-	}
+	}***/
 	
 }
 
@@ -1281,10 +1320,10 @@ species building{
 	
 	aspect default{
 		if(fromGrid = true){
-			draw shape rotated_by angle color: rgb(50,50,50);
+			draw shape rotated_by angle color: rgb(50,50,50, 125);
 		}
 		else{
-			draw shape color: rgb(50,50,50);	
+			draw shape color: rgb(50,50,50, 125);	
 		}
 		//draw shape color: #red;
 	}
@@ -1467,6 +1506,7 @@ species people{
 			}
 		}
 		list<map> criteria_WM;
+		//write "destination category " + destination.category; 
 		loop i from: 0 to: length(vals)-1{
 			criteria_WM<< ["name"::"crit"+i, "weight"::vals[i]];
 		}
@@ -1611,12 +1651,12 @@ species people{
 }
 
 experiment show type: gui{
-	parameter "createGrid " var: boolGrid init: false category: "Grid / No Grid difference ";
+	parameter "createGrid " var: boolGrid init: 1 category: "Grid / No Grid difference ";
 	output{
 		display map type: opengl draw_env: false background: #black{
 			species blockGroup aspect: default;
 			species building aspect: default;
-			species rentApartment aspect: default;
+			//species rentApartment aspect: default;
 			species road aspect: default;
 			species Tstop aspect:default;
 			species Tline aspect: default;
@@ -1813,8 +1853,11 @@ experiment show type: gui{
 	
 }
 
-experiment batch_save type: batch keep_seed: true until: cycle > 29 {
-	parameter "createGrid " var: boolGrid init: true category: "Grid / No Grid difference ";
+experiment batch_save type: batch keep_seed: true until: cycle > 9 {
+	parameter "createGrid " var: boolGrid init: 0 min:0 max: 1 category: "Grid / No Grid difference ";
+	parameter "percentage Residential area in grid" var: percForResidentialGrid init: 0.5 min: 0.5 max: 1.0 step: 0.1 category: "Grid vbles";
+	parameter "percentage of market price for grid housing" var: gridPriceMarketPerc init: 0 min: 0 max: 1.0 step: 0.1 category: "Grid vables";
+	parameter "number of floors for grid buildings" var: nbFloorsGrid init: 30 min: 10 max: 50 step: 5 category: "Grid vbles";
 	
 }
 
