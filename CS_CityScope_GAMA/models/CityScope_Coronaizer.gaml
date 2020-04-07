@@ -10,22 +10,33 @@ model CityScopeCoronaizer
 import "CityScope_main.gaml"
 
 global{
-	float socialDistance <- 20#m parameter: "Social distance:" category: "Corona" min: 1.0 max: 100.0 step:1;
-	float time_recovery<-1000.0 parameter: "Recovery Time"   category: "Corona" min: 1.0 max: 10000.0;
-	float infection_rate<-0.01 parameter: "Infection Rate"   category: "Corona" min:0.0 max:1.0;
-	int initial_nb_infected<-50 parameter: "Infection Rate"   category: "Corona" min:0 max:100;
-	bool drawDirectGraph <- false parameter: "Social Distance Graph:" category: "Corona";
-	bool draw_grid <- false parameter: "Draw Grid:" category: "Corona";
+	float socialDistance <- 2#m;
+	float maskRatio <- 0.0;
+	float gloveRatio <- 0.0;
+	
+	
+	bool a_boolean_to_disable_parameters <- true;
+    int number_day_recovery<-15;
+	int time_recovery<-1440*60*number_day_recovery;
+	float infection_rate<-0.005;
+	int initial_nb_infected<-1;
+	float step<-1#mn;
+	
+	bool drawDirectGraph <- false;
+	bool draw_grid <- false;
+	
+
 	int nb_cols <- int(75*1.5);
 	int nb_rows <- int(50*1.5);
+	
 
 	int nb_susceptible  <- 0 update: length(ViralPeople where (each.state='susceptible'));
 	int nb_infected <- 0 update: length(ViralPeople where (each.state='infected'));
 	int nb_recovered <- 0 update: length(ViralPeople where (each.state='recovered'));
 	graph<people, people> social_distance_graph;
+	
 	init{
-	//Init from Imported Model is first called	
-		ask 50 among ViralPeople{
+		ask initial_nb_infected among ViralPeople{
 			is_susceptible <-  false;
 	        is_infected <-  true;
 	        is_immune <-  false; 
@@ -58,7 +69,7 @@ species ViralPeople control: fsm mirrors:people{
 		enter {
 			infected_time <- time;
 		}
-		transition to: recovered when: time - infected_time >= time_recovery*1000 {
+ 		transition to: recovered when: (time - infected_time) >= time_recovery {
     	}
 	}
 	state recovered final: true {
@@ -74,7 +85,7 @@ species ViralPeople control: fsm mirrors:people{
 	}
 
 	aspect base {
-		draw circle(5#m) color:(state = 'susceptible') ? #green : ((state = 'infected') ? #red : #blue);
+		draw circle(is_infected ? 7#m : 5#m) color:(state = 'susceptible') ? #green : ((state = 'infected') ? #red : #blue);
 	}
 }
 grid cell width: nb_cols height: nb_rows neighbors: 8 {
@@ -95,10 +106,31 @@ grid cell width: nb_cols height: nb_rows neighbors: 8 {
 }
 
 experiment Coronaizer type:gui {
+
+	parameter "Social distance:" category: "Policy" var:socialDistance min: 1.0 max: 100.0 step:1;
+	
+	
+	
+	parameter "Mask Ratio:" category: "Policy" var: maskRatio min: 0.0 max: 1.0 step:0.1;
+	parameter "Glove Ratio:" category: "Policy" var: gloveRatio min: 0.0 max: 1.0 step:0.1;
+	
+	
+	bool a_boolean_to_disable_parameters <- true;
+	parameter "Disable following parameters" category:"Corona" var: a_boolean_to_disable_parameters disables: [time_recovery,infection_rate,initial_nb_infected,step];
+	parameter "Nb recovery day"   category: "Corona" var:number_day_recovery min: 1 max: 30;
+	parameter "Infection Rate"   category: "Corona" var:infection_rate min:0.0 max:1.0;
+	parameter "Initial Infected"   category: "Corona" var: initial_nb_infected min:0 max:100;
+	parameter "Simulation Step"   category: "Corona" var:step min:0.0 max:100.0;
+	
+	parameter "Social Distance Graph:" category: "Visualization" var:drawDirectGraph ;
+	parameter "Draw Grid:" category: "Visualization" var:draw_grid;
+	
 	output{
 	  layout #split;
-	  display CoronaMap type:opengl background:#white{
-	  	//species building aspect:base;
+	  
+	
+	  display CoronaMap type:opengl background:#white draw_env:false toolbar:false{
+	  	species building aspect:base;
 	  	species road aspect:base;
 	  	species ViralPeople aspect:base;
 	  	species cell aspect:default;
@@ -113,25 +145,27 @@ experiment Coronaizer type:gui {
 					}
 
 				}
-			}	
-	  }	
-	  /*display CoronaChart refresh:every(100#cycle) {
-			chart "Population in "+cityScopeCity type: series {
-				data "susceptible" value: nb_susceptible color: #green;
-				data "infected" value: nb_infected color: #red;	
-				data "recovered" value: nb_recovered color: #blue;
 			}
-		}*/
+		graphics "text" {
+	    	draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
+	  	}	
+	  }	
+	  display CoronaChart refresh:every(#hour) toolbar:false {
+		chart "Population in "+cityScopeCity type: series x_serie_labels: (current_day) x_label: 'Day' y_label: 'Case'{
+			data "susceptible" value: nb_susceptible color: #green;
+			data "infected" value: nb_infected color: #red;	
+			data "recovered" value: nb_recovered color: #blue;
+		}
+	  }
 	}		
 }
 
-experiment CityScopeMulti type: gui parent: Corona
+experiment CityScopeMulti type: gui parent: Coronaizer
 {
 	init
 	{
 		create simulation with: [cityScopeCity:: "Taipei", minimum_cycle_duration::0.02, cityMatrix::false];
 		create simulation with: [cityScopeCity:: "Shanghai", minimum_cycle_duration::0.02, cityMatrix::false];
-		//create simulation with: [cityScopeCity:: "Lyon", minimum_cycle_duration::0.02, cityMatrix::false];
 		create simulation with: [cityScopeCity:: "otaniemi", minimum_cycle_duration::0.02, cityMatrix::false];			
 	}
 
@@ -139,7 +173,6 @@ experiment CityScopeMulti type: gui parent: Corona
 	float minimum_cycle_duration <- 0.02;
 	output
 	{
-
 	}
 
 }

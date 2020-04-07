@@ -20,13 +20,13 @@ global {
 	graph<people, people> interaction_graph;
 
 	// ONLINE PARAMETERS
-	bool drawInteraction <- false parameter: "Draw Interaction:" category: "Interaction";
-	int distance <- 20 parameter: "Distance:" category: "Interaction" min: 1 max: 100;
-	int refresh <- 50 min: 1 max: 1000 parameter: "Refresh rate (cycle):" category: "Grid";
-	bool dynamicGrid <- true parameter: "Update Grid:" category: "Grid";
-	bool dynamicPop <- false parameter: "Dynamic Population:" category: "Population";
-	int refreshPop <- 100 min: 1 max: 1000 parameter: "Pop Refresh rate (cycle):" category: "Population";
-	int traceTime <- 100 min: 1 max: 500 parameter: "Trace:" category: "Visualization";
+	bool drawInteraction <- false;
+	int distance <- 20;
+	int refresh <- 50;
+	bool dynamicGrid <- true;
+	bool dynamicPop <- false;
+	int refreshPop <- 100;
+	int traceTime <- 100;
 
 	// INIT PARAMETERS
 	float minimum_cycle_duration <- 0.02;
@@ -53,8 +53,8 @@ global {
 	// Use for Volpe Site (Could be changed for each city).
 	map<string, int> density_map <- ["S"::89, "M"::55, "L"::15];
 	int seconds_per_day <- 8640;
-	float step <- 10 #sec;
-	int current_hour update: 6 + (time / #hour) mod 24;
+	float step <- 1#mn;
+	int current_hour update: (time / #hour) mod 24;
 	int current_day <- 0;
 	// The bounds for the times that the people species go about their daily
 	// activities is below.  Their activity times set by are randomly sampling
@@ -291,11 +291,12 @@ global {
 		interaction_graph <- graph<people, people>(people as_distance_graph (distance + distance * slider1));
 	}
 
-	reflex initSim when: ((cycle mod seconds_per_day) = 0) {
+	reflex initSim when: ((time / #mn) mod 1440 = 0) {
 		if(initpop){
 		  do initPop;	
+		  initpop<-false;
 		}
-		current_day <- current_day mod 6 + 1;
+		current_day <- current_day + 1;
 	}
 
 	action generateSquarePop (int nb, string scale) {
@@ -630,6 +631,16 @@ experiment CityScopeMain type: gui virtual: true {
 }
 
 experiment CityScopeVolpeDemo type: gui parent: CityScopeMain autorun: true {
+	
+	
+	// ONLINE PARAMETERS
+	parameter "Draw Interaction:"  var: drawInteraction category: "Interaction";
+	parameter "Distance:" var:distance category: "Interaction" min: 1 max: 100;
+	parameter "Refresh rate (cycle):" var:refresh category: "Grid" min: 1 max: 1000;
+	parameter "Update Grid:" var:dynamicGrid category: "Grid";
+	parameter "Dynamic Population:" var:dynamicPop category: "Population";
+	parameter "Pop Refresh rate (cycle):" var:refreshPop category: "Population" min: 1 max: 1000 ;
+	parameter "Trace:" var:traceTime category: "Visualization" min: 1 max: 500;
 	float minimum_cycle_duration <- 0.02;
 	output {
 		
