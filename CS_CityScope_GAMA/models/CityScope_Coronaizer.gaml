@@ -11,7 +11,7 @@ import "CityScope_main.gaml"
 
 global{
 	float socialDistance <- 2#m;
-	float quarantineRatio <- 0.0;
+	float quarantineRatio <- 0.5;
 	float maskRatio <- 0.2;
 	
 	
@@ -54,7 +54,11 @@ global{
 				as_mask<-true;
 			}
 		}
-		
+		ask ViralPeople{
+			if (flip(quarantineRatio)){
+				target.isMoving<-false;
+			}
+		}
 	}
 	reflex updateGraph when: (drawSocialDistanceGraph = true) {
 		social_distance_graph <- graph<people, people>(people as_distance_graph (socialDistance));

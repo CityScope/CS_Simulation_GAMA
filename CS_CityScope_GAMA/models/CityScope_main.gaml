@@ -419,6 +419,7 @@ species people skills: [moving] {
 	float radius;
 	bool moveOnRoad <- true;
 	bool fromTheGrid <- false;
+	bool isMoving<-true;
 
 	action travellingMode {
 		curMovingMode <- "travelling";
@@ -458,7 +459,7 @@ species people skills: [moving] {
 
 	}
 
-	reflex move {
+	reflex move when:isMoving{
 		if (moveOnRoad = true and the_target != nil) {
 			do goto target: the_target on: road_graph;
 		} else {
