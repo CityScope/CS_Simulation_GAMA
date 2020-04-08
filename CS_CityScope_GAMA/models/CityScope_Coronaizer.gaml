@@ -16,13 +16,14 @@ global{
 	
 	
 	bool a_boolean_to_disable_parameters <- true;
-    int number_day_recovery<-15;
-	int time_recovery<-1440*60*number_day_recovery;
-	float infection_rate<-0.01;
+    int number_day_recovery<-10;
+	int time_recovery<-1440*number_day_recovery*60;
+	float infection_rate<-0.05;
 	int initial_nb_infected<-1;
 	float step<-1#mn;
 	
-	bool drawDirectGraph <- false;
+	bool drawInfectionGraph <- false;
+	bool drawSocialDistanceGraph <- false;
 	bool draw_grid <- false;
 	bool showPeople<-true;
 	
@@ -34,7 +35,8 @@ global{
 	int nb_susceptible  <- 0 update: length(ViralPeople where (each.is_susceptible));
 	int nb_infected <- 0 update: length(ViralPeople where (each.is_infected));
 	int nb_recovered <- 0 update: length(ViralPeople where (each.is_recovered));
-	graph<people, people> social_distance_graph;
+	graph<people, people> infection_graph <- graph<people, people>([]);
+	graph<people, people> social_distance_graph <- graph<people, people>([]);
 	
 	init{
 			
@@ -45,10 +47,11 @@ global{
 			is_susceptible <-  false;
 	        is_infected <-  true;
 	        is_immune <-  false;
-	        is_recovered<-false; 
+	        is_recovered<-false;
 		}
+		
 	}
-	reflex updateGraph when: (drawDirectGraph = true) {
+	reflex updateGraph when: (drawSocialDistanceGraph = true) {
 		social_distance_graph <- graph<people, people>(people as_distance_graph (socialDistance));
 	}
 	
@@ -80,6 +83,7 @@ species ViralPeople  mirrors:people{
 						firstInfectionTime<-time;
 					}
 				}
+				infection_graph <<edge(self,myself);
         	}
 		}
 	}
@@ -123,7 +127,8 @@ experiment Coronaizer type:gui autorun:true{
 	parameter "Infection Rate"   category: "Corona" var:infection_rate min:0.0 max:1.0;
 	parameter "Initial Infected"   category: "Corona" var: initial_nb_infected min:0 max:100;
 	parameter "Simulation Step"   category: "Corona" var:step min:0.0 max:100.0;
-	parameter "Social Distance Graph:" category: "Visualization" var:drawDirectGraph ;
+	parameter "Social Distance Graph:" category: "Visualization" var:drawSocialDistanceGraph ;
+	parameter "Infection Graph:" category: "Visualization" var:drawInfectionGraph ;
 	parameter "Draw Grid:" category: "Visualization" var:draw_grid;
 	parameter "Show People:" category: "Visualization" var:showPeople;
 	
@@ -134,20 +139,29 @@ experiment Coronaizer type:gui autorun:true{
 	  	species road aspect:base;
 	  	species ViralPeople aspect:base;
 	  	species cell aspect:default;
-	  	graphics "simulated_graph" {
-				if (social_distance_graph != nil and drawDirectGraph = true) {
+	  	graphics "infection_graph" {
+				if (infection_graph != nil and drawInfectionGraph = true) {
+					loop eg over: infection_graph.edges {
+						geometry edge_geom <- geometry(eg);
+						draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) color:#red;
+					}
+
+				}
+			}
+		graphics "social_graph" {
+				if (social_distance_graph != nil and drawSocialDistanceGraph = true) {
 					loop eg over: social_distance_graph.edges {
 						geometry edge_geom <- geometry(eg);
 						draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) color:#gray;
 					}
 
 				}
-			}
+		}
 		graphics "text" {
 	      draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
 	  	}	
 	  }	
-	 display CoronaChart refresh:every(#hour) toolbar:false {
+	 display CoronaChart refresh:every(#day/2) toolbar:false {
 		chart "Population in "+cityScopeCity type: series x_serie_labels: (current_day) x_label: 'Infection rate: '+infection_rate y_label: 'Case'{
 			data "susceptible" value: nb_susceptible color: #green;
 			data "infected" value: nb_infected color: #red;	
@@ -162,7 +176,7 @@ experiment CityScopeMulti type: gui parent: Coronaizer
 {
 	init
 	{
-		create simulation with: [cityScopeCity:: "volpe", infection_rate::0.0025];
+		create simulation with: [cityScopeCity:: "volpe", infection_rate::0.005];
 	}
 	output
 	{
