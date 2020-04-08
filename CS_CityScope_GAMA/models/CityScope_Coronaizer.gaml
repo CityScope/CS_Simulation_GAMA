@@ -12,7 +12,7 @@ import "CityScope_main.gaml"
 global{
 	float socialDistance <- 2#m;
 	float quarantineRatio <- 0.0;
-	float maskRatio <- 0.0;
+	float maskRatio <- 0.2;
 	
 	
 	bool a_boolean_to_disable_parameters <- true;
@@ -49,6 +49,11 @@ global{
 	        is_immune <-  false;
 	        is_recovered<-false;
 		}
+		ask ViralPeople{
+			if (flip(maskRatio)){
+				as_mask<-true;
+			}
+		}
 		
 	}
 	reflex updateGraph when: (drawSocialDistanceGraph = true) {
@@ -61,18 +66,18 @@ global{
 	}
 }
 
-
 species ViralPeople  mirrors:people{
 	point location <- target.location update: {target.location.x,target.location.y,target.location.z+5};
 	bool is_susceptible <- true;
 	bool is_infected <- false;
     bool is_immune <- false;
     bool is_recovered<-false;
+    bool as_mask<-false;
     float infected_time<-0.0;
     geometry shape<-circle(1);
 		
-	reflex infected_contact when: is_infected {
-		ask ViralPeople at_distance socialDistance {
+	reflex infected_contact when: is_infected and !as_mask{
+		ask ViralPeople where !each.as_mask at_distance socialDistance {
 			if (flip(infection_rate)) {
         		is_susceptible <-  false;
             	is_infected <-  true;
@@ -97,6 +102,9 @@ species ViralPeople  mirrors:people{
 	aspect base {
 		if(showPeople){
 		  draw circle(is_infected ? 7#m : 5#m) color:(is_susceptible) ? #green : ((is_infected) ? #red : #blue);	
+		}
+		if (as_mask){
+		  draw square(2#m) color:#white;	
 		}
 	}
 }
