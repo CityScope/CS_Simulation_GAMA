@@ -12,11 +12,13 @@ import "CityScope_main.gaml"
 global{
 	float socialDistance <- 2#m;
 	float quarantineRatio <- 0.5;
+	float quarantineRatio_prev<-quarantineRatio;
 	float maskRatio <- 0.2;
+	float maskRatio_prev<-maskRatio;
 	
 	
 	bool a_boolean_to_disable_parameters <- true;
-    int number_day_recovery<-10;
+   	int number_day_recovery<-10;
 	int time_recovery<-1440*number_day_recovery*60;
 	float infection_rate<-0.05;
 	int initial_nb_infected<-1;
@@ -54,10 +56,8 @@ global{
 				as_mask<-true;
 			}
 		}
-		ask ViralPeople{
-			if (flip(quarantineRatio)){
-				target.isMoving<-false;
-			}
+		ask (quarantineRatio*length(people)) among ViralPeople{
+			target.isMoving<-false;
 		}
 	}
 	reflex updateGraph when: (drawSocialDistanceGraph = true) {
@@ -65,8 +65,29 @@ global{
 	}
 	
 	
-	reflex increaseRate when:cycle= 1440*7{
-		//infection_rate<-0.0;//infection_rate/2;
+	reflex manageDynamicValue {
+		if(quarantineRatio_prev != quarantineRatio or maskRatio_prev!=maskRatio) {
+			if(quarantineRatio>quarantineRatio_prev){
+			  ask ((quarantineRatio - quarantineRatio_prev)*length(people)) among (people where (each.isMoving)){
+			      isMoving<-false;
+		      }
+			}else{
+				ask ((quarantineRatio_prev - quarantineRatio)*length(people)) among (people where (!each.isMoving)){
+			      isMoving<-true;
+		      }
+			}
+			if(maskRatio>maskRatio_prev){
+			  ask ((maskRatio - maskRatio_prev)*length(people)) among (ViralPeople where (!each.as_mask)){
+			      as_mask<-true;
+		      }
+			}else{
+				ask ((maskRatio_prev-maskRatio)*length(people)) among (ViralPeople where (each.as_mask)){
+			      as_mask<-false;
+		      }
+			}
+		}
+		quarantineRatio_prev <- quarantineRatio;
+		maskRatio_prev<-maskRatio;
 	}
 }
 
@@ -101,14 +122,14 @@ species ViralPeople  mirrors:people{
 		is_infected<-false;
 		is_recovered<-true;
 	}
-	
+
 	
 	aspect base {
 		if(showPeople){
 		  draw circle(is_infected ? 7#m : 5#m) color:(is_susceptible) ? #green : ((is_infected) ? #red : #blue);	
 		}
 		if (as_mask){
-		  draw square(2#m) color:#white;	
+		  draw square(4#m) color:#white;	
 		}
 	}
 }
@@ -174,7 +195,7 @@ experiment Coronaizer type:gui autorun:true{
 	  	}	
 	  }	
 	 display CoronaChart refresh:every(#day/2) toolbar:false {
-		chart "Population in "+cityScopeCity type: series x_serie_labels: (current_day) x_label: 'Infection rate: '+infection_rate y_label: 'Case'{
+		chart "Population in "+cityScopeCity type: series x_serie_labels: (current_day) x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask) y_label: 'Case'{
 			data "susceptible" value: nb_susceptible color: #green;
 			data "infected" value: nb_infected color: #red;	
 			data "recovered" value: nb_recovered color: #blue;
