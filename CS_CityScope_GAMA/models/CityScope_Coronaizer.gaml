@@ -21,6 +21,7 @@ global{
    	int number_day_recovery<-10;
 	int time_recovery<-1440*number_day_recovery*60;
 	float infection_rate<-0.05;
+	float mortality_rate<-0.1;
 	int initial_nb_infected<-1;
 	float step<-1#mn;
 	
@@ -37,6 +38,7 @@ global{
 	int nb_susceptible  <- 0 update: length(ViralPeople where (each.is_susceptible));
 	int nb_infected <- 0 update: length(ViralPeople where (each.is_infected));
 	int nb_recovered <- 0 update: length(ViralPeople where (each.is_recovered));
+	int nb_death<-0;
 	graph<people, people> infection_graph <- graph<people, people>([]);
 	graph<people, people> social_distance_graph <- graph<people, people>([]);
 	
@@ -88,6 +90,17 @@ global{
 		}
 		quarantineRatio_prev <- quarantineRatio;
 		maskRatio_prev<-maskRatio;
+	}
+	
+	reflex updateDeath when:every(#day){
+		ask (ViralPeople where (each.is_infected)){
+			if flip(mortality_rate){
+				nb_death<-nb_death+1;
+				ask target{do die;}
+				do die;
+				
+			}
+		}
 	}
 }
 
@@ -155,9 +168,10 @@ experiment Coronaizer type:gui autorun:true{
 	parameter "Quarantine Ratio:" category: "Policy" var:quarantineRatio min: 0.0 max: 1.0 step:0.1;
 	parameter "Mask Ratio:" category: "Policy" var: maskRatio min: 0.0 max: 1.0 step:0.1;
 	bool a_boolean_to_disable_parameters <- true;
-	parameter "Disable following parameters" category:"Corona" var: a_boolean_to_disable_parameters disables: [time_recovery,infection_rate,initial_nb_infected,step];
+	parameter "Disable following parameters" category:"Corona" var: a_boolean_to_disable_parameters disables: [time_recovery,infection_rate,initial_nb_infected,step,mortality_rate];
 	parameter "Nb recovery day"   category: "Corona" var:number_day_recovery min: 1 max: 30;
 	parameter "Infection Rate"   category: "Corona" var:infection_rate min:0.0 max:1.0;
+	parameter "Mortality"   category: "Corona" var: mortality_rate min:0.0 max:1.0;
 	parameter "Initial Infected"   category: "Corona" var: initial_nb_infected min:0 max:100;
 	parameter "Simulation Step"   category: "Corona" var:step min:0.0 max:100.0;
 	parameter "Social Distance Graph:" category: "Visualization" var:drawSocialDistanceGraph ;
@@ -195,10 +209,13 @@ experiment Coronaizer type:gui autorun:true{
 	  	}	
 	  }	
 	 display CoronaChart refresh:every(#day/2) toolbar:false {
-		chart "Population in "+cityScopeCity type: series x_serie_labels: (current_day) x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask) y_label: 'Case'{
+		chart "Population in "+cityScopeCity type: series x_serie_labels: (current_day) 
+		x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
+		y_label: 'Case'{
 			data "susceptible" value: nb_susceptible color: #green;
 			data "infected" value: nb_infected color: #red;	
 			data "recovered" value: nb_recovered color: #blue;
+			data "death" value: nb_death color: #black;
 		}
 	  }
 	}		
@@ -220,9 +237,9 @@ experiment CityScopeMultiCity type: gui parent: Coronaizer
 {
 	init
 	{	
-		create simulation with: [cityScopeCity:: "Taipei"];
-		create simulation with: [cityScopeCity:: "otaniemi"];
-		create simulation with: [cityScopeCity:: "Lyon"];		
+		create simulation with: [cityScopeCity:: "Andorra"];
+		/*create simulation with: [cityScopeCity:: "otaniemi"];
+		create simulation with: [cityScopeCity:: "Lyon"];*/		
 	}
 	output
 	{
