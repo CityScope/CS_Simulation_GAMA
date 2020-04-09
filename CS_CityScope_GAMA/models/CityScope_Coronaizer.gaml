@@ -29,6 +29,8 @@ global{
 	bool drawSocialDistanceGraph <- false;
 	bool draw_grid <- false;
 	bool showPeople<-true;
+	bool savetoCSV<-false;
+	string filePathName;
 	
 
 	int nb_cols <- int(75*1.5);
@@ -43,7 +45,7 @@ global{
 	graph<people, people> social_distance_graph <- graph<people, people>([]);
 	
 	init{
-			
+		filePathName <-"../results/output"+date("now")+".csv";	
 	}
 	
 	reflex initCovid when:cycle=1{
@@ -101,6 +103,11 @@ global{
 				
 			}
 		}
+	}
+	
+	reflex save_model_output when: every(#day) and savetoCSV{
+		// save the values of the variables name, speed and size to the csv file; the rewrite facet is set to false to continue to write in the same file
+		save [time,nb_susceptible,nb_infected, nb_recovered, nb_death] to: filePathName type:"csv" rewrite: false;
 	}
 }
 
@@ -178,6 +185,8 @@ experiment Coronaizer type:gui autorun:true{
 	parameter "Infection Graph:" category: "Visualization" var:drawInfectionGraph ;
 	parameter "Draw Grid:" category: "Visualization" var:draw_grid;
 	parameter "Show People:" category: "Visualization" var:showPeople;
+	parameter "Save results to CSV:" category: "Simulation" var:savetoCSV;
+	
 	
 	output{
 	  layout #split;
