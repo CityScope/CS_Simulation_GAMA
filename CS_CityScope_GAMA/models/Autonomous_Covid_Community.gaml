@@ -65,8 +65,9 @@ global{
 			myPlaces[0]<-one_of(_buildings where (each.type="residential"));
 		    myPlaces[1]<-one_of(_buildings where (each.type="shopping"));
 		    myPlaces[2]<-one_of(_buildings where (each.type="business"));
+		    location <- any_location_in(myPlaces[0]);
 		    my_target<-any_location_in(myPlaces[0]);
-		    myCurrentDistrict<- first(district overlapping myPlaces[0]);
+		    myCurrentDistrict<- myPlaces[0].myDistrict;
 		    //location<-my_target;
 	    }
 	}
@@ -81,6 +82,8 @@ species district{
 		  location<-any_location_in(myself);
 		  type<-_type;
 		  myself.myBuildings<<self;
+		  
+		  myDistrict <- myself;
 	    }
 	}
 	
@@ -96,6 +99,7 @@ species district{
 		  location<-any_location_in(myself);
 		  type<-_type;
 		  myself.myBuildings<<self;
+		  myDistrict <- myself;
 	    }
 	}
 	
@@ -111,6 +115,7 @@ species district{
 species building{
 	rgb color;
 	string type;
+	district myDistrict;
 	aspect default{
 		draw shape color:buildingColors[type];
 	}
@@ -122,14 +127,36 @@ species people skills:[moving]{
 	int curPlaces<-0;
 	list<point> current_trajectory;
 	district myCurrentDistrict;
+	district target_district;
+	bool go_outside <- false;
 	
-	reflex move{
-	    do goto target:my_target speed:10.0;
-    	if (my_target = location and my_target!=nil){
-			curPlaces<-(curPlaces+1) mod 3;
-			my_target<-any_location_in(myPlaces[curPlaces]);
+	reflex move_to_target_district when: target_district != nil {
+		if (go_outside) {
+			do goto target: myCurrentDistrict.location speed:5.0;
+			if (location = myCurrentDistrict.location) {
+				go_outside <- false;
+				
+			}
+		} else {
+			do goto target: target_district.location  speed:10.0;
+			if (location = target_district.location) {
+				myCurrentDistrict <- target_district;
+				target_district <- nil;
+			}
 		}
-		do wander speed:1.0;
+	}
+	reflex move_inside_district when: target_district = nil{
+	    do goto target:my_target speed:5.0;
+    	if (my_target = location){
+    		curPlaces<-(curPlaces+1) mod 3;
+			building bd <- myPlaces[curPlaces];
+			my_target<-any_location_in(bd);
+			if (bd.myDistrict != myCurrentDistrict) {
+				go_outside <- true;
+				target_district <- bd.myDistrict;
+			}
+		}
+		
     }
     
     reflex computeTrajectory{
@@ -137,6 +164,10 @@ species people skills:[moving]{
 	    		current_trajectory >> first(current_trajectory);
        		}
         	current_trajectory << location;
+    }
+    
+    reflex rnd_move {
+    	do wander speed:1.0;
     }
 	
 	aspect default{
