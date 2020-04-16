@@ -12,16 +12,18 @@ model AutonomousCovidCommunity
 global{
 	string scenario;
 	bool drawTrajectory;
+	int nbBuildingPerDistrict<-10;
 	geometry shape<-square (1#km);
 	map<string, rgb> buildingColors <- ["residential"::#purple, "shopping"::#cyan, "business"::#orange];
+	graph<district, district> macro_graph;
 	init{	
 		create district{
 			shape<-circle (250#m);
 			location<-{500#m,250#m};
 			if(scenario="Conventional Zoning"){
-				do createBuildingByType(3,"residential");
+				do createBuildingByType(nbBuildingPerDistrict,"residential");
     	    }else{
-				do createAllBuilding(3);
+				do createAllBuilding(nbBuildingPerDistrict);
 			}
 			
 		}
@@ -29,20 +31,21 @@ global{
 			shape<-circle (250#m);
 			location<-{250#m,750#m};
 			if(scenario="Conventional Zoning"){
-			  do createBuildingByType(3,"shopping");
+			  do createBuildingByType(nbBuildingPerDistrict,"shopping");
     	    }else{
-			  do createAllBuilding(3);
+			  do createAllBuilding(nbBuildingPerDistrict);
 			}
 		}
 		create district{
 			shape<-circle (250#m);
 			location<-{750#m,750#m};
 			if(scenario="Conventional Zoning"){
-				do createBuildingByType(3,"business");
+				do createBuildingByType(nbBuildingPerDistrict,"business");
     	    }else{
-				do createAllBuilding(3);
+				do createAllBuilding(nbBuildingPerDistrict);
 			}
 		}
+		macro_graph<- graph<district, district>(district as_distance_graph (500#m ));
 		
 		if(scenario="Functional Autonomy"){
 			 do createPeople(33,first(district where (each.name = "district0")).myBuildings);
@@ -62,7 +65,8 @@ global{
 			myPlaces[0]<-one_of(_buildings where (each.type="residential"));
 		    myPlaces[1]<-one_of(_buildings where (each.type="shopping"));
 		    myPlaces[2]<-one_of(_buildings where (each.type="business"));
-		    my_target<-any_location_in(myPlaces[0]);	
+		    my_target<-any_location_in(myPlaces[0]);
+		    myCurrentDistrict<- first(district overlapping myPlaces[0]);
 		    //location<-my_target;
 	    }
 	}
@@ -117,6 +121,7 @@ species people skills:[moving]{
 	point my_target;
 	int curPlaces<-0;
 	list<point> current_trajectory;
+	district myCurrentDistrict;
 	
 	reflex move{
 	    do goto target:my_target speed:10.0;
@@ -144,7 +149,7 @@ species people skills:[moving]{
 
 experiment autonomousCity{
 	float minimu_cycle_duration<-0.02;
-	parameter "Scenario" category:"" var: scenario <- "Functional Autonomy" among: ["Conventional Zoning","Functional Autonomy","Pandemic Response"];
+	parameter "Scenario" category:"" var: scenario <- "Conventional Zoning" among: ["Conventional Zoning","Functional Autonomy","Pandemic Response"];
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	output {
 			
@@ -166,6 +171,17 @@ experiment autonomousCity{
 			}
 			overlay position: { 0, 25 } size: { 240 #px, 680 #px } background: # black transparency: 0.0 border: #black {				    
 		      draw string(scenario) color:#white at:{0,0} font:font("Helvetica", 30 , #bold);
+			}
+			graphics "macro_graph" {
+				if (macro_graph != nil ) {
+					loop eg over: macro_graph.edges {
+						geometry edge_geom <- geometry(eg);
+						float w <- macro_graph weight_of eg;
+						//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90)color:#green;//rgb(0,w*10,0);
+						draw line(edge_geom.points[0],edge_geom.points[1]) width: w/2 color:rgb(0,255,0);
+					}
+
+				}
 			}
 		}
 	}
