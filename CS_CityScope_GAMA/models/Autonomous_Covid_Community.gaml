@@ -15,109 +15,85 @@ global{
 	int trajectoryLength<-100;
 	float trajectoryTransparency<-0.5;
 	int nbBuildingPerDistrict<-10;
+	int nbPeople<-100;
 	float districtSize<-250#m;
 	geometry shape<-square (1#km);
+	file district_shapefile <- file("../results/district.shp");
 	map<string, rgb> buildingColors <- ["residential"::#purple, "shopping"::#cyan, "business"::#orange];
 	graph<district, district> macro_graph;
 	bool drawMacroGraph<-true;
+	bool pandemy<-false;
 	init{	
-		create district{
-			shape<-circle (districtSize);
-			location<-{500#m,250#m};
-			if(scenario="Conventional Zoning"){
-				do createBuildingByType(nbBuildingPerDistrict,"residential");
-    	    }else{
-				do createAllBuilding(nbBuildingPerDistrict);
-			}
-			
+		
+		create district from:district_shapefile{
+			create building number:nbBuildingPerDistrict{
+			  shape<-square(20#m);
+			  location<-any_location_in(myself.shape*0.9);
+			  myself.myBuildings<<self;
+			  myDistrict <- myself;
+		    }
 		}
-		create district{
-			shape<-circle (districtSize);
-			location<-{150#m,850#m};
-			if(scenario="Conventional Zoning"){
-			  do createBuildingByType(nbBuildingPerDistrict,"shopping");
-    	    }else{
-			  do createAllBuilding(nbBuildingPerDistrict);
-			}
-		}
-		create district{
-			shape<-circle (districtSize);
-			location<-{850#m,850#m};
-			if(scenario="Conventional Zoning"){
-				do createBuildingByType(nbBuildingPerDistrict,"business");
-    	    }else{
-				do createAllBuilding(nbBuildingPerDistrict);
-			}
+		create people number:nbPeople{
+		  	current_trajectory <- [];
 		}
 		macro_graph<- graph<district, district>(district as_distance_graph (500#m ));
-		
-		if(scenario="Functional Autonomy"){
-			 do createPeople(33,first(district where (each.name = "district0")).myBuildings);
-			 do createPeople(33,first(district where (each.name = "district1")).myBuildings);
-			 do createPeople(33,first(district where (each.name = "district2")).myBuildings);
+		do updateSim(scenario); 
 				
-		}
-		if(scenario="Conventional Zoning"){
-		  do createPeople(100,list(building));
-		}
-		if(scenario="Pandemic Response"){
-		  do createPeople(33,first(district where (each.name = "district0")).myBuildings + first(district where (each.name = "district1")).myBuildings);
-		  ask first(district where (each.name = "district2")){
-		  	isQuarantine<-true;
-		  }
-		  do createPeople(33,first(district where (each.name = "district2")).myBuildings);
-		}
-		
+		//save district to:"../results/district.shp" type:"shp"; 
+	}
 
+
+action updateSim(string _scenario){
+	do updateDistrict(_scenario);
+	do updatePeople(_scenario);
+}
+
+action updatePeople(string _scenario){
+	if (_scenario = "Conventional"){
+	  ask people{
+		myPlaces[0]<-one_of(building where (each.type="residential"));
+		myPlaces[1]<-one_of(building where (each.type="shopping"));
+		myPlaces[2]<-one_of(building where (each.type="business"));
+		my_target<-any_location_in(myPlaces[0]);
+		myCurrentDistrict<- myPlaces[0].myDistrict;
+	  }	
 	}
-	
-	action createPeople (int nb, list<building> _buildings){
-		create people number:nb{
-		  	current_trajectory <- [];
-			myPlaces[0]<-one_of(_buildings where (each.type="residential"));
-		    myPlaces[1]<-one_of(_buildings where (each.type="shopping"));
-		    myPlaces[2]<-one_of(_buildings where (each.type="business"));
-		   // location <- any_location_in(myPlaces[0]);
-		    my_target<-any_location_in(myPlaces[0]);
-		    myCurrentDistrict<- myPlaces[0].myDistrict;
-		    //location<-my_target;
-	    }
+	if (_scenario = "Autonomy"){
+	  ask people{
+	  	myCurrentDistrict<-one_of(district);
+		myPlaces[0]<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
+		myPlaces[1]<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
+		myPlaces[2]<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
+		my_target<-any_location_in(myPlaces[0]);
+	  }	
 	}
+}
+
+action updateDistrict( string _scenario){
+	if (_scenario = "Conventional"){
+		ask first(district where (each.name = "district0")).myBuildings{
+			type<-"residential";
+		}
+		ask first(district where (each.name = "district1")).myBuildings{
+			type<-"shopping";
+		}
+		ask first(district where (each.name = "district2")).myBuildings{
+			type<-"business";
+		}
+	}
+	if (_scenario = "Autonomy"){
+		ask district{
+			ask myBuildings{
+				type<-flip(0.3) ? "residential" : (flip(0.3) ? "shopping" : "business");
+			}
+		}
+	}	
+}	
 }
 
 species district{
 	list<building> myBuildings;
 	bool isQuarantine<-false;
-	
-	action createBuildingByType(int nb,string _type){
-		create building number:nb{
-		  shape<-square(20#m);
-		  location<-any_location_in(myself.shape*0.9);
-		  type<-_type;
-		  myself.myBuildings<<self;
-		  
-		  myDistrict <- myself;
-	    }
-	}
-	
-	action createAllBuilding(int nb){
-		do createBuilding(int(nb/3),"residential");
-		do createBuilding(int(nb/3),"shopping");
-		do createBuilding(int(nb/3),"business");	
-	}
-	
-	action createBuilding(int nb,string _type){
-		create building number:nb{
-		  shape<-square(20#m);
-		  location<-any_location_in(myself.shape*0.9);
-		  type<-_type;
-		  myself.myBuildings<<self;
-		  myDistrict <- myself;
-	    }
-	}
-	
-
-	
 	aspect default{
 		//draw string(self.name) at:{location.x+districtSize*1.1,location.y-districtSize*0.5} color:#white perspective: true font:font("Helvetica", 30 , #bold);
 		if (isQuarantine){
@@ -198,7 +174,7 @@ species people skills:[moving]{
 
 experiment autonomousCity{
 	float minimu_cycle_duration<-0.02;
-	parameter "Scenario" category:"" var: scenario <- "Pandemic Response" among: ["Conventional Zoning","Functional Autonomy","Pandemic Response"];
+	parameter "Scenario" category:"" var: scenario <- "Autonomy" among: ["Conventional","Autonomy"];
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
 	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0 max:1.0 ;
@@ -222,6 +198,7 @@ experiment autonomousCity{
 			species district;
 			species building;
 			species people;
+			
 
 			
 			graphics "macro_graph" {
@@ -229,12 +206,14 @@ experiment autonomousCity{
 					loop eg over: macro_graph.edges {
 						geometry edge_geom <- geometry(eg);
 						float w <- macro_graph weight_of eg;
-						//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90)color:#green;//rgb(0,w*10,0);
 						draw line(edge_geom.points[0],edge_geom.points[1]) width: 10#m color:#white;
 					}
 
 				}
 			}
+			event["c"] action: {scenario<-"Conventional";ask world{do updateSim(scenario);}};
+			event["a"] action: {scenario<-"Autonomy";ask world{do updateSim(scenario);}};
 		}
+		
 	}
 }
