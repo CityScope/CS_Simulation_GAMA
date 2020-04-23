@@ -20,8 +20,8 @@ global{
 	float districtSize<-250#m;
 	float buildingSize<-40#m;
 	geometry shape<-square (1#km);
+	string cityScopeCity<-"volpe";
 	file district_shapefile <- file("../includes/AutonomousCities/district.shp");
-	//map<string, rgb> buildingColors <- ["residential"::#purple, "shopping"::#cyan, "business"::#orange];
 	rgb districtColor <-rgb(225,235,241);
 	rgb macroGraphColor<-rgb(245,135,51);
 	map<string, rgb> buildingColors <- ["residential"::rgb(168,192,208), "shopping"::rgb(245,135,51), "business"::rgb(217,198,163)];
@@ -35,8 +35,13 @@ global{
 	bool drawMacroGraph<-true;
 	bool pandemy<-false;
 	init{	
-		
-		create district from:district_shapefile{
+		write 'in autonomous';
+		do InitModel;
+	}
+	
+action InitModel{
+	write 'init initial model';
+	create district from:district_shapefile{
 			create building number:nbBuildingPerDistrict{
 			  shape<-square(20#m);
 			  location<-any_location_in(myself.shape*0.9);
@@ -49,10 +54,7 @@ global{
 		}
 		macro_graph<- graph<district, district>(district as_distance_graph (500#m ));
 		do updateSim(autonomy); 
-				
-		//save district to:"../results/district.shp" type:"shp";
-		//save building to:"../results/building.shp" type:"shp"; 
-	}
+}	
 
 
 action updateSim(bool _autonomy){
@@ -158,8 +160,9 @@ species people skills:[moving]{
 	district myCurrentDistrict;
 	district target_district;
 	bool go_outside <- false;
+	bool isMoving<-true;
 	
-	reflex move_to_target_district when: target_district != nil {
+	reflex move_to_target_district when: (target_district != nil and isMoving){
 		if (go_outside) {
 			do goto target: myCurrentDistrict.location speed:5.0;
 			if (location = myCurrentDistrict.location) {
@@ -174,7 +177,7 @@ species people skills:[moving]{
 			}
 		}
 	}
-	reflex move_inside_district when: target_district = nil{
+	reflex move_inside_district when: (target_district = nil and isMoving){
 	    do goto target:my_target speed:5.0;
     	if (my_target = location){
     		curPlaces<-(curPlaces+1) mod 3;
@@ -209,14 +212,14 @@ species people skills:[moving]{
 
 experiment autonomousCity{
 	float minimum_cycle_duration<-0.02;
-	parameter "Autonomy" category:"Policy" var: autonomy <- "Conventional"  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
+	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
 	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0 max:1.0 ;
 	parameter "Draw Macro Graph:" category: "Visualization" var:drawMacroGraph <-false;
 	
-	
+
 	output {
 			
 		display GotoOnNetworkAgent type:opengl background:rgb(39,62,78) draw_env:false synchronized:true toolbar:false
