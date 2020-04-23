@@ -174,7 +174,7 @@ species people skills:[moving]{
 
 experiment autonomousCity{
 	float minimu_cycle_duration<-0.02;
-	parameter "Scenario" category:"" var: scenario <- "Autonomy" among: ["Conventional","Autonomy"];
+	parameter "Scenario" category:"Policy" var: scenario <- "Autonomy" among: ["Conventional","Autonomy"] on_change: {ask world{do updateSim(scenario);}};
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
 	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0 max:1.0 ;
