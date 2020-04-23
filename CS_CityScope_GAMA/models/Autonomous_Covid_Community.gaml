@@ -107,6 +107,21 @@ action updateDistrict( bool _autonomy){
 			ask myBuildings{
 				type<-flip(0.3) ? "residential" : (flip(0.3) ? "shopping" : "business");
 			}
+			if(length (myBuildings where (each.type="residential"))=0){
+				ask one_of(myBuildings){
+				  type<-"residential";	
+				}		
+			}
+			if(length (myBuildings where (each.type="shopping"))=0){
+				ask one_of(myBuildings){
+				  type<-"shopping";	
+				}		
+			}
+			if(length (myBuildings where (each.type="business"))=0){
+				ask one_of(myBuildings){
+				  type<-"business";	
+				}		
+			}
 		}
 	}	
 }	
@@ -225,11 +240,11 @@ experiment autonomousCity{
 					loop eg over: macro_graph.edges {
 						geometry edge_geom <- geometry(eg);
 						float w <- macro_graph weight_of eg;
-						if(autonomy="Conventional"){
+						if(!autonomy){
 							//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) width: 10#m color:macroGraphColor;	
 						  draw line(edge_geom.points[0],edge_geom.points[1]) width: 10#m color:macroGraphColor;	
 						}
-						if(autonomy="Autonomy"){
+						if(autonomy){
 							//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) width: 2#m color:macroGraphColor;
 						  draw line(edge_geom.points[0],edge_geom.points[1]) width: 2#m color:macroGraphColor;	
 						}
@@ -238,8 +253,8 @@ experiment autonomousCity{
 
 				}
 			}
-			event["c"] action: {autonomy<-"Conventional";ask world{do updateSim(autonomy);}};
-			event["a"] action: {autonomy<-"Autonomy";ask world{do updateSim(autonomy);}};
+			event["c"] action: {autonomy<-false;ask world{do updateSim(autonomy);}};
+			event["a"] action: {autonomy<-true;ask world{do updateSim(autonomy);}};
 		}
 		
 	}
