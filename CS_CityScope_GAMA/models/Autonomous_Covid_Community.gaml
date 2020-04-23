@@ -11,15 +11,26 @@ model AutonomousCovidCommunity
 
 global{
 	string scenario;
+	float crossRatio;
 	bool drawTrajectory;
 	int trajectoryLength<-100;
 	float trajectoryTransparency<-0.5;
 	int nbBuildingPerDistrict<-10;
 	int nbPeople<-100;
 	float districtSize<-250#m;
+	float buildingSize<-40#m;
 	geometry shape<-square (1#km);
-	file district_shapefile <- file("../results/district.shp");
-	map<string, rgb> buildingColors <- ["residential"::#purple, "shopping"::#cyan, "business"::#orange];
+	file district_shapefile <- file("../includes/AutonomousCities/district.shp");
+	//map<string, rgb> buildingColors <- ["residential"::#purple, "shopping"::#cyan, "business"::#orange];
+	rgb districtColor <-rgb(225,235,241);
+	rgb macroGraphColor<-rgb(245,135,51);
+	map<string, rgb> buildingColors <- ["residential"::rgb(168,192,208), "shopping"::rgb(245,135,51), "business"::rgb(217,198,163)];
+	map<string, geometry> buildingShape <- ["residential"::circle(buildingSize/2), "shopping"::square(buildingSize) rotated_by 45, "business"::triangle(buildingSize*1.25)];
+	
+	
+	
+	
+	
 	graph<district, district> macro_graph;
 	bool drawMacroGraph<-true;
 	bool pandemy<-false;
@@ -39,7 +50,8 @@ global{
 		macro_graph<- graph<district, district>(district as_distance_graph (500#m ));
 		do updateSim(scenario); 
 				
-		//save district to:"../results/district.shp" type:"shp"; 
+		//save district to:"../results/district.shp" type:"shp";
+		//save building to:"../results/building.shp" type:"shp"; 
 	}
 
 
@@ -65,7 +77,16 @@ action updatePeople(string _scenario){
 		myPlaces[1]<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
 		myPlaces[2]<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
 		my_target<-any_location_in(myPlaces[0]);
-	  }	
+	  }
+	  ask (length(people)*crossRatio) among people{
+	  	myCurrentDistrict<-one_of(district);
+		myPlaces[0]<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
+		myCurrentDistrict<-one_of(district);
+		myPlaces[1]<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
+		myCurrentDistrict<-one_of(district);
+		myPlaces[2]<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
+		my_target<-any_location_in(myPlaces[0]);
+	  }		
 	}
 }
 
@@ -99,8 +120,7 @@ species district{
 		if (isQuarantine){
 			draw shape*1.1 color:rgb(#red,1) empty:true border:#red;
 		}
-		draw shape color:rgb(#white,0.2) border:#white;
-		
+		draw shape color:districtColor border:districtColor-50;
 	}
 }
 
@@ -111,7 +131,7 @@ species building{
 	string type;
 	district myDistrict;
 	aspect default{
-		draw shape color:buildingColors[type];
+		draw buildingShape[type] at: location color:buildingColors[type] border:buildingColors[type]-50;
 	}
 }
 
@@ -174,7 +194,9 @@ species people skills:[moving]{
 
 experiment autonomousCity{
 	float minimu_cycle_duration<-0.02;
-	parameter "Scenario" category:"Policy" var: scenario <- "Autonomy" among: ["Conventional","Autonomy"] on_change: {ask world{do updateSim(scenario);}};
+	parameter "Scenario" category:"Policy" var: scenario <- "Conventional" among: ["Conventional","Autonomy"] on_change: {ask world{do updateSim(scenario);}};
+	//parameter "Scenario" category:"Corona" var: a_boolean_to_disable_parameters disables: [crossRatio];
+	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(scenario);}};
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
 	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0 max:1.0 ;
@@ -183,15 +205,15 @@ experiment autonomousCity{
 	
 	output {
 			
-		display GotoOnNetworkAgent type:opengl background:#black draw_env:false synchronized:true 
+		display GotoOnNetworkAgent type:opengl background:rgb(39,62,78) draw_env:false synchronized:true toolbar:false
 		camera_pos: {398.5622,522.9339,1636.0924} camera_look_pos: {398.5622,522.9053,-4.0E-4} camera_up_vector: {0.0,1.0,0.0} 
 		
 		{
 			overlay position: { 0, 25 } size: { 240 #px, 680 #px } background: #black border: #black {				    
 		      draw string(scenario) color:#white at:{50,100} font:font("Helvetica", 50 , #bold);
 		      loop i from:0 to:length(buildingColors)-1{
-				draw square(world.shape.width*0.02) empty:false color: buildingColors.values[i] at: {75, 200+i*50};
-				draw buildingColors.keys[i] color: buildingColors.values[i] at:  {100, 205+i*50} perspective: true font:font("Helvetica", 30 , #bold);
+				draw buildingShape[buildingColors.keys[i]] empty:false color: buildingColors.values[i] at: {75, 200+i*100};
+				draw buildingColors.keys[i] color: buildingColors.values[i] at:  {120, 210+i*100} perspective: true font:font("Helvetica", 30 , #bold);
 			  }
 			}
 			
@@ -199,14 +221,20 @@ experiment autonomousCity{
 			species building;
 			species people;
 			
-
-			
 			graphics "macro_graph" {
 				if (macro_graph != nil and drawMacroGraph) {
 					loop eg over: macro_graph.edges {
 						geometry edge_geom <- geometry(eg);
 						float w <- macro_graph weight_of eg;
-						draw line(edge_geom.points[0],edge_geom.points[1]) width: 10#m color:#white;
+						if(scenario="Conventional"){
+							//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) width: 10#m color:macroGraphColor;	
+						  draw line(edge_geom.points[0],edge_geom.points[1]) width: 10#m color:macroGraphColor;	
+						}
+						if(scenario="Autonomy"){
+							//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) width: 2#m color:macroGraphColor;
+						  draw line(edge_geom.points[0],edge_geom.points[1]) width: 2#m color:macroGraphColor;	
+						}
+						
 					}
 
 				}
