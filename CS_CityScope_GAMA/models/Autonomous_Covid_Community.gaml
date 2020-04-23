@@ -10,7 +10,7 @@ model AutonomousCovidCommunity
 /* Insert your model definition here */
 
 global{
-	string scenario;
+	bool autonomy;
 	float crossRatio;
 	bool drawTrajectory;
 	int trajectoryLength<-100;
@@ -48,20 +48,20 @@ global{
 		  	current_trajectory <- [];
 		}
 		macro_graph<- graph<district, district>(district as_distance_graph (500#m ));
-		do updateSim(scenario); 
+		do updateSim(autonomy); 
 				
 		//save district to:"../results/district.shp" type:"shp";
 		//save building to:"../results/building.shp" type:"shp"; 
 	}
 
 
-action updateSim(string _scenario){
-	do updateDistrict(_scenario);
-	do updatePeople(_scenario);
+action updateSim(bool _autonomy){
+	do updateDistrict(_autonomy);
+	do updatePeople(_autonomy);
 }
 
-action updatePeople(string _scenario){
-	if (_scenario = "Conventional"){
+action updatePeople(bool _autonomy){
+	if (!_autonomy){
 	  ask people{
 		myPlaces[0]<-one_of(building where (each.type="residential"));
 		myPlaces[1]<-one_of(building where (each.type="shopping"));
@@ -70,7 +70,7 @@ action updatePeople(string _scenario){
 		myCurrentDistrict<- myPlaces[0].myDistrict;
 	  }	
 	}
-	if (_scenario = "Autonomy"){
+	else{
 	  ask people{
 	  	myCurrentDistrict<-one_of(district);
 		myPlaces[0]<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
@@ -90,8 +90,8 @@ action updatePeople(string _scenario){
 	}
 }
 
-action updateDistrict( string _scenario){
-	if (_scenario = "Conventional"){
+action updateDistrict( bool _autonomy){
+	if (!_autonomy){
 		ask first(district where (each.name = "district0")).myBuildings{
 			type<-"residential";
 		}
@@ -102,7 +102,7 @@ action updateDistrict( string _scenario){
 			type<-"business";
 		}
 	}
-	if (_scenario = "Autonomy"){
+	else{
 		ask district{
 			ask myBuildings{
 				type<-flip(0.3) ? "residential" : (flip(0.3) ? "shopping" : "business");
@@ -193,10 +193,9 @@ species people skills:[moving]{
 }
 
 experiment autonomousCity{
-	float minimu_cycle_duration<-0.02;
-	parameter "Scenario" category:"Policy" var: scenario <- "Conventional" among: ["Conventional","Autonomy"] on_change: {ask world{do updateSim(scenario);}};
-	//parameter "Scenario" category:"Corona" var: a_boolean_to_disable_parameters disables: [crossRatio];
-	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(scenario);}};
+	float minimum_cycle_duration<-0.02;
+	parameter "Autonomy" category:"Policy" var: autonomy <- "Conventional"  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
+	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
 	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0 max:1.0 ;
@@ -210,7 +209,7 @@ experiment autonomousCity{
 		
 		{
 			overlay position: { 0, 25 } size: { 240 #px, 680 #px } background: #black border: #black {				    
-		      draw string(scenario) color:#white at:{50,100} font:font("Helvetica", 50 , #bold);
+		      draw !autonomy ? "Conventional" : "Autonomy" color:#white at:{50,100} font:font("Helvetica", 50 , #bold);
 		      loop i from:0 to:length(buildingColors)-1{
 				draw buildingShape[buildingColors.keys[i]] empty:false color: buildingColors.values[i] at: {75, 200+i*100};
 				draw buildingColors.keys[i] color: buildingColors.values[i] at:  {120, 210+i*100} perspective: true font:font("Helvetica", 30 , #bold);
@@ -226,11 +225,11 @@ experiment autonomousCity{
 					loop eg over: macro_graph.edges {
 						geometry edge_geom <- geometry(eg);
 						float w <- macro_graph weight_of eg;
-						if(scenario="Conventional"){
+						if(autonomy="Conventional"){
 							//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) width: 10#m color:macroGraphColor;	
 						  draw line(edge_geom.points[0],edge_geom.points[1]) width: 10#m color:macroGraphColor;	
 						}
-						if(scenario="Autonomy"){
+						if(autonomy="Autonomy"){
 							//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) width: 2#m color:macroGraphColor;
 						  draw line(edge_geom.points[0],edge_geom.points[1]) width: 2#m color:macroGraphColor;	
 						}
@@ -239,8 +238,8 @@ experiment autonomousCity{
 
 				}
 			}
-			event["c"] action: {scenario<-"Conventional";ask world{do updateSim(scenario);}};
-			event["a"] action: {scenario<-"Autonomy";ask world{do updateSim(scenario);}};
+			event["c"] action: {autonomy<-"Conventional";ask world{do updateSim(autonomy);}};
+			event["a"] action: {autonomy<-"Autonomy";ask world{do updateSim(autonomy);}};
 		}
 		
 	}
