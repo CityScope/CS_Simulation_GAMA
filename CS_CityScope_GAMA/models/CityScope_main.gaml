@@ -18,6 +18,7 @@ global {
 	geometry shape <- envelope(bound_shapefile);
 	graph road_graph;
 	graph<people, people> interaction_graph;
+	rgb backgroundColor<-#white;
 
 	// ONLINE PARAMETERS
 	bool drawInteraction <- false;
@@ -350,7 +351,7 @@ species building schedules: [] {
 
 	}
 
-	aspect base {
+	aspect default {
 		draw shape color: rgb(50, 50, 50, 125);
 	}
 
@@ -579,7 +580,7 @@ experiment CityScopeMain type: gui virtual: true {
 	output {
 		display CityScopeVirtual type: opengl background: #black draw_env: false virtual: true {
 			species table aspect: base refresh: false;
-			species building aspect: base position: {0, 0, -0.0015};
+			species building aspect: default position: {0, 0, -0.0015};
 			species road aspect: base refresh: false;
 			species people aspect: scale;
 			species amenity aspect: onScreen;

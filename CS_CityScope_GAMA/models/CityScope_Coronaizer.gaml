@@ -7,13 +7,13 @@
 
 model CityScopeCoronaizer
 
-import "CityScope_main.gaml"
+import "Autonomous_Covid_Community.gaml"
 
 global{
 	float socialDistance <- 2#m;
-	float quarantineRatio <- 0.5;
+	float quarantineRatio <- 0.0;
 	float quarantineRatio_prev<-quarantineRatio;
-	float maskRatio <- 0.2;
+	float maskRatio <- 0.0;
 	float maskRatio_prev<-maskRatio;
 	
 	
@@ -23,7 +23,7 @@ global{
 	float infection_rate<-0.05;
 	float mortality_rate<-0.1;
 	int initial_nb_infected<-1;
-	float step<-1#mn;
+	//float step<-1#mn;
 	
 	bool drawInfectionGraph <- false;
 	bool drawSocialDistanceGraph <- false;
@@ -45,7 +45,7 @@ global{
 	graph<people, people> social_distance_graph <- graph<people, people>([]);
 	
 	init{
-		filePathName <-"../results/output"+date("now")+".csv";	
+		filePathName <-"../results/output"+date("now")+".csv";
 	}
 	
 	reflex initCovid when:cycle=1{
@@ -168,31 +168,29 @@ grid cell cell_width: world.shape.width/50 cell_height:world.shape.width/50 neig
 	}	
 }
 
-experiment Coronaizer type:gui autorun:true{
+experiment Coronaizer type:gui autorun:true parent:autonomousCity{
 
-	//float minimum_cycle_duration<-0.02;
-	parameter "Social distance:" category: "Policy" var:socialDistance min: 1.0 max: 100.0 step:1;
+	float minimum_cycle_duration<-0.02;
 	parameter "Quarantine Ratio:" category: "Policy" var:quarantineRatio min: 0.0 max: 1.0 step:0.1;
 	parameter "Mask Ratio:" category: "Policy" var: maskRatio min: 0.0 max: 1.0 step:0.1;
 	bool a_boolean_to_disable_parameters <- true;
-	parameter "Disable following parameters" category:"Corona" var: a_boolean_to_disable_parameters disables: [time_recovery,infection_rate,initial_nb_infected,step,mortality_rate];
-	parameter "Nb recovery day"   category: "Corona" var:number_day_recovery min: 1 max: 30;
-	parameter "Infection Rate"   category: "Corona" var:infection_rate min:0.0 max:1.0;
-	parameter "Mortality"   category: "Corona" var: mortality_rate min:0.0 max:1.0;
-	parameter "Initial Infected"   category: "Corona" var: initial_nb_infected min:0 max:100;
-	parameter "Simulation Step"   category: "Corona" var:step min:0.0 max:100.0;
+	parameter "Disable following parameters" category:"Covid" var: a_boolean_to_disable_parameters disables: [time_recovery,infection_rate,initial_nb_infected,mortality_rate,socialDistance];
+	parameter "Nb recovery day"   category: "Covid" var:number_day_recovery min: 1 max: 30;
+	parameter "Infection Rate"   category: "Covid" var:infection_rate min:0.0 max:1.0;
+	parameter "Mortality"   category: "Covid" var: mortality_rate min:0.0 max:1.0;
+	parameter "Initial Infected"   category: "Covid" var: initial_nb_infected min:0 max:100;
+	parameter "Contamination Distance:" category: "Covid" var:socialDistance min: 1.0 max: 100.0 step:1;
 	parameter "Social Distance Graph:" category: "Visualization" var:drawSocialDistanceGraph ;
 	parameter "Infection Graph:" category: "Visualization" var:drawInfectionGraph ;
 	parameter "Draw Grid:" category: "Visualization" var:draw_grid;
 	parameter "Show People:" category: "Visualization" var:showPeople;
 	parameter "Save results to CSV:" category: "Simulation" var:savetoCSV;
 	
-	
 	output{
 	  layout #split;
-	  display CoronaMap type:opengl background:#white draw_env:false synchronized:false{
-	  	species building aspect:base;
-	  	species road aspect:base;
+	  display CoronaMap type:opengl background:backgroundColor draw_env:false synchronized:false{
+	  	species building aspect:default;
+	  	//species district aspect:default
 	  	species ViralPeople aspect:base;
 	  	species cell aspect:default;
 	  	graphics "infection_graph" {
@@ -214,11 +212,11 @@ experiment Coronaizer type:gui autorun:true{
 				}
 		}
 		graphics "text" {
-	      draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
+	      //draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
 	  	}	
 	  }	
-	 display CoronaChart refresh:every(#day/2) toolbar:false {
-		chart "Population in "+cityScopeCity type: series x_serie_labels: (current_day) 
+	 display CoronaChart refresh:every(#mn) toolbar:false {
+		chart "Population: " type: series x_serie_labels: "time" 
 		x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
 		y_label: 'Case'{
 			data "susceptible" value: nb_susceptible color: #green;
@@ -231,7 +229,7 @@ experiment Coronaizer type:gui autorun:true{
 }
 
 
-experiment CityScopeMulti type: gui parent: Coronaizer
+/*experiment CityScopeMulti type: gui parent: Coronaizer
 {
 	init
 	{
@@ -247,12 +245,12 @@ experiment CityScopeMultiCity type: gui parent: Coronaizer
 	init
 	{	
 		create simulation with: [cityScopeCity:: "Andorra"];
-		/*create simulation with: [cityScopeCity:: "otaniemi"];
-		create simulation with: [cityScopeCity:: "Lyon"];*/		
+		create simulation with: [cityScopeCity:: "otaniemi"];
+		create simulation with: [cityScopeCity:: "Lyon"];		
 	}
 	output
 	{
 	}
 
-}
+}*/
 

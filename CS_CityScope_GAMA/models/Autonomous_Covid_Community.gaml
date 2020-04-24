@@ -17,6 +17,7 @@ global{
 	float trajectoryTransparency<-0.5;
 	int nbBuildingPerDistrict<-10;
 	int nbPeople<-100;
+	float step<-1#sec;
 	float districtSize<-250#m;
 	float buildingSize<-40#m;
 	geometry shape<-square (1#km);
@@ -24,24 +25,17 @@ global{
 	file district_shapefile <- file("../includes/AutonomousCities/district.shp");
 	rgb districtColor <-rgb(225,235,241);
 	rgb macroGraphColor<-rgb(245,135,51);
+	rgb backgroundColor<-rgb(39,62,78);
 	map<string, rgb> buildingColors <- ["residential"::rgb(168,192,208), "shopping"::rgb(245,135,51), "business"::rgb(217,198,163)];
 	map<string, geometry> buildingShape <- ["residential"::circle(buildingSize/2), "shopping"::square(buildingSize) rotated_by 45, "business"::triangle(buildingSize*1.25)];
 	
-	
-	
-	
-	
+
 	graph<district, district> macro_graph;
 	bool drawMacroGraph<-true;
 	bool pandemy<-false;
-	init{	
-		write 'in autonomous';
-		do InitModel;
-	}
 	
-action InitModel{
-	write 'init initial model';
-	create district from:district_shapefile{
+	init{	
+		create district from:district_shapefile{
 			create building number:nbBuildingPerDistrict{
 			  shape<-square(20#m);
 			  location<-any_location_in(myself.shape*0.9);
@@ -54,42 +48,41 @@ action InitModel{
 		}
 		macro_graph<- graph<district, district>(district as_distance_graph (500#m ));
 		do updateSim(autonomy); 
-}	
-
-
-action updateSim(bool _autonomy){
-	do updateDistrict(_autonomy);
-	do updatePeople(_autonomy);
-}
-
-action updatePeople(bool _autonomy){
-	if (!_autonomy){
-	  ask people{
-		myPlaces[0]<-one_of(building where (each.type="residential"));
-		myPlaces[1]<-one_of(building where (each.type="shopping"));
-		myPlaces[2]<-one_of(building where (each.type="business"));
-		my_target<-any_location_in(myPlaces[0]);
-		myCurrentDistrict<- myPlaces[0].myDistrict;
-	  }	
 	}
-	else{
-	  ask people{
-	  	myCurrentDistrict<-one_of(district);
-		myPlaces[0]<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
-		myPlaces[1]<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
-		myPlaces[2]<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
-		my_target<-any_location_in(myPlaces[0]);
-	  }
-	  ask (length(people)*crossRatio) among people{
-	  	myCurrentDistrict<-one_of(district);
-		myPlaces[0]<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
-		myCurrentDistrict<-one_of(district);
-		myPlaces[1]<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
-		myCurrentDistrict<-one_of(district);
-		myPlaces[2]<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
-		my_target<-any_location_in(myPlaces[0]);
-	  }		
+	
+	action updateSim(bool _autonomy){
+		do updateDistrict(_autonomy);
+		do updatePeople(_autonomy);
 	}
+
+	action updatePeople(bool _autonomy){
+		if (!_autonomy){
+		  ask people{
+			myPlaces[0]<-one_of(building where (each.type="residential"));
+			myPlaces[1]<-one_of(building where (each.type="shopping"));
+			myPlaces[2]<-one_of(building where (each.type="business"));
+			my_target<-any_location_in(myPlaces[0]);
+			myCurrentDistrict<- myPlaces[0].myDistrict;
+		  }	
+		}
+		else{
+		  ask people{
+		  	myCurrentDistrict<-one_of(district);
+			myPlaces[0]<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
+			myPlaces[1]<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
+			myPlaces[2]<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
+			my_target<-any_location_in(myPlaces[0]);
+		  }
+		  ask (length(people)*crossRatio) among people{
+		  	myCurrentDistrict<-one_of(district);
+			myPlaces[0]<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
+			myCurrentDistrict<-one_of(district);
+			myPlaces[1]<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
+			myCurrentDistrict<-one_of(district);
+			myPlaces[2]<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
+			my_target<-any_location_in(myPlaces[0]);
+		  }		
+		}
 }
 
 action updateDistrict( bool _autonomy){
@@ -212,17 +205,19 @@ species people skills:[moving]{
 
 experiment autonomousCity{
 	float minimum_cycle_duration<-0.02;
-	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
+	parameter "Autonomy" category:"Policy" var: autonomy <- true  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
-	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0 max:1.0 ;
-	parameter "Draw Macro Graph:" category: "Visualization" var:drawMacroGraph <-false;
+	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0.0 max:1.0 ;
+	parameter "Draw Inter District Graph:" category: "Visualization" var:drawMacroGraph <-false;
+    parameter "Simulation Step"  category: "Simulation" var:step min:1#sec max:60#sec step:1#sec;
+	
 	
 
 	output {
 			
-		display GotoOnNetworkAgent type:opengl background:rgb(39,62,78) draw_env:false synchronized:true toolbar:false
+		display GotoOnNetworkAgent type:opengl background:backgroundColor draw_env:false synchronized:true toolbar:false
 		camera_pos: {398.5622,522.9339,1636.0924} camera_look_pos: {398.5622,522.9053,-4.0E-4} camera_up_vector: {0.0,1.0,0.0} 
 		
 		{
@@ -236,7 +231,7 @@ experiment autonomousCity{
 			
 			species district;
 			species building;
-			species people;
+			
 			
 			graphics "macro_graph" {
 				if (macro_graph != nil and drawMacroGraph) {
@@ -249,13 +244,14 @@ experiment autonomousCity{
 						}
 						if(autonomy){
 							//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) width: 2#m color:macroGraphColor;
-						  draw line(edge_geom.points[0],edge_geom.points[1]) width: 2#m color:macroGraphColor;	
+						  draw line(edge_geom.points[0],edge_geom.points[1]) width: 2#m + crossRatio*8#m color:macroGraphColor;	
 						}
 						
 					}
 
 				}
 			}
+			species people;
 			event["c"] action: {autonomy<-false;ask world{do updateSim(autonomy);}};
 			event["a"] action: {autonomy<-true;ask world{do updateSim(autonomy);}};
 		}
