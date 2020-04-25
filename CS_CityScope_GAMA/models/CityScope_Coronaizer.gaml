@@ -7,7 +7,7 @@
 
 model CityScopeCoronaizer
 
-import "Autonomous_Covid_Community.gaml"
+import "CityScope_main.gaml"
 
 global{
 	float socialDistance <- 2#m;
@@ -23,6 +23,7 @@ global{
 	float infection_rate<-0.05;
 	float mortality_rate<-0.1;
 	int initial_nb_infected<-1;
+	bool reinitCovid<-false;
 	//float step<-1#mn;
 	
 	bool drawInfectionGraph <- false;
@@ -48,7 +49,14 @@ global{
 		filePathName <-"../results/output"+date("now")+".csv";
 	}
 	
-	reflex initCovid when:cycle=1{
+	reflex initCovid when: (cycle=1 or reinitCovid){
+		ask ViralPeople{
+			is_susceptible <-  true;
+			is_infected <-  false;
+	        is_immune <-  false;
+	        is_recovered<-false;
+		}
+		
 		ask initial_nb_infected among ViralPeople{
 			is_susceptible <-  false;
 	        is_infected <-  true;
@@ -63,6 +71,7 @@ global{
 		ask (quarantineRatio*length(people)) among ViralPeople{
 			target.isMoving<-false;
 		}
+		reinitCovid<-false;
 	}
 	reflex updateGraph when: (drawSocialDistanceGraph = true) {
 		social_distance_graph <- graph<people, people>(people as_distance_graph (socialDistance));
@@ -188,7 +197,7 @@ experiment Coronaizer type:gui autorun:true parent:autonomousCity{
 	
 	output{
 	  layout #split;
-	  display CoronaMap type:opengl background:backgroundColor draw_env:false synchronized:false{
+	  display CoronaMap type:opengl background:backgroundColor draw_env:false synchronized:false toolbar:false{
 	  	species building aspect:default;
 	  	//species district aspect:default
 	  	species ViralPeople aspect:base;
@@ -214,6 +223,7 @@ experiment Coronaizer type:gui autorun:true parent:autonomousCity{
 		graphics "text" {
 	      //draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
 	  	}	
+	  	event ["i"] action:{reinitCovid<-true;};
 	  }	
 	 display CoronaChart refresh:every(#mn) toolbar:false {
 		chart "Population: " type: series x_serie_labels: "time" 
