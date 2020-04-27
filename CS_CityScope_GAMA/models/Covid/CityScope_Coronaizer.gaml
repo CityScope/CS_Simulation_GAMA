@@ -221,7 +221,7 @@ experiment Coronaizer type:gui autorun:true parent:autonomousCity{
 				}
 		}
 		graphics "text" {
-	      //draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
+	      draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
 	  	}	
 	  	event ["i"] action:{reinitCovid<-true;};
 	  }	

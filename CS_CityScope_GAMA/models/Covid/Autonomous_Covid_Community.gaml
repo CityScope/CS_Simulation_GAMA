@@ -19,6 +19,8 @@ global{
 	int nbBuildingPerDistrict<-10;
 	int nbPeople<-100;
 	float step<-1#sec;
+	int current_hour update: (time / #hour) mod 24;
+	int current_day  update: (int(time/#day));
 	float districtSize<-250#m;
 	float buildingSize<-40#m;
 	geometry shape<-square (1#km);
