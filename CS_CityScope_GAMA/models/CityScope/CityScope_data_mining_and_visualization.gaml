@@ -8,8 +8,8 @@ model CityScope_volpe
 
 global {
 	// GIS FILE //	
-	file bound_shapefile <- file("./../includes/City/volpe/Bounds.shp");
-	file roads_shapefile <- file("./../includes/City/volpe/Roads.shp");
+	file bound_shapefile <- file("./../../includes/City/volpe/Bounds.shp");
+	file roads_shapefile <- file("./../../includes/City/volpe/Roads.shp");
 	//file imageRaster <- file('./../../includes/images/gama_black.png') ;
 	geometry shape <- envelope(bound_shapefile);
 	float angle <--9.74;
@@ -20,7 +20,7 @@ global {
 	float lenghtMax <-0.0;
 	//kendall_1_08_10_2017
 	//boston_1_08_10_2017
-	file my_csv_file <- csv_file("./../includes/City/volpe/mobility/kendall_1_08_10_2017.csv",",");
+	file my_csv_file <- csv_file("./../../includes/City/volpe/mobility/kendall_1_08_10_2017.csv",",");
 	matrix data <- matrix(my_csv_file);
 	
 	graph<mobileData, mobileData> interaction_graph;

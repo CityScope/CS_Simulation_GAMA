@@ -7,7 +7,7 @@
 
 model CityScopeCoronaizer
 
-import "CityScope_main.gaml"
+import "Autonomous_Covid_Community.gaml"
 
 global{
 	float socialDistance <- 2#m;

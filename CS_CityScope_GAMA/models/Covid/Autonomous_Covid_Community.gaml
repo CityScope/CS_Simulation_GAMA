@@ -22,7 +22,7 @@ global{
 	float buildingSize<-40#m;
 	geometry shape<-square (1#km);
 	string cityScopeCity<-"volpe";
-	file district_shapefile <- file("../includes/AutonomousCities/district.shp");
+	file district_shapefile <- file("./../../includes/AutonomousCities/district.shp");
 	rgb districtColor <-rgb(225,235,241);
 	rgb macroGraphColor<-rgb(245,135,51);
 	rgb backgroundColor<-rgb(39,62,78);
