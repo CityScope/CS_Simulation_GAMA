@@ -23,7 +23,8 @@ global{
 	geometry shape<-square (1#km);
 	string cityScopeCity<-"volpe";
 	file district_shapefile <- file("./../../includes/AutonomousCities/district.shp");
-	rgb districtColor <-rgb(225,235,241);
+	rgb conventionalDistrictColor <-rgb(225,235,241);
+	rgb autnonomousDistrictColor <-rgb(39,62,78)+50;
 	rgb macroGraphColor<-rgb(245,135,51);
 	rgb backgroundColor<-rgb(39,62,78);
 	map<string, rgb> buildingColors <- ["residential"::rgb(168,192,208), "shopping"::rgb(245,135,51), "business"::rgb(217,198,163)];
@@ -87,18 +88,32 @@ global{
 
 action updateDistrict( bool _autonomy){
 	if (!_autonomy){
-		ask first(district where (each.name = "district0")).myBuildings{
-			type<-"residential";
+		ask first(district where (each.name = "district0")){
+			isAutonomous<-false;
+			conventionalType<-"residential";
+			ask myBuildings{
+				type<-"residential";
+			}
 		}
-		ask first(district where (each.name = "district1")).myBuildings{
-			type<-"shopping";
+		ask first(district where (each.name = "district1")){
+			isAutonomous<-false;
+			conventionalType<-"shopping";
+			ask myBuildings{
+			  type<-"shopping";
+			}
 		}
-		ask first(district where (each.name = "district2")).myBuildings{
-			type<-"business";
+		ask first(district where (each.name = "district2")){
+			isAutonomous<-false;
+			conventionalType<-"business";
+			ask myBuildings{
+			  type<-"business";	
+			}
+			
 		}
 	}
 	else{
 		ask district{
+			isAutonomous<-true;
 			ask myBuildings{
 				type<-flip(0.3) ? "residential" : (flip(0.3) ? "shopping" : "business");
 			}
@@ -125,12 +140,21 @@ action updateDistrict( bool _autonomy){
 species district{
 	list<building> myBuildings;
 	bool isQuarantine<-false;
+	bool isAutonomous<-false;
+	string conventionalType;
 	aspect default{
 		//draw string(self.name) at:{location.x+districtSize*1.1,location.y-districtSize*0.5} color:#white perspective: true font:font("Helvetica", 30 , #bold);
 		if (isQuarantine){
 			draw shape*1.1 color:rgb(#red,1) empty:true border:#red;
 		}
-		draw shape color:districtColor border:districtColor-50;
+		if(isAutonomous){
+			draw (shape*1.05) at_location {location.x,location.y,-0.01} color:autnonomousDistrictColor border:autnonomousDistrictColor-50;
+			draw shape color:conventionalDistrictColor border:conventionalDistrictColor-50;
+		}else{
+			draw (shape*1.05) at_location {location.x,location.y,-0.01} color:buildingColors[conventionalType] border:buildingColors[conventionalType]-50;
+			draw shape color:conventionalDistrictColor border:buildingColors[conventionalType]-50;
+		}
+		
 	}
 }
 
@@ -205,7 +229,7 @@ species people skills:[moving]{
 
 experiment autonomousCity{
 	float minimum_cycle_duration<-0.02;
-	parameter "Autonomy" category:"Policy" var: autonomy <- true  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
+	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
@@ -229,7 +253,7 @@ experiment autonomousCity{
 			  }
 			}
 			
-			species district;
+			species district position:{0,0,-0.001};
 			species building;
 			
 			
