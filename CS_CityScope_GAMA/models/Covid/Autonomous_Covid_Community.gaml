@@ -15,6 +15,7 @@ global{
 	bool drawTrajectory;
 	int trajectoryLength<-100;
 	float trajectoryTransparency<-0.5;
+	float peopleTransparency<-0.5;
 	int nbBuildingPerDistrict<-10;
 	int nbPeople<-100;
 	float step<-1#sec;
@@ -224,7 +225,7 @@ species people skills:[moving]{
     }
 	
 	aspect default{
-		draw circle(5#m) color:color;
+		draw circle(4#m) color:rgb(color,peopleTransparency);
 		if(macroTrip){
 			draw square(15#m) color:color;
 		}
@@ -241,6 +242,7 @@ experiment autonomousCity{
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
 	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0.0 max:1.0 ;
+	parameter "People Transparency:" category: "Visualization" var:peopleTransparency <-0.5 min:0.0 max:1.0 ;
 	parameter "Draw Inter District Graph:" category: "Visualization" var:drawMacroGraph <-false;
     parameter "Simulation Step"  category: "Simulation" var:step min:1#sec max:60#sec step:1#sec;
 	
