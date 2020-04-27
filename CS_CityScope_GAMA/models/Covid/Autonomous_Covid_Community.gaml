@@ -24,7 +24,7 @@ global{
 	string cityScopeCity<-"volpe";
 	file district_shapefile <- file("./../../includes/AutonomousCities/district.shp");
 	rgb conventionalDistrictColor <-rgb(225,235,241);
-	rgb autnonomousDistrictColor <-rgb(39,62,78)+50;
+	rgb autonomousDistrictColor <-rgb(39,62,78)+50;
 	rgb macroGraphColor<-rgb(245,135,51);
 	rgb backgroundColor<-rgb(39,62,78);
 	map<string, rgb> buildingColors <- ["residential"::rgb(168,192,208), "shopping"::rgb(245,135,51), "business"::rgb(217,198,163)];
@@ -148,7 +148,7 @@ species district{
 			draw shape*1.1 color:rgb(#red,1) empty:true border:#red;
 		}
 		if(isAutonomous){
-			draw (shape*1.05) at_location {location.x,location.y,-0.01} color:autnonomousDistrictColor border:autnonomousDistrictColor-50;
+			draw (shape*1.05) at_location {location.x,location.y,-0.01} color:autonomousDistrictColor border:autonomousDistrictColor-50;
 			draw shape color:conventionalDistrictColor border:conventionalDistrictColor-50;
 		}else{
 			draw (shape*1.05) at_location {location.x,location.y,-0.01} color:buildingColors[conventionalType] border:buildingColors[conventionalType]-50;
@@ -178,15 +178,18 @@ species people skills:[moving]{
 	district target_district;
 	bool go_outside <- false;
 	bool isMoving<-true;
+	bool macroTrip<-false;
 	
 	reflex move_to_target_district when: (target_district != nil and isMoving){
 		if (go_outside) {
+			macroTrip<-false;
 			do goto target: myCurrentDistrict.location speed:5.0;
 			if (location = myCurrentDistrict.location) {
 				go_outside <- false;
 				
 			}
 		} else {
+			macroTrip<-true;
 			do goto target: target_district.location  speed:10.0;
 			if (location = target_district.location) {
 				myCurrentDistrict <- target_district;
@@ -195,6 +198,7 @@ species people skills:[moving]{
 		}
 	}
 	reflex move_inside_district when: (target_district = nil and isMoving){
+	    macroTrip<-false;
 	    do goto target:my_target speed:5.0;
     	if (my_target = location){
     		curPlaces<-(curPlaces+1) mod 3;
@@ -221,6 +225,9 @@ species people skills:[moving]{
 	
 	aspect default{
 		draw circle(5#m) color:color;
+		if(macroTrip){
+			draw square(15#m) color:color;
+		}
 		if(drawTrajectory){
 			draw line(current_trajectory) color: rgb(color,trajectoryTransparency);
 		}
