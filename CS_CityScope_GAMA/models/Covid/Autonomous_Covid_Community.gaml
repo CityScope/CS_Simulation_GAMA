@@ -236,7 +236,9 @@ species people skills:[moving]{
 			draw square(15#m) color:rgb(color,macroTransparency);
 		}
 		if(drawTrajectory){
-			draw line(current_trajectory) color: rgb(color,trajectoryTransparency);
+			loop i from: 0 to: length(current_trajectory) {
+			draw circle(4#m) at_location current_trajectory[i]  color: rgb(color,trajectoryTransparency);
+		    }
 		}
 	}
 }
