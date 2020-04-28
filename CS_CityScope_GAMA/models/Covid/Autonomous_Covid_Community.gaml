@@ -23,6 +23,7 @@ global{
 	int current_day  update: (int(time/#day));
 	float districtSize<-250#m;
 	float buildingSize<-40#m;
+	bool randomColor<-true;
 	geometry shape<-square (1#km);
 	string cityScopeCity<-"volpe";
 	file district_shapefile <- file("./../../includes/AutonomousCities/district.shp");
@@ -57,6 +58,7 @@ global{
 	action updateSim(bool _autonomy){
 		do updateDistrict(_autonomy);
 		do updatePeople(_autonomy);
+		do updatePeopleColor(randomColor);
 	}
 
 	action updatePeople(bool _autonomy){
@@ -87,6 +89,17 @@ global{
 			my_target<-any_location_in(myPlaces[0]);
 		  }		
 		}
+		
+}
+action updatePeopleColor(bool _randomColor){
+	ask people{
+			if (_randomColor){
+				color<-rnd_color(255);
+			}
+			else{
+				color<-#darkgray;
+			}
+		}
 }
 
 action updateDistrict( bool _autonomy){
@@ -111,7 +124,6 @@ action updateDistrict( bool _autonomy){
 			ask myBuildings{
 			  type<-"business";	
 			}
-			
 		}
 	}
 	else{
@@ -173,6 +185,7 @@ species building{
 }
 
 species people skills:[moving]{
+	rgb color;
 	list<building> myPlaces<-[one_of(building),one_of(building),one_of(building)];
 	point my_target;
 	int curPlaces<-0;
@@ -223,7 +236,7 @@ species people skills:[moving]{
     }
     
     reflex rnd_move {
-    	do wander speed:1.0;
+    	do wander speed:0.1;
     }
 	
 	aspect default{
@@ -241,6 +254,7 @@ experiment autonomousCity{
 	float minimum_cycle_duration<-0.02;
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
+	parameter "Random Color:" category: "Visualization" var:randomColor <-true on_change: {ask world{do updatePeopleColor(randomColor);}};
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
 	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0.0 max:1.0 ;
