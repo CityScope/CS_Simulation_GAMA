@@ -24,7 +24,6 @@ global{
 	int current_day  update: (int(time/#day));
 	float districtSize<-250#m;
 	float buildingSize<-40#m;
-	bool randomColor<-true;
 	geometry shape<-square (1#km);
 	string cityScopeCity<-"volpe";
 	file district_shapefile <- file("./../../includes/AutonomousCities/district.shp");
@@ -51,6 +50,7 @@ global{
 		}
 		create people number:nbPeople{
 		  	current_trajectory <- [];
+		  	color<-rgb(125)+rnd(-125,125);
 		}
 		macro_graph<- graph<district, district>(district as_distance_graph (500#m ));
 		do updateSim(autonomy); 
@@ -59,7 +59,6 @@ global{
 	action updateSim(bool _autonomy){
 		do updateDistrict(_autonomy);
 		do updatePeople(_autonomy);
-		do updatePeopleColor(randomColor);
 	}
 
 	action updatePeople(bool _autonomy){
@@ -92,16 +91,7 @@ global{
 		}
 		
 }
-action updatePeopleColor(bool _randomColor){
-	ask people{
-			if (_randomColor){
-				color<-rnd_color(255);
-			}
-			else{
-				color<-#darkgray;
-			}
-		}
-}
+
 
 action updateDistrict( bool _autonomy){
 	if (!_autonomy){
@@ -255,7 +245,6 @@ experiment autonomousCity{
 	float minimum_cycle_duration<-0.02;
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
-	parameter "Random Color:" category: "Visualization" var:randomColor <-true on_change: {ask world{do updatePeopleColor(randomColor);}};
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
 	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0.0 max:1.0 ;
