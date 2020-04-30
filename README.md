@@ -16,16 +16,29 @@ Agent-Based Model integrated in the CityScope Volpe using the GAMA Platform.
 
 A collection of Model dedicated to understand and study the impact of Pandemic in Cities
 
-# [Game IT](https://github.com/mitmedialab/CityScope_GAMA/wiki/Game-IT)
-An open source, multi-level agent-based model simulating real life traffic flow developed using the Gama Platform. It models agent behaviours in different vehicle type travelling through a city. It shows how the future mobility mode can change the local feel of the city. The model and the simulation output helps to see the impact of different mobility modes on traffic flow and congestion. 
+# [Economy](https://github.com/CityScope/CS_CityScope_GAMA/wiki/Economy)
 
 # [Energy](https://github.com/CityScope/CS_CityScope_GAMA/wiki/Energy)
 
-# Other Project 
+# [Game IT](https://github.com/mitmedialab/CityScope_GAMA/wiki/Game-IT)
+An open source, multi-level agent-based model simulating real life traffic flow developed using the Gama Platform. It models agent behaviours in different vehicle type travelling through a city. It shows how the future mobility mode can change the local feel of the city. The model and the simulation output helps to see the impact of different mobility modes on traffic flow and congestion. 
 
-[UrbanSwarms](https://github.com/mitmedialab/UrbanSwarms) 
+# [Visualization ToolKit](https://github.com/CityScope/CS_CityScope_GAMA/wiki/VisualizationToolKit)
+A collection of model used to produce animated content 
 
-[Basic](https://github.com/mitmedialab/Basic)
+# Other CityScience project developped with GAMA 
+
+ - [Proxymix](https://github.com/CityScope/CS_Proxymix) 
+ - [CityScope Champs Elysées](https://github.com/CityScope/CSL_Paris)
+ - [CityScope Guadalajara](https://github.com/CityScope/CSL_Guadalajara)
+ - [CityScope Hanoi](https://github.com/CityScope/CSL_Hanoi)
+ - [CityScope Lyon](https://github.com/CityScope/CSL_Lyon)
+ - [CityScope HPA (PortCity)](https://github.com/CityScope/CSL_Hamburg_HPA)
+ - [CityScope Helsinki](https://github.com/CityScope/CSL_Helsinki)
+ - [CityScope Cooper Hewitt](https://github.com/CityScope/CS_Cooper-Hewitt)
+ - [CityScope Toronto](https://github.com/CityScope/CSL_Toronto)
+ - [UrbanSwarms](https://github.com/mitmedialab/UrbanSwarms) 
+ - [Basic](https://github.com/mitmedialab/Basic)
 ---
 For more information about this project please go to the [wiki](https://github.com/CityScope/CS_Simulation_GAMA/wiki)
 ---
