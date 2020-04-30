@@ -20,18 +20,18 @@ global {
 	string case_study <- "volpe" ;
 	int nb_people <- 500;
 	
-    string cityGISFolder <- "./../includes/City/"+case_study;
+    string cityGISFolder <- "./../../includes/City/"+case_study;
 	file<geometry> buildings_shapefile <- file<geometry>(cityGISFolder+"/Buildings.shp");
 	file<geometry> roads_shapefile <- file<geometry>(cityGISFolder+"/Roads.shp");
 	geometry shape <- envelope(roads_shapefile);
 	
 	// MOBILITY DATA
 	list<string> mobility_list <- ["walking", "bike","car","bus"];
-	file activity_file <- file("./../includes/Game_IT/ActivityPerProfile.csv");
-	file criteria_file <- file("./../includes/Game_IT/CriteriaFile.csv");
-	file profile_file <- file("./../includes/Game_IT/Profiles.csv");
-	file mode_file <- file("./../includes/Game_IT/Modes.csv");
-	file weather_coeff <- file("../includes/Game_IT/weather_coeff_per_month.csv");
+	file activity_file <- file("./../../includes/Game_IT/ActivityPerProfile.csv");
+	file criteria_file <- file("./../../includes/Game_IT/CriteriaFile.csv");
+	file profile_file <- file("./../../includes/Game_IT/Profiles.csv");
+	file mode_file <- file("./../../includes/Game_IT/Modes.csv");
+	file weather_coeff <- file("./../../includes/Game_IT/weather_coeff_per_month.csv");
 	
 	map<string,rgb> color_per_category <- [ "Restaurant"::rgb("#2B6A89"), "Night"::rgb("#1B2D36"),"GP"::rgb("#244251"), "Cultural"::rgb("#2A7EA6"), "Shopping"::rgb("#1D223A"), "HS"::rgb("#FFFC2F"), "Uni"::rgb("#807F30"), "O"::rgb("#545425"), "R"::rgb("#222222"), "Park"::rgb("#24461F")];	
 	map<string,rgb> color_per_type <- [ "High School Student"::rgb("#FFFFB2"), "College student"::rgb("#FECC5C"),"Young professional"::rgb("#FD8D3C"),  "Mid-career workers"::rgb("#F03B20"), "Executives"::rgb("#BD0026"), "Home maker"::rgb("#0B5038"), "Retirees"::rgb("#8CAB13")];
