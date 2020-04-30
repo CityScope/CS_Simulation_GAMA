@@ -1,4 +1,4 @@
-Agent-Based Model developped in the [CityScience](https://www.media.mit.edu/groups/city-science/overview/)group using [Gama Platform](https://gama-platform.github.io/) and integrated in [CityScope](https://www.media.mit.edu/projects/cityscope/overview/)
+Agent-Based Model developped in the [CityScience](https://www.media.mit.edu/groups/city-science/overview/) group using [Gama Platform](https://gama-platform.github.io/) and integrated in [CityScope](https://www.media.mit.edu/projects/cityscope/overview/)
 
 # Installation
   - Clone this reposetory
@@ -28,7 +28,6 @@ A collection of model used to produce animated content
 
 # Other CityScience project developped with GAMA 
 
- - [Proxymix](https://github.com/CityScope/CS_Proxymix) 
  - [CityScope Champs Elysées](https://github.com/CityScope/CSL_Paris)
  - [CityScope Guadalajara](https://github.com/CityScope/CSL_Guadalajara)
  - [CityScope Hanoi](https://github.com/CityScope/CSL_Hanoi)
@@ -37,8 +36,11 @@ A collection of model used to produce animated content
  - [CityScope Helsinki](https://github.com/CityScope/CSL_Helsinki)
  - [CityScope Cooper Hewitt](https://github.com/CityScope/CS_Cooper-Hewitt)
  - [CityScope Toronto](https://github.com/CityScope/CSL_Toronto)
+ - [Proxymix](https://github.com/CityScope/CS_Proxymix) 
  - [UrbanSwarms](https://github.com/mitmedialab/UrbanSwarms) 
  - [Basic](https://github.com/mitmedialab/Basic)
+ - [URBAM](https://github.com/agrignard/URBAM)
+ - [Radiohead](https://github.com/agrignard/r_adiohead_10kandOK)
 ---
 For more information about this project please go to the [wiki](https://github.com/CityScope/CS_Simulation_GAMA/wiki)
 ---
