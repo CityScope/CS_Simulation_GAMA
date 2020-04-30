@@ -42,4 +42,4 @@ A collection of model used to produce animated content
  - [URBAM](https://github.com/agrignard/URBAM)
  - [Radiohead](https://github.com/agrignard/r_adiohead_10kandOK)
 ---
-Contacts: [Arnaud Grignard](https://github.com/agrignard)
+Contacts: [Arnaud Grignard](https://www.media.mit.edu/people/agrignar/overview/) [Github](https://github.com/agrignard)
