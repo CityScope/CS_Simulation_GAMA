@@ -154,10 +154,10 @@ species district{
 			draw shape*1.1 color:rgb(#red,1) empty:true border:#red;
 		}
 		if(isAutonomous){
-			draw (shape*1.05) at_location {location.x,location.y,-0.01} color:autonomousDistrictColor border:autonomousDistrictColor-50;
+			draw (shape*1.05)-shape at_location {location.x,location.y,-0.01} color:autonomousDistrictColor border:autonomousDistrictColor-50;
 			draw shape color:conventionalDistrictColor border:conventionalDistrictColor-50;
 		}else{
-			draw (shape*1.05) at_location {location.x,location.y,-0.01} color:buildingColors[conventionalType] border:buildingColors[conventionalType]-50;
+			draw (shape*1.05)-shape at_location {location.x,location.y,-0.01} color:buildingColors[conventionalType] border:buildingColors[conventionalType]-50;
 			draw shape color:conventionalDistrictColor border:buildingColors[conventionalType]-50;
 		}
 		
@@ -186,6 +186,7 @@ species people skills:[moving]{
 	bool go_outside <- false;
 	bool isMoving<-true;
 	bool macroTrip<-false;
+	bool isQuarantine<-false;
 	
 	reflex move_to_target_district when: (target_district != nil and isMoving){
 		if (go_outside) {
@@ -219,6 +220,17 @@ species people skills:[moving]{
 		
     }
     
+    reflex ManageQuarantine when: !isMoving{
+    	macroTrip<-false;
+    	if(isQuarantine=false){
+    	  do goto target:myPlaces[0] speed:5.0;	
+    	}
+    	if(location=myPlaces[0].location and isQuarantine=false){
+    		location<-any_location_in(myPlaces[0].shape);
+    		isQuarantine<-true;
+    	}
+    }
+    
     reflex computeTrajectory{
     	loop while:(length(current_trajectory) > trajectoryLength){
 	    		current_trajectory >> first(current_trajectory);
@@ -236,9 +248,7 @@ species people skills:[moving]{
 			draw square(15#m) color:rgb(color,macroTransparency);
 		}
 		if(drawTrajectory){
-			loop i from: 0 to: length(current_trajectory) {
-			draw circle(4#m) at_location current_trajectory[i]  color: rgb(color,trajectoryTransparency);
-		    }
+			draw line(current_trajectory)  color: rgb(color,trajectoryTransparency);
 		}
 	}
 }
