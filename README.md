@@ -1,38 +1,34 @@
-Agent-Based Model developped in CityScope using [Gama Platform](https://gama-platform.github.io/).
+Agent-Based Model developped in the [CityScience](https://www.media.mit.edu/groups/city-science/overview/)group using [Gama Platform](https://gama-platform.github.io/) and integrated in [CityScope](https://www.media.mit.edu/projects/cityscope/overview/)
 
-[Contribute](https://github.com/CityScope/CS_Simulation_GAMA/issues) 
-
-For more information about this project please go to the [wiki](https://github.com/CityScope/CS_Simulation_GAMA/wiki)
-
+# Installation
+  - Clone this reposetory
+  - Download GAMA (compatible with GAMA 1.8) [here](https://gama-platform.github.io/download)
+  - Run GAMA, 
+  - Choose a new Workspace (this is a temporay folder used for computation)
+  - right click on User Models->Import->GAMA Project..
+  - Select CS_CityScope_GAMA in the CS_Simulation_GAMA folder that you have clone
 
 # [CityScope](https://github.com/mitmedialab/CityScope_GAMA/wiki/CityScope)
 
+Agent-Based Model integrated in the CityScope Volpe using the GAMA Platform. 
 
+# [Covid](https://github.com/mitmedialab/CityScope_GAMA/wiki/Covid)
 
-ABM model running on the CityScope table using the GAMA Platform. This version is the one
-running on the physical table at the lab and synchronized with CityIOServer, Grasshopper and Unity.
-
-<div style="text-align:center"><img src ="https://github.com/CityScope/CS_CityScope_GAMA/wiki/resources/images/CityScope_Volpe_Table.png" width="1000"/></div>
+A collection of Model dedicated to understand and study the impact of Pandemic in Cities
 
 # [Game IT](https://github.com/mitmedialab/CityScope_GAMA/wiki/Game-IT)
 An open source, multi-level agent-based model simulating real life traffic flow developed using the Gama Platform. It models agent behaviours in different vehicle type travelling through a city. It shows how the future mobility mode can change the local feel of the city. The model and the simulation output helps to see the impact of different mobility modes on traffic flow and congestion. 
 
-<div style="text-align:center"><img src ="https://github.com/CityScope/CS_CityScope_GAMA/wiki/resources/images/Game_IT.png" width="1000"/></div>
-
 # [Energy](https://github.com/CityScope/CS_CityScope_GAMA/wiki/Energy)
 
----
+# Other Project 
 
-Contacts: [Arnaud Grignard](https://github.com/agrignard)
+[UrbanSwarms](https://github.com/mitmedialab/UrbanSwarms) 
 
-
-
-
-
-See also
-[UrbanSwarms](https://github.com/mitmedialab/UrbanSwarms)
 [Basic](https://github.com/mitmedialab/Basic)
-
 ---
-
+For more information about this project please go to the [wiki](https://github.com/CityScope/CS_Simulation_GAMA/wiki)
+---
+[Contribute](https://github.com/CityScope/CS_Simulation_GAMA/issues) 
+---
 Contacts: [Arnaud Grignard](https://github.com/agrignard)
