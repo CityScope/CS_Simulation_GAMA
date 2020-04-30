@@ -7,7 +7,7 @@
 
 model CityScopeCoronaizer
 
-import "Autonomous_Covid_Community.gaml"
+import "./Autonomous_Covid_Community.gaml"
 
 global{
 	float socialDistance <- 2#m;
@@ -30,6 +30,7 @@ global{
 	bool drawSocialDistanceGraph <- false;
 	bool draw_grid <- false;
 	bool showPeople<-true;
+	float viralPeopleTransparency<-0.5;
 	bool savetoCSV<-false;
 	string filePathName;
 	
@@ -87,6 +88,7 @@ global{
 			}else{
 				ask ((quarantineRatio_prev - quarantineRatio)*length(people)) among (people where (!each.isMoving)){
 			      isMoving<-true;
+			      isQuarantine<-false;
 		      }
 			}
 			if(maskRatio>maskRatio_prev){
@@ -155,7 +157,7 @@ species ViralPeople  mirrors:people{
 	
 	aspect base {
 		if(showPeople){
-		  draw circle(is_infected ? 7#m : 5#m) color:(is_susceptible) ? #green : ((is_infected) ? #red : #blue);	
+		  draw circle(is_infected ? 7#m : 5#m) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
 		}
 		if (as_mask){
 		  draw square(4#m) color:#white;	
@@ -193,6 +195,7 @@ experiment Coronaizer type:gui autorun:true parent:autonomousCity{
 	parameter "Infection Graph:" category: "Visualization" var:drawInfectionGraph ;
 	parameter "Draw Grid:" category: "Visualization" var:draw_grid;
 	parameter "Show People:" category: "Visualization" var:showPeople;
+	parameter "Viral People Transparency:" category: "Visualization" var:viralPeopleTransparency <-0.5 min:0.0 max:1.0 ;
 	parameter "Save results to CSV:" category: "Simulation" var:savetoCSV;
 	
 	output{
