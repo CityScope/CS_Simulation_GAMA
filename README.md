@@ -42,8 +42,4 @@ A collection of model used to produce animated content
  - [URBAM](https://github.com/agrignard/URBAM)
  - [Radiohead](https://github.com/agrignard/r_adiohead_10kandOK)
 ---
-For more information about this project please go to the [wiki](https://github.com/CityScope/CS_Simulation_GAMA/wiki)
----
-[Contribute](https://github.com/CityScope/CS_Simulation_GAMA/issues) 
----
 Contacts: [Arnaud Grignard](https://github.com/agrignard)
