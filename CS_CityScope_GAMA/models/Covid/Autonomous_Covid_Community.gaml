@@ -11,8 +11,8 @@ model AutonomousCovidCommunity
 
 global{
 	bool autonomy;
-	float crossRatio;
-	bool drawTrajectory;
+	float crossRatio<-0.1;
+	bool drawTrajectory<-true;
 	int trajectoryLength<-100;
 	float trajectoryTransparency<-0.5;
 	float peopleTransparency<-0.5;
@@ -36,7 +36,7 @@ global{
 	
 
 	graph<district, district> macro_graph;
-	bool drawMacroGraph<-true;
+	bool drawMacroGraph<-false;
 	bool pandemy<-false;
 	
 	init{	
@@ -253,7 +253,7 @@ species people skills:[moving]{
 	}
 }
 
-experiment autonomousCity{
+experiment City{
 	float minimum_cycle_duration<-0.02;
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
@@ -265,10 +265,7 @@ experiment autonomousCity{
 	parameter "Draw Inter District Graph:" category: "Visualization" var:drawMacroGraph <-false;
     parameter "Simulation Step"  category: "Simulation" var:step min:1#sec max:60#sec step:1#sec;
 	
-	
-
 	output {
-			
 		display GotoOnNetworkAgent type:opengl background:backgroundColor draw_env:false synchronized:true toolbar:false
 		camera_pos: {398.5622,522.9339,1636.0924} camera_look_pos: {398.5622,522.9053,-4.0E-4} camera_up_vector: {0.0,1.0,0.0} 
 		
@@ -308,5 +305,16 @@ experiment autonomousCity{
 			event["a"] action: {autonomy<-true;ask world{do updateSim(autonomy);}};
 		}
 		
+	}
+}
+
+experiment MultiScenarios type: gui parent: City
+{	
+	init
+	{
+		create simulation with: [autonomy::true];
+	}
+	output{
+		layout #split;
 	}
 }
