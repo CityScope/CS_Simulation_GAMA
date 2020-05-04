@@ -308,13 +308,3 @@ experiment City{
 	}
 }
 
-experiment MultiScenarios type: gui parent: City
-{	
-	init
-	{
-		create simulation with: [autonomy::true];
-	}
-	output{
-		layout #split;
-	}
-}
