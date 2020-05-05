@@ -14,7 +14,7 @@ global{
 	float crossRatio<-0.1;
 	bool drawTrajectory<-true;
 	int trajectoryLength<-100;
-	float trajectoryTransparency<-0.5;
+	float trajectoryTransparency<-0.25;
 	float peopleTransparency<-0.5;
 	float macroTransparency<-0.5;
 	int nbBuildingPerDistrict<-10;
@@ -48,20 +48,31 @@ global{
 			  myDistrict <- myself;
 		    }
 		}
-		create people number:nbPeople{
-		  	current_trajectory <- [];
-		  	color<-rgb(125)+rnd(-125,125);
-		}
+		
 		macro_graph<- graph<district, district>(district as_distance_graph (500#m ));
 		do updateSim(autonomy); 
 	}
 	
+	reflex updateStep{
+		if(step > 1#sec){
+			step<-step-1#sec;
+		}
+	}
+	
 	action updateSim(bool _autonomy){
+		step<-60#sec;
 		do updateDistrict(_autonomy);
 		do updatePeople(_autonomy);
 	}
 
 	action updatePeople(bool _autonomy){
+		ask people{
+			do die;
+		}
+		create people number:nbPeople{
+		  	current_trajectory <- [];
+		  	color<-rgb(125)+rnd(-125,125);
+		}
 		if (!_autonomy){
 		  ask people{
 			myPlaces[0]<-one_of(building where (each.type="residential"));
@@ -259,22 +270,22 @@ experiment City{
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
-	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.5 min:0.0 max:1.0 ;
+	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.25 min:0.0 max:1.0 ;
 	parameter "People Transparency:" category: "Visualization" var:peopleTransparency <-0.5 min:0.0 max:1.0 ;
 	parameter "Macro Transparency:" category: "Visualization" var:macroTransparency <-0.5 min:0.0 max:1.0 ;
 	parameter "Draw Inter District Graph:" category: "Visualization" var:drawMacroGraph <-false;
-    parameter "Simulation Step"  category: "Simulation" var:step min:1#sec max:60#sec step:1#sec;
+    //parameter "Simulation Step"  category: "Simulation" var:step min:1#sec max:60#sec step:1#sec;
 	
 	output {
 		display GotoOnNetworkAgent type:opengl background:backgroundColor draw_env:false synchronized:true toolbar:false
-		camera_pos: {398.5622,522.9339,1636.0924} camera_look_pos: {398.5622,522.9053,-4.0E-4} camera_up_vector: {0.0,1.0,0.0} 
+		camera_pos: {417.1411,527.07,2064.3239} camera_look_pos: {417.1411,527.0339,-5.0E-4} camera_up_vector: {0.0,1.0,0.0}
 		
 		{
 			overlay position: { 0, 25 } size: { 240 #px, 680 #px } background: #black border: #black {				    
-		      draw !autonomy ? "Conventional" : "Autonomy" color:#white at:{50,100} font:font("Helvetica", 50 , #bold);
+		      draw !autonomy ? "Conventional" : "Autonomy" color:#white at:{50,100} font:font("Helvetica", 25 , #bold);
 		      loop i from:0 to:length(buildingColors)-1{
-				draw buildingShape[buildingColors.keys[i]] empty:false color: buildingColors.values[i] at: {75, 200+i*100};
-				draw buildingColors.keys[i] color: buildingColors.values[i] at:  {120, 210+i*100} perspective: true font:font("Helvetica", 30 , #bold);
+				draw buildingShape[buildingColors.keys[i]]*0.5 empty:false color: buildingColors.values[i] at: {75, 150+i*50};
+				draw buildingColors.keys[i] color: buildingColors.values[i] at:  {120, 160+i*50} perspective: true font:font("Helvetica", 25 , #plain);
 			  }
 			}
 			
@@ -313,13 +324,15 @@ experiment City{
 			  
 			  draw rectangle(nbWalk,10) color: #green at: {posCE.x-50+nbWalk/2, posCE.y+0*100};
 			  draw "Walk: " + nbWalk/length(people) color: #green at:  {posCE.x-50, -20+posCE.y+0*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw circle(10) color: #green at: {posCE.x+120, posCE.y+0*100-30};
 			  
 			  draw rectangle(nbMass,10) color: #red at: {posCE.x-50+nbMass/2, posCE.y+spacebetween*100};
 			  draw "Mass: " + nbMass/length(people)color: #red at:  {posCE.x-50, -20+posCE.y+spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw square(20) color: #red at: {posCE.x+120, posCE.y+0*100-30+spacebetween*100};
 			  
 			  draw rectangle(55,155) color: #white empty:true at: {posCE.x-100, posCE.y+spacebetween*100 - 150/2};
 			  draw rectangle(50,(nbWalk/100)*150) color: #green at: {posCE.x-100, posCE.y+spacebetween*100 - ((nbWalk/100))*150/2};
-			  draw "City Efficiency: " + int((nbWalk/nbMass)*100) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw "City Efficiency: " + int((nbWalk)) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
 			}
 			species people;
 			event["c"] action: {autonomy<-false;ask world{do updateSim(autonomy);}};

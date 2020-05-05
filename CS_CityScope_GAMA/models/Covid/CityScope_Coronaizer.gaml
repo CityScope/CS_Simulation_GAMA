@@ -179,11 +179,11 @@ grid cell cell_width: world.shape.width/50 cell_height:world.shape.width/50 neig
 	}	
 }
 
-experiment Coronaizer type:gui autorun:true parent:autonomousCity{
+experiment Coronaizer type:gui autorun:true parent:City{
 
 	float minimum_cycle_duration<-0.02;
-	parameter "Quarantine Ratio:" category: "Policy" var:quarantineRatio min: 0.0 max: 1.0 step:0.1;
-	parameter "Mask Ratio:" category: "Policy" var: maskRatio min: 0.0 max: 1.0 step:0.1;
+	parameter "Quarantine Ratio:" category: "Policy Covid" var:quarantineRatio min: 0.0 max: 1.0 step:0.1;
+	parameter "Mask Ratio:" category: "Policy Covid" var: maskRatio min: 0.0 max: 1.0 step:0.1;
 	bool a_boolean_to_disable_parameters <- true;
 	parameter "Disable following parameters" category:"Covid" var: a_boolean_to_disable_parameters disables: [time_recovery,infection_rate,initial_nb_infected,mortality_rate,socialDistance];
 	parameter "Nb recovery day"   category: "Covid" var:number_day_recovery min: 1 max: 30;
@@ -191,12 +191,12 @@ experiment Coronaizer type:gui autorun:true parent:autonomousCity{
 	parameter "Mortality"   category: "Covid" var: mortality_rate min:0.0 max:1.0;
 	parameter "Initial Infected"   category: "Covid" var: initial_nb_infected min:0 max:100;
 	parameter "Contamination Distance:" category: "Covid" var:socialDistance min: 1.0 max: 100.0 step:1;
-	parameter "Social Distance Graph:" category: "Visualization" var:drawSocialDistanceGraph ;
-	parameter "Infection Graph:" category: "Visualization" var:drawInfectionGraph ;
-	parameter "Draw Grid:" category: "Visualization" var:draw_grid;
-	parameter "Show People:" category: "Visualization" var:showPeople;
-	parameter "Viral People Transparency:" category: "Visualization" var:viralPeopleTransparency <-0.5 min:0.0 max:1.0 ;
-	parameter "Save results to CSV:" category: "Simulation" var:savetoCSV;
+	parameter "Social Distance Graph:" category: "Covid Visualization" var:drawSocialDistanceGraph ;
+	parameter "Infection Graph:" category: "Covid Visualization" var:drawInfectionGraph ;
+	parameter "Draw Grid:" category: "Covid Visualization" var:draw_grid;
+	parameter "Show People:" category: "Covid Visualization" var:showPeople;
+	parameter "Viral People Transparency:" category: "Covid Visualization" var:viralPeopleTransparency <-0.5 min:0.0 max:1.0 ;
+	parameter "Save results to CSV:" category: "Simulation Covid" var:savetoCSV;
 	
 	output{
 	  layout #split;
@@ -223,6 +223,28 @@ experiment Coronaizer type:gui autorun:true parent:autonomousCity{
 
 				}
 		}
+		
+		
+		graphics 'Pandemic Level'{
+			  float nbWalk<-float(length (people where (each.macroTrip= false)));
+			  float nbMass<-float(length (people where (each.macroTrip= true)));
+			  float spacebetween<-0.5; 	
+				 //CITY EFFICIENTY
+			  point posCE<-{1200,100};
+			  draw rectangle(320*1.5,200*1.5) at:posCE color:#white empty:true;
+			  
+			  
+			  draw rectangle(nb_susceptible,10) color: #green at: {posCE.x-50+nb_susceptible/2, posCE.y+0*100};
+			  draw "S: " + nb_susceptible/length(people) color: #green at:  {posCE.x-50, -20+posCE.y+0*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  
+			  draw rectangle(nb_infected,10) color: #red at: {posCE.x-50+nb_infected/2, posCE.y+spacebetween*100};
+			  draw "I: " + nb_infected/length(people)color: #red at:  {posCE.x-50, -20+posCE.y+spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  
+			  draw rectangle(55,155) color: #white empty:true at: {posCE.x-100, posCE.y+spacebetween*100 - 150/2};
+			  draw rectangle(50,(nb_infected/100)*150) color: #red at: {posCE.x-100, posCE.y+spacebetween*100 - ((nb_infected/100))*150/2};
+			  draw "Pandemic Level: " + int((nb_infected)*100) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+			}
+			
 		graphics "text" {
 	      draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
 	  	}	
@@ -240,30 +262,4 @@ experiment Coronaizer type:gui autorun:true parent:autonomousCity{
 	  }
 	}		
 }
-
-
-/*experiment CityScopeMulti type: gui parent: Coronaizer
-{
-	init
-	{
-		create simulation with: [cityScopeCity:: "volpe", infection_rate::0.005];
-	}
-	output
-	{
-	}
-
-}
-experiment CityScopeMultiCity type: gui parent: Coronaizer
-{
-	init
-	{	
-		create simulation with: [cityScopeCity:: "Andorra"];
-		create simulation with: [cityScopeCity:: "otaniemi"];
-		create simulation with: [cityScopeCity:: "Lyon"];		
-	}
-	output
-	{
-	}
-
-}*/
 
