@@ -300,6 +300,27 @@ experiment City{
 
 				}
 			}
+			
+			
+			graphics 'City Efficienty'{
+			  float nbWalk<-float(length (people where (each.macroTrip= false)));
+			  float nbMass<-float(length (people where (each.macroTrip= true)));
+			  float spacebetween<-0.5; 	
+				 //CITY EFFICIENTY
+			  point posCE<-{1200,100};
+			  draw rectangle(320*1.5,200*1.5) at:posCE color:#white empty:true;
+			  
+			  
+			  draw rectangle(nbWalk,10) color: #green at: {posCE.x-50+nbWalk/2, posCE.y+0*100};
+			  draw "Walk: " + nbWalk/length(people) color: #green at:  {posCE.x-50, -20+posCE.y+0*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  
+			  draw rectangle(nbMass,10) color: #red at: {posCE.x-50+nbMass/2, posCE.y+spacebetween*100};
+			  draw "Mass: " + nbMass/length(people)color: #red at:  {posCE.x-50, -20+posCE.y+spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  
+			  draw rectangle(55,155) color: #white empty:true at: {posCE.x-100, posCE.y+spacebetween*100 - 150/2};
+			  draw rectangle(50,(nbWalk/100)*150) color: #green at: {posCE.x-100, posCE.y+spacebetween*100 - ((nbWalk/100))*150/2};
+			  draw "City Efficiency: " + int((nbWalk/nbMass)*100) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+			}
 			species people;
 			event["c"] action: {autonomy<-false;ask world{do updateSim(autonomy);}};
 			event["a"] action: {autonomy<-true;ask world{do updateSim(autonomy);}};
