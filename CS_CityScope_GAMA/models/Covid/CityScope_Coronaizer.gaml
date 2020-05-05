@@ -7,7 +7,7 @@
 
 model CityScopeCoronaizer
 
-import "./Autonomous_Covid_Community.gaml"
+import "./../CityScope/CityScope_main.gaml"
 
 global{
 	float socialDistance <- 2#m;
@@ -115,7 +115,6 @@ global{
 			}
 		}
 	}
-	
 	reflex save_model_output when: every(#day) and savetoCSV{
 		// save the values of the variables name, speed and size to the csv file; the rewrite facet is set to false to continue to write in the same file
 		save [time,nb_susceptible,nb_infected, nb_recovered, nb_death] to: filePathName type:"csv" rewrite: false;
@@ -200,11 +199,12 @@ experiment Coronaizer type:gui autorun:true parent:City{
 	
 	output{
 	  layout #split;
-	  display CoronaMap type:opengl background:backgroundColor draw_env:false synchronized:false toolbar:false{
+	  display CoronaMap type:opengl background:backgroundColor draw_env:false synchronized:false toolbar:false
+	  {  	
 	  	species building aspect:default;
-	  	//species district aspect:default
 	  	species ViralPeople aspect:base;
 	  	species cell aspect:default;
+	  	
 	  	graphics "infection_graph" {
 				if (infection_graph != nil and drawInfectionGraph = true) {
 					loop eg over: infection_graph.edges {
@@ -224,10 +224,7 @@ experiment Coronaizer type:gui autorun:true parent:City{
 				}
 		}
 		
-		
 		graphics 'Pandemic Level'{
-			  float nbWalk<-float(length (people where (each.macroTrip= false)));
-			  float nbMass<-float(length (people where (each.macroTrip= true)));
 			  float spacebetween<-0.5; 	
 				 //CITY EFFICIENTY
 			  point posCE<-{1200,100};
@@ -235,18 +232,18 @@ experiment Coronaizer type:gui autorun:true parent:City{
 			  
 			  
 			  draw rectangle(nb_susceptible,10) color: #green at: {posCE.x-50+nb_susceptible/2, posCE.y+0*100};
-			  draw "S: " + nb_susceptible/length(people) color: #green at:  {posCE.x-50, -20+posCE.y+0*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw "S: " + string(nb_susceptible/length(people)) color: #green at:  {posCE.x-50, -20+posCE.y+0*100} perspective: true font:font("Helvetica", 20 , #bold);
 			  
 			  draw rectangle(nb_infected,10) color: #red at: {posCE.x-50+nb_infected/2, posCE.y+spacebetween*100};
-			  draw "I: " + nb_infected/length(people)color: #red at:  {posCE.x-50, -20+posCE.y+spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw "I: " + string(nb_infected/length(people))color: #red at:  {posCE.x-50, -20+posCE.y+spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
 			  
 			  draw rectangle(55,155) color: #white empty:true at: {posCE.x-100, posCE.y+spacebetween*100 - 150/2};
 			  draw rectangle(50,(nb_infected/100)*150) color: #red at: {posCE.x-100, posCE.y+spacebetween*100 - ((nb_infected/100))*150/2};
-			  draw "Pandemic Level: " + int((nb_infected)*100) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw "Pandemic Level: " + int((nb_infected)) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
 			}
 			
 		graphics "text" {
-	      draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
+	     // draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
 	  	}	
 	  	event ["i"] action:{reinitCovid<-true;};
 	  }	

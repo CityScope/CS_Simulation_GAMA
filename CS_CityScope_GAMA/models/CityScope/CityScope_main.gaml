@@ -421,6 +421,7 @@ species people skills: [moving] {
 	bool moveOnRoad <- true;
 	bool fromTheGrid <- false;
 	bool isMoving<-true;
+	bool isQuarantine<-false;
 
 	action travellingMode {
 		curMovingMode <- "travelling";
