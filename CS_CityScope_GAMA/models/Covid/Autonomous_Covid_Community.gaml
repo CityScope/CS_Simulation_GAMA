@@ -34,6 +34,9 @@ global{
 	map<string, rgb> buildingColors <- ["residential"::rgb(168,192,208), "shopping"::rgb(245,135,51), "business"::rgb(217,198,163)];
 	map<string, geometry> buildingShape <- ["residential"::circle(buildingSize/2), "shopping"::square(buildingSize) rotated_by 45, "business"::triangle(buildingSize*1.25)];
 	
+	map<string,float> proportion_per_type<-["homeWorker"::0.2,"OfficeWorker"::0.6,"ShopWorker"::0.2];
+	map<string,rgb> color_per_type<-["homeWorker"::rgb(240,255,56),"OfficeWorker"::rgb(82,171,255),"ShopWorker"::rgb(179,38,30)];
+	
 
 	graph<district, district> macro_graph;
 	bool drawMacroGraph<-false;
@@ -75,12 +78,13 @@ global{
 		create people number:nbPeople{
 		  	current_trajectory <- [];
 		  	color<-rgb(125)+rnd(-125,125);
+		  	type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 		}
 		if (!_autonomy){
 		  ask people{
-			myPlaces[0]<-one_of(building where (each.type="residential"));
-			myPlaces[1]<-one_of(building where (each.type="shopping"));
-			myPlaces[2]<-one_of(building where (each.type="business"));
+			myHome<-one_of(building where (each.type="residential"));
+			myShop<-one_of(building where (each.type="shopping"));
+			myOffice<-one_of(building where (each.type="business"));
 			my_target<-any_location_in(myPlaces[0]);
 			myCurrentDistrict<- myPlaces[0].myDistrict;
 		  }	
@@ -88,22 +92,44 @@ global{
 		else{
 		  ask people{
 		  	myCurrentDistrict<-one_of(district);
-			myPlaces[0]<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
-			myPlaces[1]<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
-			myPlaces[2]<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
+			myHome<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
+			myShop<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
+			myOffice<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
 			my_target<-any_location_in(myPlaces[0]);
 		  }
 		  ask (length(people)*crossRatio) among people{
 		  	myCurrentDistrict<-one_of(district);
-			myPlaces[0]<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
+			myHome<-one_of(myCurrentDistrict.myBuildings where (each.type="residential"));
 			myCurrentDistrict<-one_of(district);
-			myPlaces[1]<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
+			myShop<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
 			myCurrentDistrict<-one_of(district);
-			myPlaces[2]<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
+			myOffice<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
 			my_target<-any_location_in(myPlaces[0]);
 		  }		
 		}
-		
+		ask people{
+			if (type = proportion_per_type.keys[0]){
+				myPlaces[0]<-myHome;
+				myPlaces[1]<-myHome;
+				myPlaces[2]<-myShop;
+				myPlaces[3]<-myHome;
+				myPlaces[4]<-myHome;
+			}
+			if (type = proportion_per_type.keys[1]){
+				myPlaces[0]<-myHome;
+				myPlaces[1]<-myOffice;
+				myPlaces[2]<-myShop;
+				myPlaces[3]<-myOffice;
+				myPlaces[4]<-myHome;
+			}
+			if (type = proportion_per_type.keys[2]){
+				myPlaces[0]<-myHome;
+				myPlaces[1]<-myShop;
+				myPlaces[2]<-myShop;
+				myPlaces[3]<-myShop;
+				myPlaces[4]<-myHome;
+			}
+		}		
 }
 
 
@@ -191,7 +217,11 @@ species building{
 
 species people skills:[moving]{
 	rgb color;
-	list<building> myPlaces<-[one_of(building),one_of(building),one_of(building)];
+	building myHome;
+	building myOffice;
+	building myShop;
+	string type;
+	list<building> myPlaces<-[one_of(building),one_of(building),one_of(building),one_of(building),one_of(building)];
 	point my_target;
 	int curPlaces<-0;
 	list<point> current_trajectory;
@@ -223,7 +253,7 @@ species people skills:[moving]{
 	    macroTrip<-false;
 	    do goto target:my_target speed:5.0;
     	if (my_target = location){
-    		curPlaces<-(curPlaces+1) mod 3;
+    		curPlaces<-(curPlaces+1) mod 5;
 			building bd <- myPlaces[curPlaces];
 			my_target<-any_location_in(bd);
 			if (bd.myDistrict != myCurrentDistrict) {
@@ -265,6 +295,10 @@ species people skills:[moving]{
 			draw line(current_trajectory)  color: rgb(color,trajectoryTransparency);
 		}
 	}
+	
+	aspect profile{
+		draw circle(4#m) color:color_per_type[type];
+	}
 }
 
 experiment City{
@@ -289,6 +323,11 @@ experiment City{
 		      loop i from:0 to:length(buildingColors)-1{
 				draw buildingShape[buildingColors.keys[i]]*0.5 empty:false color: buildingColors.values[i] at: {75, 150+i*50};
 				draw buildingColors.keys[i] color: buildingColors.values[i] at:  {120, 160+i*50} perspective: true font:font("Helvetica", 25 , #plain);
+			  }
+			  
+			  loop i from:0 to:length(proportion_per_type)-1{
+				draw circle (5)  empty:false color: color_per_type.values[i] at: {75, 350+i*50};
+				draw proportion_per_type.keys[i] + " (" + proportion_per_type.values[i]+")" color: color_per_type.values[i] at:  {120, 360+i*50} perspective: true font:font("Helvetica", 15 , #plain);
 			  }
 			}
 			
@@ -337,7 +376,7 @@ experiment City{
 			  draw rectangle(50,(nbWalk/100)*150) color: #green at: {posCE.x-100, posCE.y+spacebetween*100 - ((nbWalk/100))*150/2};
 			  draw "City Efficiency: " + int((nbWalk)) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
 			}
-			species people;
+			species people aspect:profile;
 			event["c"] action: {autonomy<-false;ask world{do updateSim(autonomy);}};
 			event["a"] action: {autonomy<-true;ask world{do updateSim(autonomy);}};
 		}
