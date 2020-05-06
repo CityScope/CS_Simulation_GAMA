@@ -7,7 +7,8 @@
 
 model CityScopeCoronaizer
 
-import "./../CityScope/CityScope_main.gaml"
+//import "./../CityScope/CityScope_main.gaml"
+import "./Autonomous_Covid_Community.gaml"
 
 global{
 	float socialDistance <- 2#m;
@@ -50,7 +51,7 @@ global{
 		filePathName <-"../results/output"+date("now")+".csv";
 	}
 	
-	reflex initCovid when: (cycle=1 or reinitCovid){
+	reflex initCovid when: (cycle=1 or (reinitCovid or reinit)){
 		ask ViralPeople{
 			is_susceptible <-  true;
 			is_infected <-  false;
@@ -73,6 +74,7 @@ global{
 			target.isMoving<-false;
 		}
 		reinitCovid<-false;
+		reinit<-false;
 	}
 	reflex updateGraph when: (drawSocialDistanceGraph = true) {
 		social_distance_graph <- graph<people, people>(people as_distance_graph (socialDistance));
@@ -133,7 +135,7 @@ species ViralPeople  mirrors:people{
 		
 	reflex infected_contact when: is_infected and !as_mask{
 		ask ViralPeople where !each.as_mask at_distance socialDistance {
-			if (flip(infection_rate)) {
+			if (flip(infection_rate/step)) {
         		is_susceptible <-  false;
             	is_infected <-  true;
             	infected_time <- time; 
@@ -154,12 +156,26 @@ species ViralPeople  mirrors:people{
 	}
 
 	
-	aspect base {
+	aspect health {
 		if(showPeople){
 		  draw circle(is_infected ? 7#m : 5#m) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
 		}
 		if (as_mask){
 		  draw square(4#m) color:#white;	
+		}
+	}
+	
+	aspect safety_measures{
+		if(showPeople ){
+		  if (!as_mask and !target.isQuarantine){
+		    draw circle(5#m) color:rgb(0,0,125) border:rgb(0,0,125)-100;	
+		  }
+		  if (as_mask xor target.isQuarantine){
+		    draw circle(7#m) color:rgb(70,130,180) border:rgb(70,130,180)-100;	
+		  }	
+		  if(as_mask and target.isQuarantine){
+		    draw circle(9#m) color:rgb(135,206,250) border:rgb(135,206,250)-100;		
+		  }
 		}
 	}
 }
@@ -188,7 +204,7 @@ experiment Coronaizer type:gui autorun:true parent:City{
 	parameter "Nb recovery day"   category: "Covid" var:number_day_recovery min: 1 max: 30;
 	parameter "Infection Rate"   category: "Covid" var:infection_rate min:0.0 max:1.0;
 	parameter "Mortality"   category: "Covid" var: mortality_rate min:0.0 max:1.0;
-	parameter "Initial Infected"   category: "Covid" var: initial_nb_infected min:0 max:100;
+	parameter "Initial Infected"   category: "Covid" var: initial_nb_infected <-1 min:0 max:100;
 	parameter "Contamination Distance:" category: "Covid" var:socialDistance min: 1.0 max: 100.0 step:1;
 	parameter "Social Distance Graph:" category: "Covid Visualization" var:drawSocialDistanceGraph ;
 	parameter "Infection Graph:" category: "Covid Visualization" var:drawInfectionGraph ;
@@ -202,7 +218,7 @@ experiment Coronaizer type:gui autorun:true parent:City{
 	  display CoronaMap type:opengl background:backgroundColor draw_env:false synchronized:false toolbar:false
 	  {  	
 	  	species building aspect:default;
-	  	species ViralPeople aspect:base;
+	  	species ViralPeople aspect:health;
 	  	species cell aspect:default;
 	  	
 	  	graphics "infection_graph" {

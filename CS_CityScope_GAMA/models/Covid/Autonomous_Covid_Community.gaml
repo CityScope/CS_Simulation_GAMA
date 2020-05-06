@@ -37,7 +37,9 @@ global{
 
 	graph<district, district> macro_graph;
 	bool drawMacroGraph<-false;
-	bool pandemy<-false;
+	bool pandemy<-false;	
+	//COVID Related
+	bool reinit<-false;
 	
 	init{	
 		create district from:district_shapefile{
@@ -63,6 +65,7 @@ global{
 		step<-60#sec;
 		do updateDistrict(_autonomy);
 		do updatePeople(_autonomy);
+		reinit<-true;
 	}
 
 	action updatePeople(bool _autonomy){
