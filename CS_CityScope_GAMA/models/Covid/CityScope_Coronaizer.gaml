@@ -165,7 +165,7 @@ species ViralPeople  mirrors:people{
 		}
 	}
 	
-	aspect safety_measures{
+	aspect safety{
 		if(showPeople ){
 		  if (!as_mask and !target.isQuarantine){
 		    draw circle(5#m) color:rgb(0,0,125) border:rgb(0,0,125)-100;	
@@ -218,7 +218,7 @@ experiment Coronaizer type:gui autorun:true parent:City{
 	  display CoronaMap type:opengl background:backgroundColor draw_env:false synchronized:false toolbar:false
 	  {  	
 	  	species building aspect:default;
-	  	species ViralPeople aspect:health;
+	  	species ViralPeople aspect:safety;
 	  	species cell aspect:default;
 	  	
 	  	graphics "infection_graph" {
@@ -256,7 +256,27 @@ experiment Coronaizer type:gui autorun:true parent:City{
 			  draw rectangle(55,155) color: #white empty:true at: {posCE.x-100, posCE.y+spacebetween*100 - 150/2};
 			  draw rectangle(50,(nb_infected/100)*150) color: #red at: {posCE.x-100, posCE.y+spacebetween*100 - ((nb_infected/100))*150/2};
 			  draw "Pandemic Level: " + int((nb_infected)) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
-			}
+		}
+		
+		
+		graphics 'Safety Measures'{
+			  float spacebetween<-0.5; 	
+			  //CITY EFFICIENTY
+			  point posCE<-{1200,400};
+			  draw rectangle(320*1.5,200*1.5) at:posCE color:#white empty:true;
+			  
+			  int nbMask <- length(ViralPeople where (each.as_mask = true));
+			  draw rectangle(nbMask,10) color: rgb(70,130,180) at: {posCE.x-50+nbMask/2, posCE.y+0*100};
+			  draw "Mask: " + string(nbMask/length(people)) color: rgb(70,130,180) at:  {posCE.x-50, -20+posCE.y+0*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  
+			  int nbQ <- length(ViralPeople where (each.target.isQuarantine = true));
+			  draw rectangle(nbQ,10) color: rgb(135,206,250) at: {posCE.x-50+nbQ/2, posCE.y+spacebetween*100};
+			  draw "Quarantine: " + string(nbQ/length(people))color: rgb(135,206,250) at:  {posCE.x-50, -20+posCE.y+spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  
+			  draw rectangle(55,155) color: #white empty:true at: {posCE.x-100, posCE.y+spacebetween*100 - 150/2};
+			  draw rectangle(50,((nbMask+nbQ)/200)*150) color: #white at: {posCE.x-100, posCE.y+spacebetween*100 - (((nbMask+nbQ)/200))*150/2};
+			  draw "Safety Level: " + int((nbMask + nbQ)) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+		}
 			
 		graphics "text" {
 	     // draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
