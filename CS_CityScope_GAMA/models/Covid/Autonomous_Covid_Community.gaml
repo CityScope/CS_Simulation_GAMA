@@ -31,12 +31,13 @@ global{
 	rgb autonomousDistrictColor <-rgb(39,62,78)+50;
 	rgb macroGraphColor<-rgb(245,135,51);
 	rgb backgroundColor<-rgb(39,62,78);
-	map<string, rgb> buildingColors <- ["residential"::rgb(168,192,208), "shopping"::rgb(245,135,51), "business"::rgb(217,198,163)];
+	map<string, rgb> buildingColors <- ["residential"::rgb('#FE7134'), "shopping"::rgb('#5AB8B8'), "business"::rgb('#FCC8B1')];
+	//map<string, rgb> buildingColors <- ["residential"::rgb(168,192,208), "shopping"::rgb(245,135,51), "business"::rgb(217,198,163)];
 	map<string, geometry> buildingShape <- ["residential"::circle(buildingSize/2), "shopping"::square(buildingSize) rotated_by 45, "business"::triangle(buildingSize*1.25)];
 	
 	map<string,float> proportion_per_type<-["homeWorker"::0.2,"OfficeWorker"::0.6,"ShopWorker"::0.2];
-	map<string,rgb> color_per_type<-["homeWorker"::rgb(240,255,56),"OfficeWorker"::rgb(82,171,255),"ShopWorker"::rgb(179,38,30)];
-	
+	//map<string,rgb> color_per_type<-["homeWorker"::rgb(240,255,56),"OfficeWorker"::rgb(82,171,255),"ShopWorker"::rgb(179,38,30)];
+	map<string,rgb> color_per_type<-["homeWorker"::rgb('#FE7134')-75,"OfficeWorker"::rgb('#5AB8B8')-75,"ShopWorker"::rgb('#FCC8B1')-75];
 
 	graph<district, district> macro_graph;
 	bool drawMacroGraph<-false;
@@ -194,11 +195,11 @@ species district{
 			draw shape*1.1 color:rgb(#red,1) empty:true border:#red;
 		}
 		if(isAutonomous){
-			draw (shape*1.05)-shape at_location {location.x,location.y,-0.01} color:autonomousDistrictColor border:autonomousDistrictColor-50;
-			draw shape color:conventionalDistrictColor border:conventionalDistrictColor-50;
+			//draw (shape*1.05)-shape at_location {location.x,location.y,-0.01} color:autonomousDistrictColor border:autonomousDistrictColor-50;
+			draw shape color:conventionalDistrictColor border:conventionalDistrictColor-50 empty:true;
 		}else{
-			draw (shape*1.05)-shape at_location {location.x,location.y,-0.01} color:buildingColors[conventionalType] border:buildingColors[conventionalType]-50;
-			draw shape color:conventionalDistrictColor border:buildingColors[conventionalType]-50;
+			//draw (shape*1.05)-shape at_location {location.x,location.y,-0.01} color:buildingColors[conventionalType] border:buildingColors[conventionalType]-50;
+			draw shape color:conventionalDistrictColor border:buildingColors[conventionalType]-50 empty:true;
 		}
 		
 	}
@@ -211,7 +212,7 @@ species building{
 	string type;
 	district myDistrict;
 	aspect default{
-		draw buildingShape[type] at: location color:buildingColors[type] border:buildingColors[type]-50;
+		draw buildingShape[type] at: location color:buildingColors[type] border:buildingColors[type]-100;
 	}
 }
 
@@ -298,6 +299,9 @@ species people skills:[moving]{
 	
 	aspect profile{
 		draw circle(4#m) color:color_per_type[type];
+		if(drawTrajectory){
+			draw line(current_trajectory)  color: rgb(color_per_type[type],trajectoryTransparency);
+		}
 	}
 }
 
