@@ -26,7 +26,9 @@ global{
 	float buildingSize<-40#m;
 	geometry shape<-square (1#km);
 	string cityScopeCity<-"volpe";
-	file district_shapefile <- file("./../../includes/AutonomousCities/district.shp");
+	file bound_shapefile <- file("./../../includes/AutonomousCities/bound.shp");
+	file district_shapefile <- file("./../../includes/AutonomousCities/GridDistrict.shp");
+	file legend_shapefile <- file("./../../includes/AutonomousCities/Legend.shp");
 	rgb conventionalDistrictColor <-rgb(225,235,241);
 	rgb autonomousDistrictColor <-rgb(39,62,78)+50;
 	rgb macroGraphColor<-rgb(245,135,51);
@@ -45,7 +47,9 @@ global{
 	//COVID Related
 	bool reinit<-false;
 	
-	init{	
+	init{
+		shape<-envelope(bound_shapefile);	
+		create legend from: legend_shapefile;
 		create district from:district_shapefile{
 			create building number:nbBuildingPerDistrict{
 			  shape<-square(20#m);
@@ -305,6 +309,14 @@ species people skills:[moving]{
 	}
 }
 
+
+species legend{
+	string type;
+	aspect default{
+		draw shape color:#white empty:true;
+	}
+}
+
 experiment City{
 	float minimum_cycle_duration<-0.02;
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
@@ -319,24 +331,28 @@ experiment City{
 	
 	output {
 		display GotoOnNetworkAgent type:opengl background:backgroundColor draw_env:false synchronized:true toolbar:false
-		camera_pos: {417.1411,527.07,2064.3239} camera_look_pos: {417.1411,527.0339,-5.0E-4} camera_up_vector: {0.0,1.0,0.0}
 		
 		{
-			overlay position: { 0, 25 } size: { 240 #px, 680 #px } background: #black border: #black {				    
-		      draw !autonomy ? "Conventional" : "Autonomy" color:#white at:{50,100} font:font("Helvetica", 25 , #bold);
+			//overlay position: {first(legend where (each.type="title")).location.x, first(legend where (each.type="title")).location.y } 
+			//size: {first(legend where (each.type="title")).shape.width,first(legend where (each.type="title")).shape.height} background: #black border: #black {				    
+		    graphics "title" { 
+		      draw !autonomy ? "Conventional Zoning" : "Autonomous Cities" color:#white at:{first(legend where (each.type="title")).location.x - first(legend where (each.type="title")).shape.width/2, first(legend where (each.type="title")).location.y} font:font("Helvetica", 50 , #bold);
+		    } 
+		    graphics "building"{
 		      loop i from:0 to:length(buildingColors)-1{
-				draw buildingShape[buildingColors.keys[i]]*0.5 empty:false color: buildingColors.values[i] at: {75, 150+i*50};
-				draw buildingColors.keys[i] color: buildingColors.values[i] at:  {120, 160+i*50} perspective: true font:font("Helvetica", 25 , #plain);
+				draw buildingShape[buildingColors.keys[i]] empty:false color: buildingColors.values[i] at: {first(legend where (each.type="left1")).location.x - first(legend where (each.type="left1")).shape.width/2, first(legend where (each.type="left1")).location.y - first(legend where (each.type="left1")).shape.height/2+i*first(legend where (each.type="left1")).shape.height/2};
+				draw buildingColors.keys[i] color: buildingColors.values[i] perspective: true font:font("Helvetica", 25 , #plain) at: {40+ first(legend where (each.type="left1")).location.x - first(legend where (each.type="left1")).shape.width/2, 20+ first(legend where (each.type="left1")).location.y - first(legend where (each.type="left1")).shape.height/2+i*first(legend where (each.type="left1")).shape.height/2};
 			  }
 			  
 			  loop i from:0 to:length(proportion_per_type)-1{
-				draw circle (5)  empty:false color: color_per_type.values[i] at: {75, 350+i*50};
-				draw proportion_per_type.keys[i] + " (" + proportion_per_type.values[i]+")" color: color_per_type.values[i] at:  {120, 360+i*50} perspective: true font:font("Helvetica", 15 , #plain);
+				draw circle (10)  empty:false color: color_per_type.values[i] at: {first(legend where (each.type="left3")).location.x - first(legend where (each.type="left3")).shape.width/2, first(legend where (each.type="left3")).location.y - first(legend where (each.type="left3")).shape.height/2+i*first(legend where (each.type="left3")).shape.height/2};
+				draw proportion_per_type.keys[i] + " (" + proportion_per_type.values[i]+")" color: color_per_type.values[i] perspective: true font:font("Helvetica", 15 , #plain) at: {40+first(legend where (each.type="left3")).location.x - first(legend where (each.type="left3")).shape.width/2, first(legend where (each.type="left3")).location.y - first(legend where (each.type="left3")).shape.height/2+i*first(legend where (each.type="left3")).shape.height/2};
 			  }
 			}
 			
 			species district position:{0,0,-0.001};
 			species building;
+			//species legend;
 			
 			
 			graphics "macro_graph" {
@@ -362,23 +378,27 @@ experiment City{
 			graphics 'City Efficienty'{
 			  float nbWalk<-float(length (people where (each.macroTrip= false)));
 			  float nbMass<-float(length (people where (each.macroTrip= true)));
-			  float spacebetween<-0.5; 	
+			  float spacebetween<-first(legend where (each.type="right1")).shape.height/2; 	
 				 //CITY EFFICIENTY
-			  point posCE<-{1200,100};
-			  draw rectangle(320*1.5,200*1.5) at:posCE color:#white empty:true;
+			  point posCE<-{first(legend where (each.type="right1")).location.x- first(legend where (each.type="right1")).shape.width/2,first(legend where (each.type="right1")).location.y- first(legend where (each.type="right1")).shape.height/2};
+			  	
+			  draw "City Efficiency: " + int((nbWalk)) color: #white at:  {40+ posCE.x, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);			  
+			  draw rectangle(55,first(legend where (each.type="right1")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right1")).shape.height/2};
+			  draw rectangle(50,(nbWalk/100)*first(legend where (each.type="right1")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - ((nbWalk/100))*first(legend where (each.type="right1")).shape.height/2};
 			  
 			  
-			  draw rectangle(nbWalk,10) color: #green at: {posCE.x-50+nbWalk/2, posCE.y+0*100};
-			  draw "Walk: " + nbWalk/length(people) color: #green at:  {posCE.x-50, -20+posCE.y+0*100} perspective: true font:font("Helvetica", 20 , #bold);
-			  draw circle(10) color: #green at: {posCE.x+120, posCE.y+0*100-30};
 			  
-			  draw rectangle(nbMass,10) color: #red at: {posCE.x-50+nbMass/2, posCE.y+spacebetween*100};
-			  draw "Mass: " + nbMass/length(people)color: #red at:  {posCE.x-50, -20+posCE.y+spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
-			  draw square(20) color: #red at: {posCE.x+120, posCE.y+0*100-30+spacebetween*100};
+			  float offsetX<-first(legend where (each.type="right1")).shape.width/4;
+			  draw rectangle(nbWalk,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nbWalk/2,posCE.y+spacebetween+20};
+			  draw "Walk: " + nbWalk/length(people) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw circle(10) color: buildingColors.values[1] at: {offsetX+posCE.x-20, posCE.y+spacebetween-20};
 			  
-			  draw rectangle(55,155) color: #white empty:true at: {posCE.x-100, posCE.y+spacebetween*100 - 150/2};
-			  draw rectangle(50,(nbWalk/100)*150) color: #green at: {posCE.x-100, posCE.y+spacebetween*100 - ((nbWalk/100))*150/2};
-			  draw "City Efficiency: " + int((nbWalk)) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw rectangle(nbMass,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nbMass/2, posCE.y+2*spacebetween+20};
+			  draw "Mass: " + nbMass/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20};
+			  
+			  
+			  
 			}
 			species people aspect:profile;
 			event["c"] action: {autonomy<-false;ask world{do updateSim(autonomy);}};
