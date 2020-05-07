@@ -167,15 +167,31 @@ species ViralPeople  mirrors:people{
 	
 	aspect safety{
 		if(showPeople ){
-		  if (!as_mask and !target.isQuarantine){
-		    draw circle(5#m) color:rgb(0,0,125) border:rgb(0,0,125)-100;	
-		  }
-		  if (as_mask xor target.isQuarantine){
-		    draw circle(7#m) color:rgb(70,130,180) border:rgb(70,130,180)-100;	
-		  }	
-		  if(as_mask and target.isQuarantine){
+		  if(target.isQuarantine){
 		    draw circle(9#m) color:rgb(135,206,250) border:rgb(135,206,250)-100;		
 		  }
+		  if (as_mask){
+		    draw circle(7#m) color:rgb(70,130,180) border:rgb(70,130,180)-100;	
+		  }	
+		  draw circle(5#m) color:rgb(0,0,125) border:rgb(0,0,125)-100;
+		}
+	}
+	
+	aspect dynamic{
+		if(safety){
+          if(target.isQuarantine){
+		    draw circle(9#m) color:rgb(135,206,250) border:rgb(135,206,250)-100;		
+		  }
+		  if (as_mask){
+		    draw circle(7#m) color:rgb(70,130,180) border:rgb(70,130,180)-100;	
+		  }	
+		  draw circle(5#m) color:rgb(0,0,125) border:rgb(0,0,125)-100;
+		}
+		if(health){
+		  draw circle(is_infected ? 7#m : 5#m) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
+		if (as_mask){
+		  draw square(4#m) color:#white;	
+		}	
 		}
 	}
 }
@@ -194,7 +210,7 @@ grid cell cell_width: world.shape.width/50 cell_height:world.shape.width/50 neig
 	}	
 }
 
-experiment Coronaizer type:gui autorun:true parent:City{
+experiment Coronaizer type:gui autorun:true virtual:true{
 
 	float minimum_cycle_duration<-0.02;
 	parameter "Quarantine Ratio:" category: "Policy Covid" var:quarantineRatio min: 0.0 max: 1.0 step:0.1;
@@ -205,7 +221,7 @@ experiment Coronaizer type:gui autorun:true parent:City{
 	parameter "Infection Rate"   category: "Covid" var:infection_rate min:0.0 max:1.0;
 	parameter "Mortality"   category: "Covid" var: mortality_rate min:0.0 max:1.0;
 	parameter "Initial Infected"   category: "Covid" var: initial_nb_infected <-1 min:0 max:100;
-	parameter "Contamination Distance:" category: "Covid" var:socialDistance min: 1.0 max: 100.0 step:1;
+	parameter "Contamination Distance:" category: "Covid" var:socialDistance min: 1.0 max: 1000.0 step:1;
 	parameter "Social Distance Graph:" category: "Covid Visualization" var:drawSocialDistanceGraph ;
 	parameter "Infection Graph:" category: "Covid Visualization" var:drawInfectionGraph ;
 	parameter "Draw Grid:" category: "Covid Visualization" var:draw_grid;
@@ -215,7 +231,7 @@ experiment Coronaizer type:gui autorun:true parent:City{
 	
 	output{
 	  layout #split;
-	  display CoronaMap type:opengl background:backgroundColor draw_env:false synchronized:false toolbar:false
+	  /*display CoronaMap type:opengl background:backgroundColor draw_env:false synchronized:false toolbar:false
 	  {  	
 	  	species building aspect:default;
 	  	species ViralPeople aspect:safety;
@@ -239,51 +255,13 @@ experiment Coronaizer type:gui autorun:true parent:City{
 
 				}
 		}
-		
-		graphics 'Pandemic Level'{
-			  float spacebetween<-0.5; 	
-				 //CITY EFFICIENTY
-			  point posCE<-{1200,100};
-			  draw rectangle(320*1.5,200*1.5) at:posCE color:#white empty:true;
-			  
-			  
-			  draw rectangle(nb_susceptible,10) color: #green at: {posCE.x-50+nb_susceptible/2, posCE.y+0*100};
-			  draw "S: " + string(nb_susceptible/length(people)) color: #green at:  {posCE.x-50, -20+posCE.y+0*100} perspective: true font:font("Helvetica", 20 , #bold);
-			  
-			  draw rectangle(nb_infected,10) color: #red at: {posCE.x-50+nb_infected/2, posCE.y+spacebetween*100};
-			  draw "I: " + string(nb_infected/length(people))color: #red at:  {posCE.x-50, -20+posCE.y+spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
-			  
-			  draw rectangle(55,155) color: #white empty:true at: {posCE.x-100, posCE.y+spacebetween*100 - 150/2};
-			  draw rectangle(50,(nb_infected/100)*150) color: #red at: {posCE.x-100, posCE.y+spacebetween*100 - ((nb_infected/100))*150/2};
-			  draw "Pandemic Level: " + int((nb_infected)) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
-		}
-		
-		
-		graphics 'Safety Measures'{
-			  float spacebetween<-0.5; 	
-			  //CITY EFFICIENTY
-			  point posCE<-{1200,400};
-			  draw rectangle(320*1.5,200*1.5) at:posCE color:#white empty:true;
-			  
-			  int nbMask <- length(ViralPeople where (each.as_mask = true));
-			  draw rectangle(nbMask,10) color: rgb(70,130,180) at: {posCE.x-50+nbMask/2, posCE.y+0*100};
-			  draw "Mask: " + string(nbMask/length(people)) color: rgb(70,130,180) at:  {posCE.x-50, -20+posCE.y+0*100} perspective: true font:font("Helvetica", 20 , #bold);
-			  
-			  int nbQ <- length(ViralPeople where (each.target.isQuarantine = true));
-			  draw rectangle(nbQ,10) color: rgb(135,206,250) at: {posCE.x-50+nbQ/2, posCE.y+spacebetween*100};
-			  draw "Quarantine: " + string(nbQ/length(people))color: rgb(135,206,250) at:  {posCE.x-50, -20+posCE.y+spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
-			  
-			  draw rectangle(55,155) color: #white empty:true at: {posCE.x-100, posCE.y+spacebetween*100 - 150/2};
-			  draw rectangle(50,((nbMask+nbQ)/200)*150) color: #white at: {posCE.x-100, posCE.y+spacebetween*100 - (((nbMask+nbQ)/200))*150/2};
-			  draw "Safety Level: " + int((nbMask + nbQ)) color: #white at:  {posCE.x-100-25, 10+posCE.y+2*spacebetween*100} perspective: true font:font("Helvetica", 20 , #bold);
-		}
 			
 		graphics "text" {
 	     // draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
 	  	}	
 	  	event ["i"] action:{reinitCovid<-true;};
-	  }	
-	 display CoronaChart refresh:every(#mn) toolbar:false {
+	  }*/	
+	 /*display CoronaChart refresh:every(#mn) toolbar:false {
 		chart "Population: " type: series x_serie_labels: "time" 
 		x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
 		y_label: 'Case'{
@@ -292,7 +270,7 @@ experiment Coronaizer type:gui autorun:true parent:City{
 			data "recovered" value: nb_recovered color: #blue;
 			data "death" value: nb_death color: #black;
 		}
-	  }
+	  }*/
 	}		
 }
 

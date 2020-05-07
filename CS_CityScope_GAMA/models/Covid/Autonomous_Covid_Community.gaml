@@ -7,6 +7,8 @@
 
 model AutonomousCovidCommunity
 
+import "./CityScope_Coronaizer.gaml"
+
 /* Insert your model definition here */
 
 global{
@@ -46,6 +48,9 @@ global{
 	bool pandemy<-false;	
 	//COVID Related
 	bool reinit<-false;
+	bool profile<-true;
+	bool safety<-false;
+	bool health<-false;
 	
 	init{
 		shape<-envelope(bound_shapefile);	
@@ -301,11 +306,19 @@ species people skills:[moving]{
 		}
 	}
 	
-	aspect profile{
-		draw circle(4#m) color:color_per_type[type];
-		if(drawTrajectory){
-			draw line(current_trajectory)  color: rgb(color_per_type[type],trajectoryTransparency);
+
+	
+	aspect dynamique{
+		if(profile){
+		  draw circle(4#m) color:color_per_type[type];
+		  if(macroTrip){
+			draw square(15#m) color:color_per_type[type];
 		}
+		  if(drawTrajectory){
+		    draw line(current_trajectory)  color: rgb(color_per_type[type],trajectoryTransparency);
+		  }
+		}
+
 	}
 }
 
@@ -317,7 +330,7 @@ species legend{
 	}
 }
 
-experiment City{
+experiment City parent:Coronaizer autorun:true{
 	float minimum_cycle_duration<-0.02;
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
@@ -330,12 +343,9 @@ experiment City{
     //parameter "Simulation Step"  category: "Simulation" var:step min:1#sec max:60#sec step:1#sec;
 	
 	output {
-		display GotoOnNetworkAgent type:opengl background:backgroundColor draw_env:false synchronized:true toolbar:false
-		
+		display GotoOnNetworkAgent type:opengl background:backgroundColor draw_env:false synchronized:true toolbar:false 
 		{
-			//overlay position: {first(legend where (each.type="title")).location.x, first(legend where (each.type="title")).location.y } 
-			//size: {first(legend where (each.type="title")).shape.width,first(legend where (each.type="title")).shape.height} background: #black border: #black {				    
-		    graphics "title" { 
+			graphics "title" { 
 		      draw !autonomy ? "Conventional Zoning" : "Autonomous Cities" color:#white at:{first(legend where (each.type="title")).location.x - first(legend where (each.type="title")).shape.width/2, first(legend where (each.type="title")).location.y} font:font("Helvetica", 50 , #bold);
 		    } 
 		    graphics "building"{
@@ -382,27 +392,105 @@ experiment City{
 				 //CITY EFFICIENTY
 			  point posCE<-{first(legend where (each.type="right1")).location.x- first(legend where (each.type="right1")).shape.width/2,first(legend where (each.type="right1")).location.y- first(legend where (each.type="right1")).shape.height/2};
 			  	
-			  draw "City Efficiency: " + int((nbWalk)) color: #white at:  {40+ posCE.x, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);			  
+			  draw "City Efficiency: " + int((nbWalk)) color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
 			  draw rectangle(55,first(legend where (each.type="right1")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right1")).shape.height/2};
 			  draw rectangle(50,(nbWalk/100)*first(legend where (each.type="right1")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - ((nbWalk/100))*first(legend where (each.type="right1")).shape.height/2};
 			  
 			  
 			  
 			  float offsetX<-first(legend where (each.type="right1")).shape.width/4;
-			  draw rectangle(nbWalk,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nbWalk/2,posCE.y+spacebetween+20};
-			  draw "Walk: " + nbWalk/length(people) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween} perspective: true font:font("Helvetica", 20 , #bold);
-			  draw circle(10) color: buildingColors.values[1] at: {offsetX+posCE.x-20, posCE.y+spacebetween-20};
+			  float offsetY<--first(legend where (each.type="right1")).shape.height/8;
+			  draw rectangle(nbWalk,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nbWalk/2,posCE.y+spacebetween+20+offsetY};
+			  draw "Walk: " + nbWalk/length(people) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw circle(10) color: buildingColors.values[1] at: {offsetX+posCE.x-20, posCE.y+spacebetween-20+offsetY};
 			  
-			  draw rectangle(nbMass,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nbMass/2, posCE.y+2*spacebetween+20};
-			  draw "Mass: " + nbMass/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween} perspective: true font:font("Helvetica", 20 , #bold);
-			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20};
-			  
-			  
-			  
+			  draw rectangle(nbMass,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nbMass/2, posCE.y+2*spacebetween+20+offsetY};
+			  draw "Mass: " + nbMass/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
+ 
 			}
-			species people aspect:profile;
+			
+			graphics 'Pandemic Level'{
+			  float nbWalk<-float(length (people where (each.macroTrip= false)));
+			  float nbMass<-float(length (people where (each.macroTrip= true)));
+			  float spacebetween<-first(legend where (each.type="right1")).shape.height/2; 	
+				 //CITY EFFICIENTY
+			  point posCE<-{first(legend where (each.type="right2")).location.x- first(legend where (each.type="right2")).shape.width/2,first(legend where (each.type="right2")).location.y- first(legend where (each.type="right2")).shape.height/2};
+			  	
+			  draw "Pandemic Level: " + int((nb_infected)) color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
+			  draw rectangle(55,first(legend where (each.type="right2")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right2")).shape.height/2};
+			  draw rectangle(50,(nb_infected/100)*first(legend where (each.type="right2")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - ((nb_infected/100))*first(legend where (each.type="right2")).shape.height/2};
+			  
+			  
+			  
+			  float offsetX<-first(legend where (each.type="right2")).shape.width/4;
+			  float offsetY<--first(legend where (each.type="right2")).shape.height/8;
+			  draw rectangle(nb_susceptible,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nb_susceptible/2,posCE.y+spacebetween+20+offsetY};
+			  draw "S: " + nb_susceptible/length(people) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw circle(10) color: buildingColors.values[1] at: {offsetX+posCE.x-20, posCE.y+spacebetween-20+offsetY};
+			  
+			  draw rectangle(nb_infected,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nb_infected/2, posCE.y+2*spacebetween+20+offsetY};
+			  draw "I: " + nb_infected/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
+ 
+		}
+		
+		
+		graphics 'Safety Measures'{
+			  int nbMask <- length(ViralPeople where (each.as_mask = true));
+			  int nbQ <- length(ViralPeople where (each.target.isQuarantine = true));
+			  float spacebetween<-first(legend where (each.type="right1")).shape.height/2; 	
+				 //CITY EFFICIENTY
+			  point posCE<-{first(legend where (each.type="right3")).location.x- first(legend where (each.type="right3")).shape.width/2,first(legend where (each.type="right3")).location.y- first(legend where (each.type="right3")).shape.height/2};
+			  	
+			  draw "Safety: " + ((nbMask+nbQ)/200) color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
+			  draw rectangle(55,first(legend where (each.type="right3")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right3")).shape.height/2};
+			  draw rectangle(50,(((nbMask+nbQ)/200))*first(legend where (each.type="right3")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - ((((nbMask+nbQ)/200)))*first(legend where (each.type="right3")).shape.height/2};
+			  
+			  
+			  
+			  float offsetX<-first(legend where (each.type="right3")).shape.width/4;
+			  float offsetY<--first(legend where (each.type="right3")).shape.height/8;
+			  draw rectangle(nbMask,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nbMask/2,posCE.y+spacebetween+20+offsetY};
+			  draw "Mask: " + nbMask/length(people) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw circle(10) color: buildingColors.values[1] at: {offsetX+posCE.x-20, posCE.y+spacebetween-20+offsetY};
+			  
+			  draw rectangle(nbQ,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nbQ/2, posCE.y+2*spacebetween+20+offsetY};
+			  draw "Quarantine: " + nbQ/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
+ 
+		}
+		
+		
+		graphics 'Interface'{	  
+   		  point posCE<-{first(legend where (each.type="bottom")).location.x-first(legend where (each.type="bottom")).shape.width/3,first(legend where (each.type="bottom")).location.y};		
+		  float offsetX<-first(legend where (each.type="bottom")).shape.width/3;
+		
+		  draw "Profile: (P)" color: profile ? #white :#grey at:  {posCE.x, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);		 
+		  draw "Safety: (S)" color: safety ?  #white :#grey at:  {posCE.x+offsetX, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);	
+		  draw "Health: (H)" color: health ?  #white :#grey at:  {posCE.x+2*offsetX, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);		  
+			
+		}
+			species people aspect:dynamique;
+			species ViralPeople aspect:dynamic;
+			event["p"] action: {profile<-true;safety<-false;health<-false;};
+			event["s"] action: {profile<-false;safety<-true;health<-false;};
+			event["h"] action: {profile<-false;safety<-false;health<-true;};
 			event["c"] action: {autonomy<-false;ask world{do updateSim(autonomy);}};
 			event["a"] action: {autonomy<-true;ask world{do updateSim(autonomy);}};
+			event ["i"] action:{reinitCovid<-true;};
+			
+			chart "Population: " type: series x_serie_labels: "time" background:backgroundColor
+			x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
+			y_label: 'Case'
+			position:{world.shape.width/6,world.shape.height*0.95}
+			size:{0.5,0.5}
+			{
+			data "susceptible" value: nb_susceptible color: #green;
+			data "infected" value: nb_infected color: #red;	
+			data "recovered" value: nb_recovered color: #blue;
+			data "death" value: nb_death color: #black;
+		}
 		}
 		
 	}
