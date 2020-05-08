@@ -9,16 +9,18 @@ model GridDesign
 
 global {
 	/** Insert the global definitions, variables and actions here */
-	int width<-3600;
-	int height<-2400;
+	file shape_file_world<- shape_file("./../../includes/City/volpe/Bounds.shp");
+				
+	geometry shape<-envelope(shape_file_world);
+	float width<-3600#m*3;
+	float height<-2400#m*3;
 	int nbCols<-5;
 	int nbRows<-5;
-    geometry shape<-rectangle(width,height);
+    
 	init{
 		
 		create bound{
-			shape<-rectangle(width,height);
-			location<-{width/2,height/2};
+			shape<-rectangle(width,height) at_location {width/2,height/2};
 		}
 		loop i from:0 to:nbCols-1{
 			loop j from:0 to:nbRows-1{
@@ -46,10 +48,9 @@ species squareCell{
 	}	
 }
 
-experiment GridDesign type: gui {
-	/** Insert here the definition of the input and output of the model */
+experiment GridDesign type: gui{
 	output {
-		display Grid{
+		display Grid  type:opengl{
 			species bound;
 			species squareCell;
 		}

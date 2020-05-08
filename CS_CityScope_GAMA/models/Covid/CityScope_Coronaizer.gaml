@@ -134,6 +134,7 @@ species ViralPeople  mirrors:people{
     geometry shape<-circle(1);
 		
 	reflex infected_contact when: is_infected and !as_mask{
+
 		ask ViralPeople where !each.as_mask at_distance socialDistance {
 			if (flip(infection_rate/step)) {
         		is_susceptible <-  false;

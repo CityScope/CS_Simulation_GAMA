@@ -26,11 +26,12 @@ global{
 	int current_day  update: (int(time/#day));
 	float districtSize<-250#m;
 	float buildingSize<-40#m;
-	geometry shape<-square (1#km);
 	string cityScopeCity<-"volpe";
-	file bound_shapefile <- file("./../../includes/AutonomousCities/bound.shp");
-	file district_shapefile <- file("./../../includes/AutonomousCities/GridDistrict.shp");
-	file legend_shapefile <- file("./../../includes/AutonomousCities/Legend.shp");
+	file bound_shapefile <- shape_file("./../../includes/AutonomousCities/bound.shp");
+	file district_shapefile <- shape_file("./../../includes/AutonomousCities/Districts.shp");
+	file legend_shapefile <- shape_file("./../../includes/AutonomousCities/Legend.shp");
+	image_file cityMap <- image_file("./../../includes/AutonomousCities/background.png");
+	geometry shape<-envelope(bound_shapefile);
 	rgb conventionalDistrictColor <-rgb(225,235,241);
 	rgb autonomousDistrictColor <-rgb(39,62,78)+50;
 	rgb macroGraphColor<-rgb(245,135,51);
@@ -48,12 +49,14 @@ global{
 	bool pandemy<-false;	
 	//COVID Related
 	bool reinit<-false;
-	bool profile<-true;
+	bool health<-true;
+	bool profile<-false;
 	bool safety<-false;
-	bool health<-false;
+		
+			
+		
 	
 	init{
-		shape<-envelope(bound_shapefile);	
 		create legend from: legend_shapefile;
 		create district from:district_shapefile{
 			create building number:nbBuildingPerDistrict{
@@ -363,6 +366,7 @@ experiment City parent:Coronaizer autorun:true{
 			species district position:{0,0,-0.001};
 			species building;
 			//species legend;
+			//image cityMap position: { 0, 0, -0.01 } transparency:0.5;
 			
 			
 			graphics "macro_graph" {
@@ -466,9 +470,9 @@ experiment City parent:Coronaizer autorun:true{
    		  point posCE<-{first(legend where (each.type="bottom")).location.x-first(legend where (each.type="bottom")).shape.width/3,first(legend where (each.type="bottom")).location.y};		
 		  float offsetX<-first(legend where (each.type="bottom")).shape.width/3;
 		
-		  draw "Profile: (P)" color: profile ? #white :#grey at:  {posCE.x, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);		 
-		  draw "Safety: (S)" color: safety ?  #white :#grey at:  {posCE.x+offsetX, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);	
-		  draw "Health: (H)" color: health ?  #white :#grey at:  {posCE.x+2*offsetX, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);		  
+		  draw "Health: (H)" color: health ?  #white :#grey at:  {posCE.x, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);		  
+		  draw "Profile: (P)" color: profile ? #white :#grey at:  {posCE.x+offsetX, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);		 
+		  draw "Safety: (S)" color: safety ?  #white :#grey at:  {posCE.x+2*offsetX, posCE.y} perspective: true font:font("Helvetica", 20 , #bold);	
 			
 		}
 			species people aspect:dynamique;
