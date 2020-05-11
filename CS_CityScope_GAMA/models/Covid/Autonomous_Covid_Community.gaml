@@ -327,8 +327,12 @@ species people skills:[moving]{
 }
 
 species hospital{
+	int nbMedicalBeds<-10;
+	int nbBeds<-100;
+	int occupiedBed<-0;
 	aspect default{
 		draw cross(buildingSize) color:#red width:10 rotate:45;
+		draw ("beds:") + occupiedBed + "/" + nbMedicalBeds  at:  location perspective: true font:font("Helvetica", 10 , #plain) color:#white;	
 	}
 }
 
