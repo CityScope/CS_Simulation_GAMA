@@ -37,11 +37,9 @@ global{
 	rgb macroGraphColor<-rgb(245,135,51);
 	rgb backgroundColor<-rgb(39,62,78);
 	map<string, rgb> buildingColors <- ["residential"::rgb('#FE7134'), "shopping"::rgb('#5AB8B8'), "business"::rgb('#FCC8B1')];
-	//map<string, rgb> buildingColors <- ["residential"::rgb(168,192,208), "shopping"::rgb(245,135,51), "business"::rgb(217,198,163)];
 	map<string, geometry> buildingShape <- ["residential"::circle(buildingSize/2), "shopping"::square(buildingSize) rotated_by 45, "business"::triangle(buildingSize*1.25)];
 	
 	map<string,float> proportion_per_type<-["homeWorker"::0.2,"OfficeWorker"::0.6,"ShopWorker"::0.2];
-	//map<string,rgb> color_per_type<-["homeWorker"::rgb(240,255,56),"OfficeWorker"::rgb(82,171,255),"ShopWorker"::rgb(179,38,30)];
 	map<string,rgb> color_per_type<-["homeWorker"::rgb('#FE7134')-75,"OfficeWorker"::rgb('#5AB8B8')-75,"ShopWorker"::rgb('#FCC8B1')-75];
 
 	graph<district, district> macro_graph;
@@ -167,6 +165,9 @@ action updateDistrict( bool _autonomy){
 			conventionalType<-"business";
 			ask myBuildings{
 			  type<-"business";	
+			}
+			create hospital{
+				location<-any_location_in(myself);
 			}
 		}
 	}
@@ -325,6 +326,12 @@ species people skills:[moving]{
 	}
 }
 
+species hospital{
+	aspect default{
+		draw cross(buildingSize) color:#red width:10 rotate:45;
+	}
+}
+
 
 species legend{
 	string type;
@@ -365,6 +372,7 @@ experiment City parent:Coronaizer autorun:true{
 			
 			species district position:{0,0,-0.001};
 			species building;
+			species hospital;
 			//species legend;
 			//	image cityMap position: { 0, 0, -0.01 } transparency:0.5;
 		    graphics "infection_graph" {
