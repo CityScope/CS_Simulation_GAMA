@@ -26,11 +26,11 @@ global{
 	int current_day  update: (int(time/#day));
 	float districtSize<-250#m;
 	float buildingSize<-40#m;
-	string cityScopeCity<-"volpe";
-	file bound_shapefile <- shape_file("./../../includes/AutonomousCities/bound.shp");
-	file district_shapefile <- shape_file("./../../includes/AutonomousCities/Districts.shp");
-	file legend_shapefile <- shape_file("./../../includes/AutonomousCities/Legend.shp");
-	image_file cityMap <- image_file("./../../includes/AutonomousCities/background.png");
+	string cityScopeCity<-"";
+	file bound_shapefile <- shape_file("./../../includes/AutonomousCities/bound"+cityScopeCity+".shp");
+	file district_shapefile <- shape_file("./../../includes/AutonomousCities/Districts"+cityScopeCity+".shp");
+	file legend_shapefile <- shape_file("./../../includes/AutonomousCities/Legend"+cityScopeCity+".shp");
+	image_file cityMap <- image_file("./../../includes/AutonomousCities/background"+cityScopeCity+".png");
 	geometry shape<-envelope(bound_shapefile);
 	rgb conventionalDistrictColor <-rgb(225,235,241);
 	rgb autonomousDistrictColor <-rgb(39,62,78)+50;
@@ -60,7 +60,7 @@ global{
 		create legend from: legend_shapefile;
 		create district from:district_shapefile{
 			create building number:nbBuildingPerDistrict{
-			  shape<-square(20#m);
+			  shape<-square(world.shape.width/50);
 			  location<-any_location_in(myself.shape*0.9);
 			  myself.myBuildings<<self;
 			  myDistrict <- myself;
@@ -313,9 +313,9 @@ species people skills:[moving]{
 	
 	aspect dynamique{
 		if(profile){
-		  draw circle(4#m) color:color_per_type[type];
+		  draw circle(world.shape.width/300) color:color_per_type[type];
 		  if(macroTrip){
-			draw square(15#m) color:color_per_type[type];
+			draw square(world.shape.width/150) color:color_per_type[type];
 		}
 		  if(drawTrajectory){
 		    draw line(current_trajectory)  color: rgb(color_per_type[type],trajectoryTransparency);
@@ -366,9 +366,25 @@ experiment City parent:Coronaizer autorun:true{
 			species district position:{0,0,-0.001};
 			species building;
 			//species legend;
-			//image cityMap position: { 0, 0, -0.01 } transparency:0.5;
-			
-			
+			//	image cityMap position: { 0, 0, -0.01 } transparency:0.5;
+		    graphics "infection_graph" {
+				if (infection_graph != nil and drawInfectionGraph = true) {
+					loop eg over: infection_graph.edges {
+						geometry edge_geom <- geometry(eg);
+						draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) color:#red;
+					}
+
+				}
+			}
+		    graphics "social_graph" {
+				if (social_distance_graph != nil and drawSocialDistanceGraph = true) {
+					loop eg over: social_distance_graph.edges {
+						geometry edge_geom <- geometry(eg);
+						draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) color:#gray;
+					}
+
+				}
+		    }
 			graphics "macro_graph" {
 				if (macro_graph != nil and drawMacroGraph) {
 					loop eg over: macro_graph.edges {
@@ -484,7 +500,7 @@ experiment City parent:Coronaizer autorun:true{
 			event["a"] action: {autonomy<-true;ask world{do updateSim(autonomy);}};
 			event ["i"] action:{reinitCovid<-true;};
 			
-			chart "Population: " type: series x_serie_labels: "time" background:backgroundColor
+			/*chart "Population: " type: series x_serie_labels: "time" background:backgroundColor
 			x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
 			y_label: 'Case'
 			position:{world.shape.width/6,world.shape.height*0.95}
@@ -494,7 +510,7 @@ experiment City parent:Coronaizer autorun:true{
 			data "infected" value: nb_infected color: #red;	
 			data "recovered" value: nb_recovered color: #blue;
 			data "death" value: nb_death color: #black;
-		}
+		}*/
 		}
 		
 	}

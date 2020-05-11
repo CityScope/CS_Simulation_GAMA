@@ -21,7 +21,7 @@ global{
 	bool a_boolean_to_disable_parameters <- true;
    	int number_day_recovery<-10;
 	int time_recovery<-1440*number_day_recovery*60;
-	float infection_rate<-0.05;
+	float infection_rate<-0.1;
 	float mortality_rate<-0.1;
 	int initial_nb_infected<-1;
 	bool reinitCovid<-false;
@@ -159,10 +159,10 @@ species ViralPeople  mirrors:people{
 	
 	aspect health {
 		if(showPeople){
-		  draw circle(is_infected ? 7#m : 5#m) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
+		  draw circle(world.shape.width/300) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
 		}
 		if (as_mask){
-		  draw square(4#m) color:#white;	
+		  draw square(world.shape.width/600) color:#white;	
 		}
 	}
 	
@@ -181,15 +181,15 @@ species ViralPeople  mirrors:people{
 	aspect dynamic{
 		if(safety){
           if(target.isQuarantine){
-		    draw circle(9#m) color:rgb(135,206,250) border:rgb(135,206,250)-100;		
+		    draw circle(world.shape.width/300*1.5) color:rgb(135,206,250) border:rgb(135,206,250)-100;		
 		  }
 		  if (as_mask){
-		    draw circle(7#m) color:rgb(70,130,180) border:rgb(70,130,180)-100;	
+		    draw circle(world.shape.width/300*1.3) color:rgb(70,130,180) border:rgb(70,130,180)-100;	
 		  }	
-		  draw circle(5#m) color:rgb(0,0,125) border:rgb(0,0,125)-100;
+		  draw circle(world.shape.width/300) color:rgb(0,0,125) border:rgb(0,0,125)-100;
 		}
 		if(health){
-		  draw circle(is_infected ? 7#m : 5#m) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
+		  draw circle(world.shape.width/300) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
 		if (as_mask){
 		  draw square(4#m) color:#white;	
 		}	
@@ -238,31 +238,14 @@ experiment Coronaizer type:gui autorun:true virtual:true{
 	  	species ViralPeople aspect:safety;
 	  	species cell aspect:default;
 	  	
-	  	graphics "infection_graph" {
-				if (infection_graph != nil and drawInfectionGraph = true) {
-					loop eg over: infection_graph.edges {
-						geometry edge_geom <- geometry(eg);
-						draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) color:#red;
-					}
 
-				}
-			}
-		graphics "social_graph" {
-				if (social_distance_graph != nil and drawSocialDistanceGraph = true) {
-					loop eg over: social_distance_graph.edges {
-						geometry edge_geom <- geometry(eg);
-						draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) color:#gray;
-					}
-
-				}
-		}
 			
-		graphics "text" {
+	graphics "text" {
 	     // draw "day" + string(current_day) + " - " + string(current_hour) + "h" color: #gray font: font("Helvetica", 25, #italic) at:{world.shape.width * 0.8, world.shape.height * 0.975};
 	  	}	
 	  	event ["i"] action:{reinitCovid<-true;};
-	  }*/	
-	 /*display CoronaChart refresh:every(#mn) toolbar:false {
+	  }	
+	 display CoronaChart refresh:every(#mn) toolbar:false {
 		chart "Population: " type: series x_serie_labels: "time" 
 		x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
 		y_label: 'Case'{
