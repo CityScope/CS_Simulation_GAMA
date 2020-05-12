@@ -528,18 +528,17 @@ experiment City parent:Coronaizer autorun:true{
 			event["c"] action: {autonomy<-false;ask world{do updateSim(autonomy);}};
 			event["a"] action: {autonomy<-true;ask world{do updateSim(autonomy);}};
 			event ["i"] action:{reinitCovid<-true;};
-			
-			/*chart "Population: " type: series x_serie_labels: "time" background:backgroundColor
-			x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
-			y_label: 'Case'
-			position:{world.shape.width/6,world.shape.height*0.95}
-			size:{0.5,0.5}
-			{
+		}
+		
+		 display CoronaChart refresh:every(#mn) toolbar:false {
+		 chart "Population: " type: series x_serie_labels: "time" 
+		 x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
+		 y_label: 'Case'{
 			data "susceptible" value: nb_susceptible color: #green;
 			data "infected" value: nb_infected color: #red;	
 			data "recovered" value: nb_recovered color: #blue;
 			data "death" value: nb_death color: #black;
-		}*/
+		 } 
 		}
 		
 	}
