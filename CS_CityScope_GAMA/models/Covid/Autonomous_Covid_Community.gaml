@@ -26,11 +26,12 @@ global{
 	int current_day  update: (int(time/#day));
 	float districtSize<-250#m;
 	float buildingSize<-40#m;
-	string cityScopeCity<-"";
-	file bound_shapefile <- shape_file("./../../includes/AutonomousCities/bound"+cityScopeCity+".shp");
-	file district_shapefile <- shape_file("./../../includes/AutonomousCities/Districts"+cityScopeCity+".shp");
-	file legend_shapefile <- shape_file("./../../includes/AutonomousCities/Legend"+cityScopeCity+".shp");
-	image_file cityMap <- image_file("./../../includes/AutonomousCities/background"+cityScopeCity+".png");
+	string cityScopeCity<-"Boston";
+	bool drawMap<-true;
+	file bound_shapefile <- shape_file("./../../includes/AutonomousCities/"+cityScopeCity+"/bound.shp");
+	file district_shapefile <- shape_file("./../../includes/AutonomousCities/"+cityScopeCity+"/Districts.shp");
+	file legend_shapefile <- shape_file("./../../includes/AutonomousCities/"+cityScopeCity+"/Legend.shp");
+	image_file cityMap <- image_file("./../../includes/AutonomousCities/"+cityScopeCity+"/background.png");
 	geometry shape<-envelope(bound_shapefile);
 	rgb conventionalDistrictColor <-rgb(225,235,241);
 	rgb autonomousDistrictColor <-rgb(39,62,78)+50;
@@ -348,6 +349,7 @@ experiment City parent:Coronaizer autorun:true{
 	float minimum_cycle_duration<-0.02;
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
+	parameter "Map:" category: "Visualization" var:drawMap <-true ;
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
 	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.25 min:0.0 max:1.0 ;
@@ -378,7 +380,9 @@ experiment City parent:Coronaizer autorun:true{
 			species building;
 			species hospital;
 			//species legend;
-			//	image cityMap position: { 0, 0, -0.01 } transparency:0.5;
+			image cityMap position: { 0, 0, -0.01 } transparency:drawMap ? 0.5 : 0.0;	
+
+			
 		    graphics "infection_graph" {
 				if (infection_graph != nil and drawInfectionGraph = true) {
 					loop eg over: infection_graph.edges {
