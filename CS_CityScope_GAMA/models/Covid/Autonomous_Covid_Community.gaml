@@ -22,6 +22,7 @@ global{
 	int nbBuildingPerDistrict<-10;
 	int nbPeople<-100;
 	float step<-1#sec;
+	float speedFactor<-1.0;
 	int current_hour update: (time / #hour) mod 24;
 	int current_day  update: (int(time/#day));
 	float districtSize<-250#m;
@@ -30,7 +31,7 @@ global{
 	bool drawMap<-true;
 	file bound_shapefile <- shape_file("./../../includes/AutonomousCities/"+cityScopeCity+"/bound.shp");
 	file district_shapefile <- shape_file("./../../includes/AutonomousCities/"+cityScopeCity+"/Districts.shp");
-	file legend_shapefile <- shape_file("./../../includes/AutonomousCities/"+cityScopeCity+"/Legend.shp");
+	file legend_shapefile <- shape_file("./../../includes/AutonomousCities/"+cityScopeCity+"/legend.shp");
 	image_file cityMap <- image_file("./../../includes/AutonomousCities/"+cityScopeCity+"/background.png");
 	geometry shape<-envelope(bound_shapefile);
 	rgb conventionalDistrictColor <-rgb(225,235,241);
@@ -56,6 +57,7 @@ global{
 		
 	
 	init{
+		speedFactor<-world.shape.width/3600#m;
 		create legend from: legend_shapefile;
 		create district from:district_shapefile{
 			create building number:nbBuildingPerDistrict{
@@ -147,21 +149,21 @@ global{
 
 action updateDistrict( bool _autonomy){
 	if (!_autonomy){
-		ask first(district where (each.name = "district0")){
+		ask district where (each.type = "R"){
 			isAutonomous<-false;
 			conventionalType<-"residential";
 			ask myBuildings{
 				type<-"residential";
 			}
 		}
-		ask first(district where (each.name = "district1")){
+		ask district where (each.type = "S"){
 			isAutonomous<-false;
 			conventionalType<-"shopping";
 			ask myBuildings{
 			  type<-"shopping";
 			}
 		}
-		ask first(district where (each.name = "district2")){
+		ask district where (each.type = "O"){
 			isAutonomous<-false;
 			conventionalType<-"business";
 			ask myBuildings{
@@ -203,6 +205,7 @@ species district{
 	bool isQuarantine<-false;
 	bool isAutonomous<-false;
 	string conventionalType;
+	string type;
 	aspect default{
 		//draw string(self.name) at:{location.x+districtSize*1.1,location.y-districtSize*0.5} color:#white perspective: true font:font("Helvetica", 30 , #bold);
 		if (isQuarantine){
@@ -250,14 +253,14 @@ species people skills:[moving]{
 	reflex move_to_target_district when: (target_district != nil and isMoving){
 		if (go_outside) {
 			macroTrip<-false;
-			do goto target: myCurrentDistrict.location speed:5.0;
+			do goto target: myCurrentDistrict.location speed:5.0*speedFactor;
 			if (location = myCurrentDistrict.location) {
 				go_outside <- false;
 				
 			}
 		} else {
 			macroTrip<-true;
-			do goto target: target_district.location  speed:10.0;
+			do goto target: target_district.location  speed:10.0*speedFactor;
 			if (location = target_district.location) {
 				myCurrentDistrict <- target_district;
 				target_district <- nil;
@@ -266,7 +269,7 @@ species people skills:[moving]{
 	}
 	reflex move_inside_district when: (target_district = nil and isMoving){
 	    macroTrip<-false;
-	    do goto target:my_target speed:5.0;
+	    do goto target:my_target speed:5.0*speedFactor;
     	if (my_target = location){
     		curPlaces<-(curPlaces+1) mod 5;
 			building bd <- myPlaces[curPlaces];
@@ -282,7 +285,7 @@ species people skills:[moving]{
     reflex ManageQuarantine when: !isMoving{
     	macroTrip<-false;
     	if(isQuarantine=false){
-    	  do goto target:myPlaces[0] speed:5.0;	
+    	  do goto target:myPlaces[0] speed:5.0*speedFactor;	
     	}
     	if(location=myPlaces[0].location and isQuarantine=false){
     		location<-any_location_in(myPlaces[0].shape);
@@ -347,6 +350,7 @@ species legend{
 
 experiment City parent:Coronaizer autorun:true{
 	float minimum_cycle_duration<-0.02;
+	parameter 'City:' var: cityScopeCity category: 'GIS' <- "Paris" among: ["AbstractCity", "Boston","Paris"];
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
 	parameter "Map:" category: "Visualization" var:drawMap <-true ;
@@ -379,10 +383,13 @@ experiment City parent:Coronaizer autorun:true{
 			species district position:{0,0,-0.001};
 			species building;
 			species hospital;
-			//species legend;
-			image cityMap position: { 0, 0, -0.01 } transparency:drawMap ? 0.5 : 0.0;	
 
-			
+
+			graphics "map"{
+				if(drawMap){
+					draw shape texture:cityMap color:rgb(backgroundColor,0.25);
+				}
+			}
 		    graphics "infection_graph" {
 				if (infection_graph != nil and drawInfectionGraph = true) {
 					loop eg over: infection_graph.edges {
@@ -531,4 +538,6 @@ experiment City parent:Coronaizer autorun:true{
 		
 	}
 }
+
+
 
