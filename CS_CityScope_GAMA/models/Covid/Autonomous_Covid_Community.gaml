@@ -366,7 +366,7 @@ experiment City parent:Coronaizer autorun:true{
 	parameter "People Transparency:" category: "Visualization" var:peopleTransparency <-0.5 min:0.0 max:1.0 ;
 	parameter "Macro Transparency:" category: "Visualization" var:macroTransparency <-0.5 min:0.0 max:1.0 ;
 	parameter "Draw Inter District Graph:" category: "Visualization" var:drawMacroGraph <-false;
-    //parameter "Simulation Step"  category: "Simulation" var:step min:1#sec max:60#sec step:1#sec;
+    parameter "Simulation Step"  category: "Simulation" var:step min:1#sec max:60#sec step:1#sec;
 	
 	output {
 		display GotoOnNetworkAgent type:opengl background:backgroundColor draw_env:false synchronized:true toolbar:false 
