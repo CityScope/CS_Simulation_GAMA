@@ -154,9 +154,7 @@ species ViralPeople  mirrors:people{
 	reflex recover when: (is_infected and (time - infected_time) >= time_recovery){
 		is_infected<-false;
 		is_recovered<-true;
-	}
-
-	
+	}	
 	aspect health {
 		if(showPeople){
 		  draw circle(world.shape.width/300) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
