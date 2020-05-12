@@ -68,7 +68,7 @@ global{
 		    }
 		}
 		
-		macro_graph<- graph<district, district>(district as_distance_graph (500#m ));
+		macro_graph<- graph<district, district>(district as_distance_graph (1000#m ));
 		do updateSim(autonomy); 
 	}
 	
@@ -206,6 +206,12 @@ species district{
 	bool isAutonomous<-false;
 	string conventionalType;
 	string type;
+	
+	user_command "Quarantine"action: quarantine;
+	
+	action quarantine{
+	}
+	
 	aspect default{
 		//draw string(self.name) at:{location.x+districtSize*1.1,location.y-districtSize*0.5} color:#white perspective: true font:font("Helvetica", 30 , #bold);
 		if (isQuarantine){
@@ -350,7 +356,7 @@ species legend{
 
 experiment City parent:Coronaizer autorun:true{
 	float minimum_cycle_duration<-0.02;
-	parameter 'City:' var: cityScopeCity category: 'GIS' <- "Paris" among: ["AbstractCity", "Boston","Paris"];
+	parameter 'City:' var: cityScopeCity category: 'GIS' <- "AbstractCity" among: ["AbstractCity", "Boston","Paris"];
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
 	parameter "Map:" category: "Visualization" var:drawMap <-true ;
@@ -415,11 +421,11 @@ experiment City parent:Coronaizer autorun:true{
 						float w <- macro_graph weight_of eg;
 						if(!autonomy){
 							//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) width: 10#m color:macroGraphColor;	
-						  draw line(edge_geom.points[0],edge_geom.points[1]) width: 10#m color:macroGraphColor;	
+						  draw line(edge_geom.points[0],edge_geom.points[1]) width: world.shape.width/10000 color:macroGraphColor;	
 						}
 						if(autonomy){
 							//draw curve(edge_geom.points[0],edge_geom.points[1], 0.5, 200, 90) width: 2#m color:macroGraphColor;
-						  draw line(edge_geom.points[0],edge_geom.points[1]) width: 2#m + crossRatio*8#m color:macroGraphColor;	
+						  draw line(edge_geom.points[0],edge_geom.points[1]) width: world.shape.width/20000 + crossRatio*8#m color:macroGraphColor;	
 						}
 						
 					}

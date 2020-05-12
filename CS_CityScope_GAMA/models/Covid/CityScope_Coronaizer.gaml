@@ -187,13 +187,21 @@ species ViralPeople  mirrors:people{
 		    draw circle(world.shape.width/300*1.3) color:rgb(70,130,180) border:rgb(70,130,180)-100;	
 		  }	
 		  draw circle(world.shape.width/300) color:rgb(0,0,125) border:rgb(0,0,125)-100;
+		  if(drawTrajectory){
+		    draw line(target.current_trajectory)  color: rgb(#white,trajectoryTransparency);
+		  }
 		}
 		if(health){
 		  draw circle(world.shape.width/300) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
-		if (as_mask){
-		  draw square(4#m) color:#white;	
-		}	
+		  if (as_mask){
+		   draw square(4#m) color:#white;	
+		  }	
+		  if(drawTrajectory){
+		    draw line(target.current_trajectory)  color: rgb(#white,trajectoryTransparency);
+		  }
 		}
+		 
+		
 	}
 }
 grid cell cell_width: world.shape.width/50 cell_height:world.shape.width/50 neighbors: 8 {
