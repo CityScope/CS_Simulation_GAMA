@@ -73,6 +73,7 @@ global{
 		ask (quarantineRatio*length(people)) among ViralPeople{
 			target.isMoving<-false;
 		}
+		infection_graph<-graph<people, people>([]);
 		reinitCovid<-false;
 		reinit<-false;
 	}
