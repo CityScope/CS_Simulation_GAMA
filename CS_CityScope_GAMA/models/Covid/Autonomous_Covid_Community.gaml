@@ -456,6 +456,11 @@ experiment City parent:Coronaizer autorun:true{
 			  draw rectangle(nbMass,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nbMass/2, posCE.y+2*spacebetween+20+offsetY};
 			  draw "Mass: " + nbMass/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
 			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
+			  
+			  
+			  draw rectangle(nbMass,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nbMass/2, posCE.y+2*spacebetween+20+offsetY};
+			  draw "Working: " + nbMass/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
  
 			}
 			
@@ -528,6 +533,7 @@ experiment City parent:Coronaizer autorun:true{
 			event["c"] action: {autonomy<-false;ask world{do updateSim(autonomy);}};
 			event["a"] action: {autonomy<-true;ask world{do updateSim(autonomy);}};
 			event ["i"] action:{reinitCovid<-true;};
+			event ["o"] action:{stopCovid<-true;};
 		}
 		
 		 display CoronaChart refresh:every(#mn) toolbar:false {

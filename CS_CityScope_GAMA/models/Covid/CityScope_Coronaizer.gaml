@@ -25,6 +25,7 @@ global{
 	float mortality_rate<-0.1;
 	int initial_nb_infected<-1;
 	bool reinitCovid<-false;
+	bool stopCovid<-false;
 	//float step<-1#mn;
 	
 	bool drawInfectionGraph <- false;
@@ -51,7 +52,7 @@ global{
 		filePathName <-"../results/output"+date("now")+".csv";
 	}
 	
-	reflex initCovid when: (cycle=1 or (reinitCovid or reinit)){
+	reflex initCovid when:reinitCovid{
 		ask ViralPeople{
 			is_susceptible <-  true;
 			is_infected <-  false;
@@ -76,6 +77,16 @@ global{
 		infection_graph<-graph<people, people>([]);
 		reinitCovid<-false;
 		reinit<-false;
+	}
+	
+	reflex stopCovid when:stopCovid{
+		ask ViralPeople{
+			is_susceptible <-  true;
+			is_infected <-  false;
+	        is_immune <-  false;
+	        is_recovered<-false;
+		}
+		stopCovid<-false;
 	}
 	reflex updateGraph when: (drawSocialDistanceGraph = true) {
 		social_distance_graph <- graph<people, people>(people as_distance_graph (socialDistance));
