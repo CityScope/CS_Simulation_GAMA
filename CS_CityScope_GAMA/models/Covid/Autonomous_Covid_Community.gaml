@@ -452,8 +452,9 @@ experiment City parent:Coronaizer autorun:true{
 			  draw rectangle(55,first(legend where (each.type="right1")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right1")).shape.height/2};
 			  draw rectangle(50,(nbWalk/100)*first(legend where (each.type="right1")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - ((nbWalk/100))*first(legend where (each.type="right1")).shape.height/2};
 			  
-			  
-			  
+			 
+			 
+			  float spacebetween<-first(legend where (each.type="right1")).shape.height/3; 	
 			  float offsetX<-first(legend where (each.type="right1")).shape.width/4;
 			  float offsetY<--first(legend where (each.type="right1")).shape.height/8;
 			  draw rectangle(nbWalk,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nbWalk/2,posCE.y+spacebetween+20+offsetY};
@@ -464,6 +465,11 @@ experiment City parent:Coronaizer autorun:true{
 			  draw "Mass: " + nbMass/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
 			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
 			  
+			  
+			  int toalTheoreticalWork <- length(ViralPeople)*8;
+			  int effectiveWork <- length(ViralPeople where each.is_susceptible)*8 + length (ViralPeople where (each.is_asymptomatic and each.is_infected))*7 + length (ViralPeople where (!each.is_asymptomatic and each.is_infected))*4 +length(ViralPeople where each.is_recovered)*8;
+			  draw rectangle(effectiveWork/toalTheoreticalWork * length(people),20) color: buildingColors.values[2] at: {offsetX+posCE.x+effectiveWork/toalTheoreticalWork/2, posCE.y+3*spacebetween+20+offsetY};
+			  draw "Working forces: " + effectiveWork/toalTheoreticalWork color: buildingColors.values[2] at:  {offsetX+posCE.x, posCE.y+3*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);			  
 			}
 			
 			graphics 'Pandemic Level'{

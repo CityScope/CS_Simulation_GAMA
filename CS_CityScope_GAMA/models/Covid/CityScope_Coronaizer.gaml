@@ -19,15 +19,15 @@ global{
 	
 	
 	bool a_boolean_to_disable_parameters <- true;
-   	int number_day_recovery<-10;
+   	int number_day_recovery<-1;
 	int time_recovery<-1440*number_day_recovery*60;
 	float asymptomatic_ratio<-0.2;
-	float infection_rate<-0.2;
-	float mortality_rate<-0.1;
+	float infection_rate<-0.1;
+	float mortality_rate<-0.01;
 	int initial_nb_infected<-1;
 	bool reinitCovid<-false;
 	bool stopCovid<-false;
-	//float step<-1#mn;
+
 	
 	bool drawInfectionGraph <- false;
 	bool drawSocialDistanceGraph <- false;
@@ -241,7 +241,7 @@ experiment Coronaizer type:gui autorun:true virtual:true{
 	parameter "Quarantine Ratio:" category: "Policy Covid" var:quarantineRatio min: 0.0 max: 1.0 step:0.1;
 	parameter "Mask Ratio:" category: "Policy Covid" var: maskRatio min: 0.0 max: 1.0 step:0.1;
 	bool a_boolean_to_disable_parameters <- true;
-	parameter "Disable following parameters" category:"Covid" var: a_boolean_to_disable_parameters disables: [time_recovery,infection_rate,initial_nb_infected,mortality_rate,socialDistance];
+	parameter "Disable following parameters" category:"Covid" var: a_boolean_to_disable_parameters disables: [number_day_recovery,infection_rate,initial_nb_infected,mortality_rate,socialDistance,asymptomatic_ratio];
 	parameter "Nb recovery day"   category: "Covid" var:number_day_recovery min: 1 max: 30;
 	parameter "Infection Rate"   category: "Covid" var:infection_rate min:0.0 max:1.0;
 	parameter "Asymptomatic Ratio"   category: "Covid" var:asymptomatic_ratio min:0.0 max:1.0;
