@@ -458,18 +458,18 @@ experiment City parent:Coronaizer autorun:true{
 			  float offsetX<-first(legend where (each.type="right1")).shape.width/4;
 			  float offsetY<--first(legend where (each.type="right1")).shape.height/8;
 			  draw rectangle(nbWalk,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nbWalk/2,posCE.y+spacebetween+20+offsetY};
-			  draw "Walk: " + nbWalk/length(people) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw "Walk: " + with_precision(nbWalk/length(people), 2) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
 			  draw circle(10) color: buildingColors.values[1] at: {offsetX+posCE.x-20, posCE.y+spacebetween-20+offsetY};
 			  
 			  draw rectangle(nbMass,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nbMass/2, posCE.y+2*spacebetween+20+offsetY};
-			  draw "Mass: " + nbMass/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw "Mass: " + with_precision(nbMass/length(people),2) color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
 			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
 			  
 			  
 			  int toalTheoreticalWork <- length(ViralPeople)*8;
 			  int effectiveWork <- length(ViralPeople where each.is_susceptible)*8 + length (ViralPeople where (each.is_asymptomatic and each.is_infected))*7 + length (ViralPeople where (!each.is_asymptomatic and each.is_infected))*4 +length(ViralPeople where each.is_recovered)*8;
 			  draw rectangle(effectiveWork/toalTheoreticalWork * length(people),20) color: buildingColors.values[2] at: {offsetX+posCE.x+effectiveWork/toalTheoreticalWork/2, posCE.y+3*spacebetween+20+offsetY};
-			  draw "Working forces: " + effectiveWork/toalTheoreticalWork color: buildingColors.values[2] at:  {offsetX+posCE.x, posCE.y+3*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);			  
+			  draw "Working forces: " + with_precision(effectiveWork/toalTheoreticalWork,2) color: buildingColors.values[2] at:  {offsetX+posCE.x, posCE.y+3*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);			  
 			}
 			
 			graphics 'Pandemic Level'{
@@ -488,11 +488,11 @@ experiment City parent:Coronaizer autorun:true{
 			  float offsetX<-first(legend where (each.type="right2")).shape.width/4;
 			  float offsetY<--first(legend where (each.type="right2")).shape.height/8;
 			  draw rectangle(nb_susceptible,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nb_susceptible/2,posCE.y+spacebetween+20+offsetY};
-			  draw "S: " + nb_susceptible/length(people) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw "S: " + with_precision(nb_susceptible/length(people),2) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
 			  draw circle(10) color: buildingColors.values[1] at: {offsetX+posCE.x-20, posCE.y+spacebetween-20+offsetY};
 			  
 			  draw rectangle(nb_infected,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nb_infected/2, posCE.y+2*spacebetween+20+offsetY};
-			  draw "I: " + nb_infected/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw "I: " + with_precision(nb_infected/length(people),2) color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
 			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
  
 		}
@@ -514,11 +514,11 @@ experiment City parent:Coronaizer autorun:true{
 			  float offsetX<-first(legend where (each.type="right3")).shape.width/4;
 			  float offsetY<--first(legend where (each.type="right3")).shape.height/8;
 			  draw rectangle(nbMask,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nbMask/2,posCE.y+spacebetween+20+offsetY};
-			  draw "Mask: " + nbMask/length(people) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw "Mask: " + with_precision(nbMask/length(people),2) color: buildingColors.values[1] at:  {offsetX+posCE.x,posCE.y+spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
 			  draw circle(10) color: buildingColors.values[1] at: {offsetX+posCE.x-20, posCE.y+spacebetween-20+offsetY};
 			  
 			  draw rectangle(nbQ,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nbQ/2, posCE.y+2*spacebetween+20+offsetY};
-			  draw "Quarantine: " + nbQ/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
+			  draw "Quarantine: " + with_precision(nbQ/length(people),2) color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
 			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
  
 		}
