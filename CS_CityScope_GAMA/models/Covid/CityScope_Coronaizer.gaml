@@ -119,7 +119,7 @@ global{
 		maskRatio_prev<-maskRatio;
 	}
 	
-	reflex updateDeath when:every(#day){
+	reflex updateDeath when:every(#mn){
 		ask (ViralPeople where (each.is_infected)){
 			if flip(mortality_rate){
 				nb_death<-nb_death+1;

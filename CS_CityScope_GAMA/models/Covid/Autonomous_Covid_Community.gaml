@@ -538,7 +538,7 @@ experiment City parent:Coronaizer autorun:true{
 			event ["o"] action:{stopCovid<-true;};
 		}
 		
-		 /*display CoronaChart refresh:every(#mn) toolbar:false {
+		 display CoronaChart refresh:every(#mn) toolbar:false {
 			 chart "Population: " type: series x_serie_labels: "time" 
 			 x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
 			 y_label: 'Case'{
@@ -547,7 +547,7 @@ experiment City parent:Coronaizer autorun:true{
 				data "recovered" value: nb_recovered color: #blue;
 				data "death" value: nb_death color: #black;
 			 } 
-		}*/
+		}
 		
 	}
 }
