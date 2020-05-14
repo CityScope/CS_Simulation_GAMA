@@ -21,6 +21,7 @@ global{
 	bool a_boolean_to_disable_parameters <- true;
    	int number_day_recovery<-10;
 	int time_recovery<-1440*number_day_recovery*60;
+	float asymptomatic_ratio<-0.2;
 	float infection_rate<-0.2;
 	float mortality_rate<-0.1;
 	int initial_nb_infected<-1;
@@ -55,6 +56,7 @@ global{
 	reflex initCovid when:reinitCovid{
 		ask ViralPeople{
 			is_susceptible <-  true;
+			is_asymptomatic<-true;
 			is_infected <-  false;
 	        is_immune <-  false;
 	        is_recovered<-false;
@@ -62,6 +64,7 @@ global{
 		
 		ask initial_nb_infected among ViralPeople{
 			is_susceptible <-  false;
+			if flip(asymptomatic_ratio){is_asymptomatic<-false;}
 	        is_infected <-  true;
 	        is_immune <-  false;
 	        is_recovered<-false;
@@ -82,6 +85,7 @@ global{
 	reflex stopCovid when:stopCovid{
 		ask ViralPeople{
 			is_susceptible <-  true;
+			is_asymptomatic<-true;
 			is_infected <-  false;
 	        is_immune <-  false;
 	        is_recovered<-false;
@@ -141,6 +145,7 @@ species ViralPeople  mirrors:people{
 	bool is_infected <- false;
     bool is_immune <- false;
     bool is_recovered<-false;
+    bool is_asymptomatic<-true;
     bool as_mask<-false;
     float infected_time<-0.0;
     geometry shape<-circle(1);
@@ -151,6 +156,7 @@ species ViralPeople  mirrors:people{
 			if (flip(infection_rate/step)) {
         		is_susceptible <-  false;
             	is_infected <-  true;
+            	if flip(asymptomatic_ratio){is_asymptomatic<-false;}
             	infected_time <- time; 
             	ask (cell overlapping self.target){
 					nbInfection<-nbInfection+1;
@@ -169,7 +175,7 @@ species ViralPeople  mirrors:people{
 	}	
 	aspect health {
 		if(showPeople){
-		  draw circle(world.shape.width/300) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
+		  draw circle(world.shape.width/300) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? (is_asymptomatic ? rgb(#orange,viralPeopleTransparency): rgb(#red,viralPeopleTransparency)) : rgb(#blue,viralPeopleTransparency));	
 		}
 		if (as_mask){
 		  draw square(world.shape.width/600) color:#white;	
@@ -202,7 +208,7 @@ species ViralPeople  mirrors:people{
 		  }
 		}
 		if(health){
-		  draw circle(world.shape.width/300) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? rgb(#red,viralPeopleTransparency) : rgb(#blue,viralPeopleTransparency));	
+		  draw circle(world.shape.width/300) color:(is_susceptible) ? rgb(#green,viralPeopleTransparency) : ((is_infected) ? (is_asymptomatic ? rgb(#orange,viralPeopleTransparency): rgb(#red,viralPeopleTransparency)) : rgb(#blue,viralPeopleTransparency));	
 		  if (as_mask){
 		   draw square(4#m) color:#white;	
 		  }	
@@ -238,6 +244,7 @@ experiment Coronaizer type:gui autorun:true virtual:true{
 	parameter "Disable following parameters" category:"Covid" var: a_boolean_to_disable_parameters disables: [time_recovery,infection_rate,initial_nb_infected,mortality_rate,socialDistance];
 	parameter "Nb recovery day"   category: "Covid" var:number_day_recovery min: 1 max: 30;
 	parameter "Infection Rate"   category: "Covid" var:infection_rate min:0.0 max:1.0;
+	parameter "Asymptomatic Ratio"   category: "Covid" var:asymptomatic_ratio min:0.0 max:1.0;
 	parameter "Mortality"   category: "Covid" var: mortality_rate min:0.0 max:1.0;
 	parameter "Initial Infected"   category: "Covid" var: initial_nb_infected <-1 min:0 max:100;
 	parameter "Contamination Distance:" category: "Covid" var:socialDistance min: 1.0 max: 1000.0 step:1;
