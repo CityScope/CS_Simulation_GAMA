@@ -23,6 +23,7 @@ global{
 	int nbPeople<-100;
 	float step<-1#sec;
 	float speedFactor<-1.0;
+	int current_min update: (time / #mn) mod 60;
 	int current_hour update: (time / #hour) mod 24;
 	int current_day  update: (int(time/#day));
 	float districtSize<-250#m;
@@ -374,6 +375,12 @@ experiment City parent:Coronaizer autorun:true{
 			graphics "title" { 
 		      draw !autonomy ? "Conventional Zoning" : "Autonomous Cities" color:#white at:{first(legend where (each.type="title")).location.x - first(legend where (each.type="title")).shape.width/2, first(legend where (each.type="title")).location.y} font:font("Helvetica", 50 , #bold);
 		    } 
+		    
+		    graphics "clock" {
+				draw "day" + string(current_day) + " - " + string(current_hour) + "h:" + string(current_min) + "min" color: #white font: font("Helvetica", 25, #plain) at:
+				{world.shape.width * 0.8, world.shape.height * 0.975};
+			}
+		    
 		    graphics "building"{
 		      loop i from:0 to:length(buildingColors)-1{
 				draw buildingShape[buildingColors.keys[i]] empty:false color: buildingColors.values[i] at: {first(legend where (each.type="left1")).location.x - first(legend where (each.type="left1")).shape.width/2, first(legend where (each.type="left1")).location.y - first(legend where (each.type="left1")).shape.height/2+i*first(legend where (each.type="left1")).shape.height/2};
@@ -457,11 +464,6 @@ experiment City parent:Coronaizer autorun:true{
 			  draw "Mass: " + nbMass/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
 			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
 			  
-			  
-			  draw rectangle(nbMass,20) color: buildingColors.values[0] at: {offsetX+posCE.x+nbMass/2, posCE.y+2*spacebetween+20+offsetY};
-			  draw "Working: " + nbMass/length(people)color: buildingColors.values[0] at:  {offsetX+posCE.x, posCE.y+2*spacebetween+offsetY} perspective: true font:font("Helvetica", 20 , #bold);
-			  draw square(20) color: buildingColors.values[0] at: {offsetX+posCE.x-20, posCE.y+2*spacebetween-20+offsetY};
- 
 			}
 			
 			graphics 'Pandemic Level'{
@@ -536,16 +538,16 @@ experiment City parent:Coronaizer autorun:true{
 			event ["o"] action:{stopCovid<-true;};
 		}
 		
-		 display CoronaChart refresh:every(#mn) toolbar:false {
-		 chart "Population: " type: series x_serie_labels: "time" 
-		 x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
-		 y_label: 'Case'{
-			data "susceptible" value: nb_susceptible color: #green;
-			data "infected" value: nb_infected color: #red;	
-			data "recovered" value: nb_recovered color: #blue;
-			data "death" value: nb_death color: #black;
-		 } 
-		}
+		 /*display CoronaChart refresh:every(#mn) toolbar:false {
+			 chart "Population: " type: series x_serie_labels: "time" 
+			 x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
+			 y_label: 'Case'{
+				data "susceptible" value: nb_susceptible color: #green;
+				data "infected" value: nb_infected color: #red;	
+				data "recovered" value: nb_recovered color: #blue;
+				data "death" value: nb_death color: #black;
+			 } 
+		}*/
 		
 	}
 }
