@@ -23,6 +23,7 @@ global{
 	int nbPeople<-100;
 	float step<-1#sec;
 	float speedFactor<-1.0;
+	bool transitionPhase<-false;
 	int current_min update: (time / #mn) mod 60;
 	int current_hour update: (time / #hour) mod 24;
 	int current_day  update: (int(time/#day));
@@ -73,9 +74,11 @@ global{
 		do updateSim(autonomy); 
 	}
 	
-	reflex updateStep{
+	reflex updateStep when:transitionPhase{
 		if(step > 1#sec){
 			step<-step-1#sec;
+		}else{
+			transitionPhase<-false;
 		}
 	}
 	
@@ -83,6 +86,7 @@ global{
 		step<-60#sec;
 		do updateDistrict(_autonomy);
 		do updatePeople(_autonomy);
+		transitionPhase<-true;
 		reinit<-true;
 	}
 
@@ -357,7 +361,7 @@ species legend{
 
 experiment City parent:Coronaizer autorun:true{
 	float minimum_cycle_duration<-0.02;
-	parameter 'City:' var: cityScopeCity category: 'GIS' <- "AbstractCity" among: ["AbstractCity", "MIT","Boston","Paris"];
+	parameter 'City:' var: cityScopeCity category: 'GIS' <- "MIT" among: ["AbstractCity", "MIT","Boston","Paris"];
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
 	parameter "Map:" category: "Visualization" var:drawMap <-true ;
