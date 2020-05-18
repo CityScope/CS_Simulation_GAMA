@@ -61,6 +61,10 @@ global{
 	init{
 		speedFactor<-world.shape.width/3600#m;
 		create legend from: legend_shapefile;
+		create cityMapper{
+			shape<-myself.shape;
+			location<-myself.location;
+		}
 		create district from:district_shapefile{
 			create building number:nbBuildingPerDistrict{
 			  shape<-square(world.shape.width/50);
@@ -98,6 +102,7 @@ global{
 		  	current_trajectory <- [];
 		  	color<-rgb(125)+rnd(-125,125);
 		  	type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
+		  	crossingPeople<-false;
 		}
 		if (!_autonomy){
 		  ask people{
@@ -124,6 +129,7 @@ global{
 			myCurrentDistrict<-one_of(district);
 			myOffice<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));
 			my_target<-any_location_in(myPlaces[0]);
+			crossingPeople<-true;
 		  }		
 		}
 		ask people{
@@ -213,21 +219,35 @@ species district{
 	string type;
 	
 	user_command "Quarantine"action: quarantine;
+	user_command "UnQuarantine"action: unquarantine;
 	
 	action quarantine{
+		if(autonomy){
+			isQuarantine<-true;
+			ask (people where (each.crossingPeople=true)){
+				isMoving<-false;
+			}
+		}	
+	}
+	action unquarantine{
+		if(autonomy){
+			isQuarantine<-false;
+		}
+		ask (people where (each.crossingPeople=true)){
+				isMoving<-true;
+		}	
 	}
 	
 	aspect default{
-		//draw string(self.name) at:{location.x+districtSize*1.1,location.y-districtSize*0.5} color:#white perspective: true font:font("Helvetica", 30 , #bold);
 		if (isQuarantine){
-			draw shape*1.1 color:rgb(#red,1) empty:true border:#red;
+			draw shape*1.1 - shape color:rgb(255,0,0,0.25) border:conventionalDistrictColor-50 empty:false;
 		}
 		if(isAutonomous){
 			//draw (shape*1.05)-shape at_location {location.x,location.y,-0.01} color:autonomousDistrictColor border:autonomousDistrictColor-50;
-			draw shape color:conventionalDistrictColor border:conventionalDistrictColor-50 empty:true;
+			draw shape color:rgb(255,255,255,0.1) border:conventionalDistrictColor-50 empty:false;
 		}else{
 			//draw (shape*1.05)-shape at_location {location.x,location.y,-0.01} color:buildingColors[conventionalType] border:buildingColors[conventionalType]-50;
-			draw shape color:conventionalDistrictColor border:buildingColors[conventionalType]-50 empty:true;
+			draw shape color:rgb(255,255,255,0.1) border:buildingColors[conventionalType]-50 empty:false;
 		}
 		
 	}
@@ -241,6 +261,14 @@ species building{
 	district myDistrict;
 	aspect default{
 		draw buildingShape[type] at: location color:buildingColors[type] border:buildingColors[type]-100;
+	}
+}
+
+species cityMapper{
+	aspect default{
+		if(drawMap){
+			draw shape texture:cityMap color:rgb(backgroundColor,0.25);
+		}
 	}
 }
 
@@ -260,6 +288,7 @@ species people skills:[moving]{
 	bool isMoving<-true;
 	bool macroTrip<-false;
 	bool isQuarantine<-false;
+	bool crossingPeople<-false;
 	
 	reflex move_to_target_district when: (target_district != nil and isMoving){
 		if (go_outside) {
@@ -361,7 +390,7 @@ species legend{
 
 experiment City parent:Coronaizer autorun:true{
 	float minimum_cycle_duration<-0.02;
-	parameter 'City:' var: cityScopeCity category: 'GIS' <- "MIT" among: ["AbstractCity", "MIT","Boston","Paris"];
+	parameter 'City:' var: cityScopeCity category: 'GIS' <- "AbstractCity" among: ["AbstractCity", "MIT","Boston","Paris"];
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
 	parameter "Map:" category: "Visualization" var:drawMap <-true ;
@@ -397,16 +426,11 @@ experiment City parent:Coronaizer autorun:true{
 			  }
 			}
 			
-			species district position:{0,0,-0.001};
 			species building;
 			species hospital;
-
-
-			graphics "map"{
-				if(drawMap){
-					draw shape texture:cityMap color:rgb(backgroundColor,0.25);
-				}
-			}
+			species cityMapper;
+			species district;
+			
 		    graphics "infection_graph" {
 				if (infection_graph != nil and drawInfectionGraph = true) {
 					loop eg over: infection_graph.edges {
@@ -548,7 +572,7 @@ experiment City parent:Coronaizer autorun:true{
 			event ["o"] action:{stopCovid<-true;};
 		}
 		
-		 display CoronaChart refresh:every(#mn) toolbar:false {
+		 /*display CoronaChart refresh:every(#mn) toolbar:false {
 			 chart "Population: " type: series x_serie_labels: "time" 
 			 x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
 			 y_label: 'Case'{
@@ -557,7 +581,7 @@ experiment City parent:Coronaizer autorun:true{
 				data "recovered" value: nb_recovered color: #blue;
 				data "death" value: nb_death color: #black;
 			 } 
-		}
+		}*/
 		
 	}
 }
