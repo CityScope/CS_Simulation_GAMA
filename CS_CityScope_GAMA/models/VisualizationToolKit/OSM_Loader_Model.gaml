@@ -9,7 +9,7 @@ model switch_utilities_gis
 global {
 	
 	//define the path to the dataset folder
-	string dataset_path <- "./../../includes/AutonomousCities/MIT/";
+	string dataset_path <- "./../../includes/AutonomousCities/Paris/";
 		
 	//define the bounds of the studied area
 	file data_file <-shape_file(dataset_path + "bound.shp");
@@ -25,6 +25,8 @@ global {
 	int default_num_lanes <- 1;
 	
 	bool display_google_map <- true parameter:"Display google map image";
+	
+	bool saveShp<-false;
 	
 	//-----------------------------------------------------------------------------------------------------------------------------
 	
@@ -115,8 +117,9 @@ global {
 			}
 		}
 	
-		
-		save Building to:dataset_path +"buildings.shp" type: shp attributes: ["type"::type, "flats"::flats,"height"::height, "levels"::levels];
+		if(saveShp){
+		  save Building to:dataset_path +"buildings.shp" type: shp attributes: ["type"::type, "flats"::flats,"height"::height, "levels"::levels];
+		}
 		
 		
 		map<string, list<Building>> buildings <- Building group_by (each.type);
@@ -203,9 +206,12 @@ global {
 		}
 		
 		write "node agents filtered";
-		save Road type:"shp" to:dataset_path +"roads.shp" attributes:["junction"::junction, "type"::type, "lanes"::self.lanes, "maxspeed"::maxspeed, "oneway"::oneway] ;
-		
-		save Node type:"shp" to:dataset_path +"nodes.shp" attributes:["type"::type, "crossing"::crossing] ;
+		if(saveShp){
+		  save Road type:"shp" to:dataset_path +"roads.shp" attributes:["junction"::junction, "type"::type, "lanes"::self.lanes, "maxspeed"::maxspeed, "oneway"::oneway] ;
+		}
+		if(saveShp){
+		  save Node type:"shp" to:dataset_path +"nodes.shp" attributes:["type"::type, "crossing"::crossing] ;
+		}
 		
 		do load_satellite_image;
 	}
@@ -318,11 +324,11 @@ species Boundary {
 
 experiment generateGISdata type: gui {
 	output {
-		display map type: opengl draw_env: false{
+		display map  draw_env: false{
 			image dataset_path +"satellite.png"  transparency: 0.2 refresh: false;
-			species Building;
-			species Node;
-			species Road;
+			//species Building;
+			//species Node;
+			//species Road;
 			
 		}
 	}
