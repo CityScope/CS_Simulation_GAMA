@@ -22,6 +22,7 @@ global{
 	int nbBuildingPerDistrict<-10;
 	int nbPeople<-100;
 	float step<-1#sec;
+	bool accelerationEffect<-false;
 	float speedFactor<-1.0;
 	bool transitionPhase<-false;
 	int current_min update: (time / #mn) mod 60;
@@ -78,7 +79,7 @@ global{
 		do updateSim(autonomy); 
 	}
 	
-	reflex updateStep when:transitionPhase{
+	reflex updateStep when:(transitionPhase and accelerationEffect){
 		if(step > 1#sec){
 			step<-step-1#sec;
 		}else{
@@ -87,7 +88,9 @@ global{
 	}
 	
 	action updateSim(bool _autonomy){
-		step<-60#sec;
+		if(accelerationEffect){
+		  step<-60#sec;	
+		}
 		do updateDistrict(_autonomy);
 		do updatePeople(_autonomy);
 		transitionPhase<-true;
@@ -397,6 +400,7 @@ experiment City parent:Coronaizer autorun:true{
 	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
 	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
 	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.25 min:0.0 max:1.0 ;
+	parameter "Transition acceleration effect:" category: "Visualization" var:accelerationEffect <-false ;
 	parameter "People Transparency:" category: "Visualization" var:peopleTransparency <-0.5 min:0.0 max:1.0 ;
 	parameter "Macro Transparency:" category: "Visualization" var:macroTransparency <-0.5 min:0.0 max:1.0 ;
 	parameter "Draw Inter District Graph:" category: "Visualization" var:drawMacroGraph <-false;
