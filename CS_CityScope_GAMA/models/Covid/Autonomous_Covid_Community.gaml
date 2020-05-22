@@ -393,7 +393,7 @@ species legend{
 
 experiment City parent:Coronaizer autorun:true{
 	float minimum_cycle_duration<-0.02;
-	parameter 'City:' var: cityScopeCity category: 'GIS' <- "AbstractCity" among: ["AbstractCity", "MIT","Boston","Paris","Andorra"];
+	parameter 'City:' var: cityScopeCity category: 'GIS' <- "AbstractCity" among: ["AbstractCity", "MIT","Boston","Paris","Andorra","SanSebastian"];
 	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
 	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
 	parameter "Map:" category: "Visualization" var:drawMap <-true ;
