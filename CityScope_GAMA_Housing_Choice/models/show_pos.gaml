@@ -15,7 +15,7 @@ global{
 	file<geometry> buildings_shapefile <- file<geometry>("./../includesCalibration/City/volpe/BuildingsLatLongBlock.shp");
 	file<geometry> roads_shapefile <- file<geometry>("./../includesCalibration/City/volpe/simplified_roads.shp");
 	file<geometry> T_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_NODE_MAss_color.shp");
-	file resuls_false <- file("../results/calibrateData/hillClimbing/resultingPeopleChoice 023.csv");
+	file resuls_false <- file("../results/calibrateData/hillClimbing/resultingPeopleChoice 031.csv");
 	file<geometry> T_lines_shapefile <- file<geometry>("./../includesCalibration/City/volpe/Tline_cleanedQGIS.shp");
 	list<string> type_people <- ["<$30000", "$30000 - $44999", "$45000 - $59999", "$60000 - $99999","$100000 - $124999","$125000 - $149999","$150000 - $199999", ">$200000"];
 	map<string,rgb> color_per_type <- ["<$30000"::#cyan, "$30000 - $44999"::#blue, "$45000 - $59999"::rgb(0,128,128), "$60000 - $99999"::#green, "$100000 - $124999"::#pink, "$125000 - $149999"::#purple,"$150000 - $199999"::rgb(182, 102, 210), ">$200000"::#magenta];
@@ -172,7 +172,7 @@ species people{
 	blockGroup living_place;
 	
 	aspect default{
-		draw circle(70) color:color;
+		draw circle(100) color:color;
 	}
 }
 

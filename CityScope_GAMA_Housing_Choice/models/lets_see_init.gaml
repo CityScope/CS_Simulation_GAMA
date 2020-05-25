@@ -1,11 +1,11 @@
 /***
-* Name: calibrateDataPercentage
-* Author: mireia yurrita
+* Name: letsseeinit
+* Author: mirei
 * Description: 
 * Tags: Tag1, Tag2, TagN
 ***/
 
-model calibrateDataPercentage
+model letsseeinit
 
 
 
@@ -246,6 +246,7 @@ global{
 		do updateMeanDiver;
 		do calculateRealPercentages;
 		do computeErrorHousing;
+		do save_init;
 
 	}
 	
@@ -778,7 +779,8 @@ global{
 				real_GEOID <- kendall_real_pop[0,i];
 				realBlockGroup <- one_of(blockGroup where(each.GEOID = real_GEOID));
 				
-				living_place <- one_of(building where (each.vacantSpaces >= 1*agent_per_point and each.outskirts = false));
+				living_place <- one_of(building where (each.associatedBlockGroup = realBlockGroup));
+				
 				
 				if (living_place != nil){
 					actualCity <- living_place.associatedBlockGroup.city;
@@ -1016,6 +1018,12 @@ global{
 		}
 		housingErrorTotal <- sqrt(housingErrorTotal / (length(list_neighbourhoods) - 1));
 		housingErrorTotalInt <- sqrt(housingErrorTotalInt) / (length(list_neighbourhoods) - 1);
+	}
+	
+	action save_init{
+		ask people{
+			save[type, living_place.location.x, living_place.location.y, living_place.associatedBlockGroup.GEOID, activity_place.ID, activity_place.location.x, activity_place.location.y, activity_place.lat, activity_place.long, actualNeighbourhood, actualCity, happyNeighbourhood, mobility_mode_main_activity, time_main_activity_min, distance_main_activity, CommutingCost, living_place.rentNormVacancy, agent_per_point] type:csv to:"../results/calibrateData/initResults/lets_see_init "+ ".csv" rewrite: false header:true;	
+		}
 	}
 
 	reflex peopleMove{

@@ -1,0 +1,9 @@
+﻿,Price Importance,Diversity acceptance,Preferred vacancies per person,Vacancy/person importance,Preferred zone,Pattern weight
+<$30000,-0.9,0.6,1,0.8,WAKEFIELD,0.8
+$30000 - $44999,-1,0.6,1,0.8,North Cambridge,0.8
+$45000 - $59999,-0.2,0.6,1,0.6,MERRIMAC,0.8
+$60000 - $99999,-0.7,0.6,1,0.4,MILLIS,0.4
+$100000 - $124999,-0.3,-1,1,0.4,WEST BRIDGEWATER,0.9
+$125000 - $149999,-0.3,-0.6,1,0.6,SALISBURY,0.8
+$150000 - $199999,-0.3,0,2,0.8,Riverside,0
+>$200000,-0.7,0.8,2,0.8,Area 2/MIT,0.3

@@ -18,17 +18,17 @@ global{
 	file<geometry> bus_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_BUS_MAss.shp");
 	file<geometry> road_shapefile <- file<geometry>("./../includesCalibration/City/volpe/simplified_roads.shp");
 	file kendallBlocks_file <- file("./../includesCalibration/City/volpe/KendallBlockGroupstxt.txt");
-	file criteria_home_file <- file("./../includesCalibration/Criteria/CriteriaHome.csv");
+	file criteria_home_file <- file("./../includesCalibration/Criteria/CriteriaHomeCalibrated.csv");
 	file activity_file <- file("./../includesCalibration/Criteria/ActivityPerProfile.csv");
 	file mode_file <- file("./../includesCalibration/Criteria/Modes.csv");
 	file profile_file <- file("./../includesCalibration/Criteria/Profiles.csv");
 	file weather_coeff <- file("../includesCalibration/Criteria/weather_coeff_per_month.csv");
-	file criteria_file <- file("../includesCalibration/Criteria/CriteriaFile.csv");
+	file criteria_file <- file("../includesCalibration/Criteria/CriteriaFileCalibrated.csv");
 	file population_file <- file("../includesCalibration/City/censusDataGreaterBoston/censusDataClustered.csv");
 	geometry shape<-envelope(T_lines_shapefile);
 	
 	int nb_people <- 11585; //for example. Nearly x2 of vacant spaces in Kendall
-	int nb_agents <- 11585; //make sure [nb_agent*max(possible_agents_per_point_list) > nb_people]
+	int nb_agents <- int(11585/2); //make sure [nb_agent*max(possible_agents_per_point_list) > nb_people]
 	float maxRent;
 	float minRent;
 	float maxDiversity;
@@ -47,13 +47,13 @@ global{
 	float angle <- atan((899.235 - 862.12)/(1083.42 - 1062.038));
 	point startingPoint <- {13844, 8318};
 	float brickSize <- 21.3;
-	int boolGrid;
+	int boolGrid <- 1;
 	int init;
-	float percForResidentialGrid <- 0.50; //variable for batch experiment
+	float percForResidentialGrid <- 0.5; //variable for batch experiment
 	int nbFloorsGrid <- 30; //variable for batch experiment
 	float gridPriceMarketPerc <- 1.0; //percentage of the market price that grid buildings will offer (to everyone or specific profiles??) Vble for batch experiment
 	
-	map<string,int> density_map<-["S"::15,"M"::55, "L"::89, "microUnit" :: 30]; //provisional. Ask Suleiman
+	map<string,int> density_map<-["S"::15,"M"::55, "L"::89, "microUnit" :: 40]; //provisional. Ask Suleiman
 	list<blockGroup> kendallBlockList;
 	list<rentApartment> kendallApartmentList;
 	map<string,map<string,list<float>>> weights_map <- map([]);
@@ -560,6 +560,7 @@ global{
 	
 	action createGridBuildings{
 		angle <- angle / 2;
+		float acum_area <- 0.0;
 		//write startingPoint;
 		startingPoint <- {startingPoint.x - brickSize / 2, startingPoint.y - brickSize / 2};
 		//write startingPoint;	
@@ -1853,12 +1854,24 @@ experiment show type: gui{
 	
 }
 
-experiment batch_save type: batch keep_seed: true until: cycle > 9 {
-	parameter "createGrid " var: boolGrid init: 0 min:0 max: 1 category: "Grid / No Grid difference ";
+experiment batch_save type: batch keep_seed: true until: cycle > 4 {
+	//parameter "createGrid " var: boolGrid init: 0 min:0 max: 1 category: "Grid / No Grid difference ";
 	parameter "percentage Residential area in grid" var: percForResidentialGrid init: 0.5 min: 0.5 max: 1.0 step: 0.1 category: "Grid vbles";
-	parameter "percentage of market price for grid housing" var: gridPriceMarketPerc init: 0 min: 0 max: 1.0 step: 0.1 category: "Grid vables";
-	parameter "number of floors for grid buildings" var: nbFloorsGrid init: 30 min: 10 max: 50 step: 5 category: "Grid vbles";
+	parameter "percentage of market price for grid housing" var: gridPriceMarketPerc init: 0 min: 0 max: 1.0 step: 0.5 category: "Grid vables";
+	parameter "number of floors for grid buildings" var: nbFloorsGrid init: 10 min: 10 max: 50 step: 5 category: "Grid vbles";
 	
+	reflex save_results{
+		int it;
+		int cpt <- 5;
+		ask simulations{
+			it <- int(self);
+			save[int(self), nb_people, movingPeople, meanDiver, percForResidentialGrid, gridPriceMarketPerc, nbFloorsGrid] type: csv to: "../results/whatif/results_gral"+cpt+".csv" header: true;
+			ask people{
+				save[it, type, living_place.associatedBlockGroup.lat, living_place.location.x, living_place.lat, living_place.associatedBlockGroup.long, living_place.location.y, living_place.long, activity_place.lat, activity_place.location.x, activity_place.long, activity_place.location.y, actualNeighbourhood, actualCity, happyNeighbourhood, mobility_mode_main_activity, time_main_activity_min, distance_main_activity, payingRentAbs, CommutingCost, agent_per_point] type: csv to: "../results/whatif/results_segreg"+cpt+".csv" rewrite: false header: true;
+			}
+			cpt <- cpt + 1;
+		}
+	}
 }
 
 
