@@ -44,9 +44,9 @@ global{
 	int nb_rows <- int(50*1.5);
 	
 
-	int nb_susceptible  <- 0 update: length(ViralPeople where (each.is_susceptible));
-	int nb_infected <- 0 update: length(ViralPeople where (each.is_infected));
-	int nb_recovered <- 0 update: length(ViralPeople where (each.is_recovered));
+	int nb_susceptible -> {ViralPeople count (each.is_susceptible)};
+	int nb_infected  -> {ViralPeople count (each.is_infected)};
+	int nb_recovered -> {ViralPeople count (each.is_recovered)};
 	int nb_death<-0;
 	graph<people, people> infection_graph <- graph<people, people>([]);
 	graph<people, people> social_distance_graph <- graph<people, people>([]);
@@ -131,7 +131,7 @@ global{
 	}
 }
 
-species ViralPeople  mirrors:people{
+species ViralPeople  mirrors:people{ 
 	point location <- target.location update: {target.location.x,target.location.y,target.location.z+5};
 	bool is_susceptible <- true;
 	bool is_infected <- false;
