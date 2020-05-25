@@ -1,3 +1,4 @@
+
 /***
 * Name: CityScope Epidemiology
 * Author: Arnaud Grignard
@@ -9,6 +10,7 @@ model CityScopeCoronaizer
 
 //import "./../CityScope/CityScope_main.gaml"
 import "./Autonomous_Covid_Community.gaml"
+
 
 global{
 	float socialDistance <- 2#m;
@@ -81,17 +83,7 @@ global{
 		reinitCovid<-false;
 		reinit<-false;
 	}
-	
-	reflex stopCovid when:stopCovid{
-		ask ViralPeople{
-			is_susceptible <-  true;
-			is_asymptomatic<-true;
-			is_infected <-  false;
-	        is_immune <-  false;
-	        is_recovered<-false;
-		}
-		stopCovid<-false;
-	}
+
 	reflex updateGraph when: (drawSocialDistanceGraph = true) {
 		social_distance_graph <- graph<people, people>(people as_distance_graph (socialDistance));
 	}

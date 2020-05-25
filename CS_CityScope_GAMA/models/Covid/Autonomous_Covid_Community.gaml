@@ -135,7 +135,12 @@ global{
 			crossingPeople<-true;
 		  }		
 		}
-		ask people{
+		do updatePlaces;
+		
+}
+
+action updatePlaces{
+			ask people{
 			if (type = proportion_per_type.keys[0]){
 				myPlaces[0]<-myHome;
 				myPlaces[1]<-myHome;
@@ -157,10 +162,8 @@ global{
 				myPlaces[3]<-myShop;
 				myPlaces[4]<-myHome;
 			}
-		}		
+		}
 }
-
-
 action updateDistrict( bool _autonomy){
 	if (!_autonomy){
 		ask district where (each.type = "R"){
@@ -227,18 +230,33 @@ species district{
 	action quarantine{
 		if(autonomy){
 			isQuarantine<-true;
-			ask (people where (each.crossingPeople=true)){
-				isMoving<-false;
+			ask (people where (each.myHome.myDistrict = self)){
+				//isMoving<-false;
+				isQuarantine<-true;
+				if(crossingPeople){
+				  myShop<-one_of(myself.myBuildings where (each.type="shopping"));
+			      myOffice<-one_of(myself.myBuildings where (each.type="business"));	
+				}
 			}
-		}	
+		}
+		ask world{do updatePlaces;}	
 	}
 	action unquarantine{
 		if(autonomy){
 			isQuarantine<-false;
 		}
-		ask (people where (each.crossingPeople=true)){
-				isMoving<-true;
+
+		ask (people where (each.myHome.myDistrict = self)){
+				//isMoving<-true;
+				isQuarantine<-false;
+				if(crossingPeople){
+				  myCurrentDistrict<-one_of(district);
+				  myShop<-one_of(myCurrentDistrict.myBuildings where (each.type="shopping"));
+				  myCurrentDistrict<-one_of(district);
+			      myOffice<-one_of(myCurrentDistrict.myBuildings where (each.type="business"));	
+				}
 		}	
+		ask world{do updatePlaces;}	
 	}
 	
 	aspect default{
@@ -576,7 +594,7 @@ experiment City parent:Coronaizer autorun:true{
 			event ["o"] action:{stopCovid<-true;};
 		}
 		
-		 /*display CoronaChart refresh:every(#mn) toolbar:false {
+		/*display CoronaChart refresh:every(#mn)  {
 			 chart "Population: " type: series x_serie_labels: "time" 
 			 x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
 			 y_label: 'Case'{
@@ -589,6 +607,38 @@ experiment City parent:Coronaizer autorun:true{
 		
 	}
 }
+
+/*experiment CityWithChart parent:City autorun:true{
+	float minimum_cycle_duration<-0.02;
+	parameter 'City:' var: cityScopeCity category: 'GIS' <- "AbstractCity" among: ["AbstractCity", "MIT","Boston","Paris","Andorra","SanSebastian"];
+	parameter "Autonomy" category:"Policy" var: autonomy <- false  on_change: {ask world{do updateSim(autonomy);}} enables:[crossRatio] ;
+	parameter "Cross District Autonomy Ratio:" category: "Policy" var:crossRatio <-0.1 min:0.0 max:1.0 on_change: {ask world{do updateSim(autonomy);}};
+	parameter "Map:" category: "Visualization" var:drawMap <-true ;
+	parameter "Trajectory:" category: "Visualization" var:drawTrajectory <-true ;
+	parameter "Trajectory Length:" category: "Visualization" var:trajectoryLength <-100 min:0 max:100 ;
+	parameter "Trajectory Transparency:" category: "Visualization" var:trajectoryTransparency <-0.25 min:0.0 max:1.0 ;
+	parameter "Transition acceleration effect:" category: "Visualization" var:accelerationEffect <-false ;
+	parameter "People Transparency:" category: "Visualization" var:peopleTransparency <-0.5 min:0.0 max:1.0 ;
+	parameter "Macro Transparency:" category: "Visualization" var:macroTransparency <-0.5 min:0.0 max:1.0 ;
+	parameter "Draw Inter District Graph:" category: "Visualization" var:drawMacroGraph <-false;
+    parameter "Simulation Step"  category: "Simulation" var:step min:1#sec max:60#sec step:1#sec;
+	
+	output {
+
+		
+		 display CoronaChart refresh:every(#mn) toolbar:false {
+			 chart "Population: " type: series x_serie_labels: "time" 
+			 x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
+			 y_label: 'Case'{
+				data "susceptible" value: nb_susceptible color: #green;
+				data "infected" value: nb_infected color: #red;	
+				data "recovered" value: nb_recovered color: #blue;
+				data "death" value: nb_death color: #black;
+			 } 
+		}
+		
+	}
+}*/
 
 
 

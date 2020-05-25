@@ -9,7 +9,7 @@ model switch_utilities_gis
 global {
 	
 	//define the path to the dataset folder
-	string dataset_path <- "./../../includes/AutonomousCities/Paris/";
+	string dataset_path <- "./../../includes/AutonomousCities/Andorra/";
 		
 	//define the bounds of the studied area
 	file data_file <-shape_file(dataset_path + "bound.shp");

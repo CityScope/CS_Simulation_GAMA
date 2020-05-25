@@ -9,7 +9,7 @@ model GridDesign
 
 global {
 	/** Insert the global definitions, variables and actions here */
-	file shape_file_world<- shape_file("./../../includes/AutonomousCities/Paris/bound.shp");
+	file shape_file_world<- shape_file("./../../includes/AutonomousCities/Andorra/bound.shp");
 				
 	geometry shape<-envelope(shape_file_world);
 	float width<-shape.width;
