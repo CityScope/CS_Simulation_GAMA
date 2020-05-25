@@ -18,6 +18,8 @@ A collection of Model dedicated to understand and study the impact of Pandemic i
 
 # [Economy](https://github.com/CityScope/CS_CityScope_GAMA/wiki/Economy)
 
+# [Housing Choice](https://github.com/CityScope/CS_CityScope_GAMA/wiki/HousingChoice)
+
 # [Energy](https://github.com/CityScope/CS_CityScope_GAMA/wiki/Energy)
 
 # [Game IT](https://github.com/mitmedialab/CityScope_GAMA/wiki/Game-IT)
