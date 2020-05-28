@@ -1,3 +1,4 @@
+
 /***
 * Name: CityScope Epidemiology
 * Author: Arnaud Grignard
@@ -9,6 +10,7 @@ model CityScopeCoronaizer
 
 //import "./../CityScope/CityScope_main.gaml"
 import "./Autonomous_Covid_Community.gaml"
+
 
 global{
 	float socialDistance <- 2#m;
@@ -42,9 +44,9 @@ global{
 	int nb_rows <- int(50*1.5);
 	
 
-	int nb_susceptible  <- 0 update: length(ViralPeople where (each.is_susceptible));
-	int nb_infected <- 0 update: length(ViralPeople where (each.is_infected));
-	int nb_recovered <- 0 update: length(ViralPeople where (each.is_recovered));
+	int nb_susceptible -> {ViralPeople count (each.is_susceptible)};
+	int nb_infected  -> {ViralPeople count (each.is_infected)};
+	int nb_recovered -> {ViralPeople count (each.is_recovered)};
 	int nb_death<-0;
 	graph<people, people> infection_graph <- graph<people, people>([]);
 	graph<people, people> social_distance_graph <- graph<people, people>([]);
@@ -81,17 +83,7 @@ global{
 		reinitCovid<-false;
 		reinit<-false;
 	}
-	
-	reflex stopCovid when:stopCovid{
-		ask ViralPeople{
-			is_susceptible <-  true;
-			is_asymptomatic<-true;
-			is_infected <-  false;
-	        is_immune <-  false;
-	        is_recovered<-false;
-		}
-		stopCovid<-false;
-	}
+
 	reflex updateGraph when: (drawSocialDistanceGraph = true) {
 		social_distance_graph <- graph<people, people>(people as_distance_graph (socialDistance));
 	}
@@ -139,7 +131,7 @@ global{
 	}
 }
 
-species ViralPeople  mirrors:people{
+species ViralPeople  mirrors:people{ 
 	point location <- target.location update: {target.location.x,target.location.y,target.location.z+5};
 	bool is_susceptible <- true;
 	bool is_infected <- false;
