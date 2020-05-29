@@ -18,12 +18,12 @@ global{
 	file<geometry> bus_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_BUS_MAss.shp");
 	file<geometry> road_shapefile <- file<geometry>("./../includesCalibration/City/volpe/simplified_roads.shp");
 	file kendallBlocks_file <- file("./../includesCalibration/City/volpe/KendallBlockGroupstxt.txt");
-	file criteria_home_file <- file("./../includesCalibration/Criteria/CriteriaHomeCalibrated.csv");
+	file criteria_home_file <- file("./../includesCalibration/Criteria/CriteriaHome.csv");
 	file activity_file <- file("./../includesCalibration/Criteria/ActivityPerProfile.csv");
 	file mode_file <- file("./../includesCalibration/Criteria/Modes.csv");
 	file profile_file <- file("./../includesCalibration/Criteria/Profiles.csv");
 	file weather_coeff <- file("../includesCalibration/Criteria/weather_coeff_per_month.csv");
-	file criteria_file <- file("../includesCalibration/Criteria/CriteriaFileCalibrated.csv");
+	file criteria_file <- file("../includesCalibration/Criteria/CriteriaFile.csv");
 	file population_file <- file("../includesCalibration/City/censusDataGreaterBoston/censusDataClustered.csv");
 	geometry shape<-envelope(T_lines_shapefile);
 	
