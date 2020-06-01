@@ -595,7 +595,7 @@ experiment City parent:Coronaizer autorun:true{
 		}
 		
 		display CoronaChart refresh:every(#mn)  {
-			 chart "Population: " type: series x_serie_labels: "time" 
+			 chart "Population: " type: series x_serie_labels: "time" axes: rgb(142,142,142)  background: rgb(53,53,53) color: rgb (146,146,146) size: point (1,1) 
 			 x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
 			 y_label: 'Case'{
 				data "susceptible" value: nb_susceptible color: #green;
