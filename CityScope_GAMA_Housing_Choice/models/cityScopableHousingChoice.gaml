@@ -17,16 +17,21 @@ global{
 	file calibratedCase <- file("../includesCalibration/Criteria/calibratedDataMLcomm.csv");
 	
 	//PARAMETERS
-	int builtFloors <- 10 parameter: "Built Floors: " category: "Area" min: 0 max: 50 step: 5;
-	int caseStudy <- 0 parameter: "Case Study: " category: "Calibrated vs Utopian" min: 0 max: 1; //0: calibrated 1: utopian
-	float devotedResidential <- 0.5 parameter: "Percentage of area for residential use: " category: "Area" min: 0.4 max: 1.0 step: 0.1; //slider
-	float subsidyPerc <- 0.0 parameter: "Percentage of subsidy: " category: "Subsidy" min: 0.0 max: 1.0 step: 0.1; //slider
-	int initPopulation <- 11585 max: 50000 parameter: "Population: " category: "Population";
-	
+	//int builtFloors <- 10 parameter: "Built Floors: " category: "Area" min: 0 max: 50 step: 5;
+	int builtFloors <- 10;
+	//int caseStudy <- 0 parameter: "Case Study: " category: "Calibrated vs Utopian" min: 0 max: 1; //0: calibrated 1: utopian
+	int caseStudy <- 0;
+	//float devotedResidential <- 0.5 parameter: "Percentage of area for residential use: " category: "Area" min: 0.4 max: 1.0 step: 0.1; //slider
+	float devotedResidential <- 0.5;
+	//float subsidyPerc <- 0.0 parameter: "Percentage of subsidy: " category: "Subsidy" min: 0.0 max: 1.0 step: 0.1; //slider
+	float subsidyPerc <- 0.0;
+	//int initPopulation <- 11585 max: 50000 parameter: "Population: " category: "Population";
+	int initPopulation <- 11585;
 	
 	int nbPeopleKendall;
 	float builtArea<- 0.0; //if Volpe grid, different floors for each building possible. builtArea is the one to search
-	float propInKendall;
+	float untilNowInKendall <- 0.0;
+	float propInKendall <- 0.0;
 	float propProf1;
 	float propProf2;
 	float propProf3;
@@ -58,10 +63,37 @@ global{
 	
 	init{
 		do createBuildings;
+		do createRoads;
 		do createGrid;
 		do normaliseRents;
-		do createRoads;
 		do importData;
+		do createPopulation;
+	}
+	
+	reflex iterations{
+		if (subsidyPerc < 1.0){
+			subsidyPerc <- subsidyPerc + 0.2;
+			ask building where(each.fromGrid = true){
+				rentPrice <- (1-subsidyPerc) * 3400;
+			}
+		}
+		else{
+			builtFloors <- builtFloors + 5;
+			builtArea <- 0.0;
+			subsidyPerc <- 0.0;
+			ask building where(each.fromGrid = true){
+				nbFloors <- builtFloors; //variable batch experiment
+				heightValue <- builtFloors*5;
+				builtArea <- builtArea + shape.area*nbFloors*devotedResidential;
+				rentPrice <- (1-subsidyPerc)*3400;
+			}
+		}
+		do normaliseRents;
+		do importData;
+		
+		ask people{
+			do die;
+		}
 		do createPopulation;
 	}
 	
@@ -105,6 +137,7 @@ global{
 		int location <- 0;
 		//write "primer elem " + data_matrix[0,1];
 		write "builtArea " + builtArea;
+		write "subsidy percentage " + subsidyPerc;
 		
 		loop i from:1 to: data_matrix.rows - 1{ //provisional. Increase granularity with ML
 			float areaValue <- data_matrix[0,i];
@@ -123,8 +156,11 @@ global{
 				}
 			}
 		}
+		write "min difference " + minDifferenceNow;
 		write "location " + location;
 		write "area value matrix " + data_matrix[0,location];
+		untilNowInKendall <- propInKendall;
+		write "prop i-1 in Kendall " + untilNowInKendall;
 		propInKendall <- data_matrix[2,location];
 		nbPeopleKendall <- int(propInKendall*initPopulation);
 		propProf1 <- data_matrix[3,location];
@@ -153,21 +189,24 @@ global{
 		write "meanCommDist " + meanCommDist;
 		write "propPeopleKendall " + propInKendall;
 		write "propPeopleInKendall sum " + lets_see;
-		colorMap <- ['<$30,000'::#cyan, '$30,000 - $44,999'::#blue, '$45,000 - $59,999'::#green, '$60,000 - $99,999'::#yellow, '$100,000 - $124,999'::#orange, '$125,000 - $149,999'::#red, '$150,000 - $199,999'::#pink, '>$200,000'::#purple];
+		colorMap <- ['<$30,000'::#yellow, '$30,000 - $44,999'::#blue, '$45,000 - $59,999'::#green, '$60,000 - $99,999'::#cyan, '$100,000 - $124,999'::#orange, '$125,000 - $149,999'::#red, '$150,000 - $199,999'::#pink, '>$200,000'::#purple];
 		rentMap <- ['<$30,000'::0.7, '$30,000 - $44,999'::0.7, '$45,000 - $59,999'::0.8, '$60,000 - $99,999'::0.8, '$100,000 - $124,999'::0.9, '$125,000 - $149,999'::0.9, '$150,000 - $199,999'::1.0, '>$200,000'::1.0];
 		listProfiles <-  ['<$30,000', '$30,000 - $44,999', '$45,000 - $59,999', '$60,000 - $99,999', '$100,000 - $124,999', '$125,000 - $149,999', '$150,000 - $199,999','>$200,000'];
 	}
 	
 	action createPopulation{
-		create people number: int(nbPeopleKendall/5){
+		create people number: int(nbPeopleKendall/2){
 			type <- profileMap.keys[rnd_choice(profileMap.values)];
 			float maxRentProf <- rentMap[type];
 			livingPlace <- one_of(building where(each.usage = "R"));
 			//livingPlace <- one_of(building where (each.usage = "R" and each.rentPrice <= maxRentProf*maxRentPrice));
-			if (empty(livingPlace) = true){
+			/***if (empty(livingPlace) = true){
 				livingPlace <- one_of(building where(each.usage = "R"));
-			}
+			}***/
 			location <- any_location_in(livingPlace);
+			/***if (self overlaps livingPlace = false){
+				do die;
+			}***/
 			mobilityMode <- mobilityMap.keys[rnd_choice(mobilityMap.values)];
 			color <- colorMap[type];
 		}
@@ -230,7 +269,7 @@ global{
 						//scale <- "microUnit";
 						nbFloors <- builtFloors; //variable batch experiment
 						heightValue <- builtFloors*5;
-						builtArea <- builtArea + shape.area*nbFloors;
+						builtArea <- builtArea + shape.area*nbFloors*devotedResidential;
 						rentPrice <- (1-subsidyPerc)*3400;
 						//write "calc builtArea " + builtArea;
 					}				
@@ -289,43 +328,79 @@ species people{
 experiment visual type:gui{
 
 	output{
-		display map type: opengl draw_env: false background: #black 
+		display map type: opengl draw_env: false  autosave: false background: #black 
 			{
 			species building aspect: default;
 			species road;
 			species people aspect: default;
 	
-			overlay position: { 5, 5 } size: { 240 #px, 340 #px } background: rgb(50,50,50,125) transparency: 0.5 border: #black 
+			overlay position: { 5, 5 } size: { 240 #px, 270 #px } background: rgb(50,50,50,125) transparency: 1.0 border: #black 
 		        {            	
 		            rgb text_color<-#white;
 		            float y <- 30#px;
-		            draw "Percentage of people working and living in Kendall " at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
-		             y <- y + 30#px;
-		            draw string(propInKendall*100) + " %" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
-		            
-		            y <- y + 50 #px;        
+		            float x <- world.shape.height*1.75;
 		            draw "Icons" at: { 40#px, y } color: text_color font: font("Helvetica", 20, #bold) perspective:false;
-		            y <- y + 30 #px;
+		            y <- y + 30#px;
 		            
 		            loop i from: 0 to: length(listProfiles) - 1 {
 		            	draw square(10#px) at: {20#px, y} color:colorMap[listProfiles[i]] border: #white;
 		            	draw string(listProfiles[i]) at: {40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
 		            	y <- y + 25#px;
-		            }   
-		            
-		              
-		            
-		            y <- y + 400#px;
-		            draw "Mean Commuting Time " at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            } 
+		            y <- y + 100#px;
+		            draw "INPUT: " at:{40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
 		            y <- y + 50#px;
-		            draw string(meanCommTime) + " min" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",100,#plain) perspective: false;
+		            draw "BuiltArea: " +  string(builtArea with_precision 2) + " m2" at:{40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            y <- y + 50#px;
+		            draw rectangle(builtArea/1000#px,10#px) at: {40#px+builtArea/2/1000#px, y} color:#white border: #white;
+		            y <- y + 50#px;
+		            //draw string(builtArea with_precision 2) + " m2" at: {x, y + 4#px} color: text_color font: font("Helvetica",100,#plain) perspective: false;
+		            //y <- y + 50#px;
+		            draw "Percentage of subsidy: " + string(int(subsidyPerc*100)) + " %" at:{40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            y <- y + 50#px;
+		            draw rectangle(int(subsidyPerc*250)#px,10#px) at: {40#px+int(subsidyPerc*250/2)#px, y} color:#white border: #white;
+		            y <- y + 100#px;
+		            draw "OUTPUT: " at:{40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            y <- y + 50#px;
+		            draw "Percentage of people working and living in Kendall: " + string(int(propInKendall*100) ) + " %" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            y <- y + 50 #px;    
+		            draw rectangle(int(propInKendall*250)#px,10#px) at: {40#px+int(propInKendall*250/2)#px, y} color:#white border: #white;
+		            y <- y - 200#px;
 		            
-		            y <- y + 50#px;
-		            draw "Mean Commuting Distance " at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
-		            y <- y + 50#px;
-		            draw string(meanCommDist) + " m" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",100,#plain) perspective: false;
+		            
+		            //draw "OUPUT: " at:{x, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            //y<- y + 50#px;
+		            //draw string(subsidyPerc*100 with_precision 0) + " %" at:{x, y + 4#px} color: text_color font: font("Helvetica",100,#plain) perspective: false;
+		            //y <- y + 50#px;
+		            //draw "Percentage of people working and living in Kendall: " + string(int(propInKendall*100) ) + " %" at: {x, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            //y <- y + 50 #px;    
+		            //draw string(int(propInKendall*100) ) + " %" at: {x, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            
+		            //y <- y + 50 #px;    
+		            //draw "Mean Commuting Distance: " + string(meanCommDist with_precision 2) + " m" at: {x, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            //y <- y + 50#px;
+		            //draw string(meanCommDist with_precision 2) + " m" at: {x, y + 4#px} color: text_color font: font("Helvetica",100,#plain) perspective: false;
+		            //y <- y + 50#px;             
+		          
+		            //draw "Mean Commuting Time: " + string(meanCommTime with_precision 2) + " min" at: {x, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            //y <- y + 50#px;
+		            //draw string(meanCommTime with_precision 2) + " min" at: {x, y + 4#px} color: text_color font: font("Helvetica",100,#plain) perspective: false;
+		            
+		             //y <- y - 250#px;
+		           
+		            
+		            
 		    	}
-		    	chart "Mobility Modes" background:#black  type: pie size: {0.5,0.5} position: {world.shape.width*0.7,world.shape.height*0.5} color: #white axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+		    	
+		    	chart "Mean Commuting Time [min]" background: #black type: series size: {0.5,0.5} position: {world.shape.width*1,world.shape.height*0.05} color: #white axes: #white title_font: 'Helvetica' title_font_size: 12.0{
+		    		data "Mean Commuting Time" value:meanCommTime color:#blue;
+		    	}
+		    	
+		    	/***chart "Mean Commuting Time" background: #black type: series size: {0.5,0.5} position: {world.shape.width*1.2,world.shape.height*0.35} color: #white axes: #white title_font: 'Helvetica' title_font_size: 12.0{
+		    		data "Mean Commuting Time" value:meanCommDist color:#blue;
+		    	}***/
+		    	
+		    	chart "Mobility Modes" background:#black  type: pie size: {0.5,0.5} position: {world.shape.width*1,world.shape.height*0.7} color: #white axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 				tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 				{
 					loop i from: 0 to: length(mobilityMap.keys)-1	{
