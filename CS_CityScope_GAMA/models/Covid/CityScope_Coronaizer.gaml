@@ -36,7 +36,7 @@ global{
 	bool draw_grid <- false;
 	bool showPeople<-true;
 	float viralPeopleTransparency<-0.5;
-	bool savetoCSV<-false;
+	bool savetoCSV<-true;
 	string filePathName;
 	
 
@@ -125,9 +125,14 @@ global{
 			}
 		}
 	}
-	reflex save_model_output when: every(#day) and savetoCSV{
+	reflex save_model_output when: every(#hours) and savetoCSV{
 		// save the values of the variables name, speed and size to the csv file; the rewrite facet is set to false to continue to write in the same file
-		save [time,nb_susceptible,nb_infected, nb_recovered, nb_death] to: filePathName type:"csv" rewrite: false;
+		write "save to csv";
+		save [time,cycle,date("now"),length(ViralPeople),length(building),
+		length(building where (each.type="R")),length(building where (each.type="S")),length(building where (each.type="0")),
+		length(people where (each.macroTrip=false)),length(people where (each.macroTrip=true)),
+		nb_susceptible,nb_infected, nb_recovered, nb_death
+		] to: filePathName type:"csv" rewrite: false;
 	}
 }
 
