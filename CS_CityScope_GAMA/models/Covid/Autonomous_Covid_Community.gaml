@@ -7,6 +7,7 @@
 
 model AutonomousCovidCommunity
 
+
 import "./CityScope_Coronaizer.gaml"
 
 /* Insert your model definition here */
@@ -55,9 +56,13 @@ global{
 	bool health<-true;
 	bool profile<-false;
 	bool safety<-false;
+	
+	//KPIS
+	float PANDEMIC_LEVEL;
+	float CITY_EFFICIENCY;
+	float SAFETY_LEVEL;
 		
 			
-		
 	
 	init{
 		speedFactor<-world.shape.width/3600#m;
@@ -497,10 +502,10 @@ experiment City parent:Coronaizer autorun:true{
 			  float spacebetween<-first(legend where (each.type="right1")).shape.height/2; 	
 				 //CITY EFFICIENTY
 			  point posCE<-{first(legend where (each.type="right1")).location.x- first(legend where (each.type="right1")).shape.width/2,first(legend where (each.type="right1")).location.y- first(legend where (each.type="right1")).shape.height/2};
-			  	
-			  draw "City Efficiency: " + int((nbWalk)) color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
+			  CITY_EFFICIENCY<-	int((nbWalk))/100;
+			  draw "City Efficiency: " + CITY_EFFICIENCY color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
 			  draw rectangle(55,first(legend where (each.type="right1")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right1")).shape.height/2};
-			  draw rectangle(50,(nbWalk/100)*first(legend where (each.type="right1")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - ((nbWalk/100))*first(legend where (each.type="right1")).shape.height/2};
+			  draw rectangle(50,CITY_EFFICIENCY*first(legend where (each.type="right1")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - CITY_EFFICIENCY*first(legend where (each.type="right1")).shape.height/2};
 			  
 			 
 			 
@@ -528,13 +533,12 @@ experiment City parent:Coronaizer autorun:true{
 			  float spacebetween<-first(legend where (each.type="right1")).shape.height/2; 	
 				 //CITY EFFICIENTY
 			  point posCE<-{first(legend where (each.type="right2")).location.x- first(legend where (each.type="right2")).shape.width/2,first(legend where (each.type="right2")).location.y- first(legend where (each.type="right2")).shape.height/2};
-			  	
-			  draw "Pandemic Level: " + int((nb_infected)) color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
+			 
+			  PANDEMIC_LEVEL<-nb_infected/100;
+			  draw "Pandemic Level: " + PANDEMIC_LEVEL color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
 			  draw rectangle(55,first(legend where (each.type="right2")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right2")).shape.height/2};
-			  draw rectangle(50,(nb_infected/100)*first(legend where (each.type="right2")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - ((nb_infected/100))*first(legend where (each.type="right2")).shape.height/2};
-			  
-			  
-			  
+			  draw rectangle(50,PANDEMIC_LEVEL*first(legend where (each.type="right2")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - PANDEMIC_LEVEL*first(legend where (each.type="right2")).shape.height/2};
+			    
 			  float offsetX<-first(legend where (each.type="right2")).shape.width/4;
 			  float offsetY<--first(legend where (each.type="right2")).shape.height/8;
 			  draw rectangle(nb_susceptible,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nb_susceptible/2,posCE.y+spacebetween+20+offsetY};
@@ -552,12 +556,13 @@ experiment City parent:Coronaizer autorun:true{
 			  int nbMask <- length(ViralPeople where (each.as_mask = true));
 			  int nbQ <- length(ViralPeople where (each.target.isQuarantine = true));
 			  float spacebetween<-first(legend where (each.type="right1")).shape.height/2; 	
-				 //CITY EFFICIENTY
+			  //SAFETY LEVEL
 			  point posCE<-{first(legend where (each.type="right3")).location.x- first(legend where (each.type="right3")).shape.width/2,first(legend where (each.type="right3")).location.y- first(legend where (each.type="right3")).shape.height/2};
-			  	
-			  draw "Safety: " + ((nbMask+nbQ)/200) color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
+			  
+			  SAFETY_LEVEL<-((nbMask+nbQ)/200);	
+			  draw "Safety: " + SAFETY_LEVEL color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
 			  draw rectangle(55,first(legend where (each.type="right3")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right3")).shape.height/2};
-			  draw rectangle(50,(((nbMask+nbQ)/200))*first(legend where (each.type="right3")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - ((((nbMask+nbQ)/200)))*first(legend where (each.type="right3")).shape.height/2};
+			  draw rectangle(50,SAFETY_LEVEL*first(legend where (each.type="right3")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - SAFETY_LEVEL*first(legend where (each.type="right3")).shape.height/2};
 			  
 			  
 			  

@@ -8,7 +8,9 @@
 
 model CityScopeCoronaizer
 
+
 //import "./../CityScope/CityScope_main.gaml"
+
 import "./Autonomous_Covid_Community.gaml"
 
 
@@ -129,8 +131,9 @@ global{
 		// save the values of the variables name, speed and size to the csv file; the rewrite facet is set to false to continue to write in the same file
 		write "save to csv";
 		save [time,cycle,date("now"),length(ViralPeople),length(building),
-		length(building where (each.type="R")),length(building where (each.type="S")),length(building where (each.type="0")),
+		length(building where (each.type="residential")),length(building where (each.type="shopping")),length(building where (each.type="business")),
 		length(people where (each.macroTrip=false)),length(people where (each.macroTrip=true)),
+        PANDEMIC_LEVEL, CITY_EFFICIENCY, SAFETY_LEVEL,
 		nb_susceptible,nb_infected, nb_recovered, nb_death
 		] to: filePathName type:"csv" rewrite: false;
 	}
