@@ -534,7 +534,7 @@ experiment City parent:Coronaizer autorun:true{
 				 //CITY EFFICIENTY
 			  point posCE<-{first(legend where (each.type="right2")).location.x- first(legend where (each.type="right2")).shape.width/2,first(legend where (each.type="right2")).location.y- first(legend where (each.type="right2")).shape.height/2};
 			 
-			  PANDEMIC_LEVEL<-nb_infected/100;
+			  PANDEMIC_LEVEL<-nb_infected/length(ViralPeople);
 			  draw "Pandemic Level: " + PANDEMIC_LEVEL color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
 			  draw rectangle(55,first(legend where (each.type="right2")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right2")).shape.height/2};
 			  draw rectangle(50,PANDEMIC_LEVEL*first(legend where (each.type="right2")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - PANDEMIC_LEVEL*first(legend where (each.type="right2")).shape.height/2};
