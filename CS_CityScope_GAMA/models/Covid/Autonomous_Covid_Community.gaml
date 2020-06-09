@@ -315,6 +315,7 @@ species people skills:[moving]{
 	bool macroTrip<-false;
 	bool isQuarantine<-false;
 	bool crossingPeople<-false;
+	string currentTransitStatus;
 	
 	reflex move_to_target_district when: (target_district != nil and isMoving){
 		if (go_outside) {
@@ -345,6 +346,7 @@ species people skills:[moving]{
 				target_district <- bd.myDistrict;
 			}
 		}
+		currentTransitStatus<-myPlaces[curPlaces].type;
 		
     }
     
@@ -502,7 +504,7 @@ experiment City parent:Coronaizer autorun:true{
 			  float spacebetween<-first(legend where (each.type="right1")).shape.height/2; 	
 				 //CITY EFFICIENTY
 			  point posCE<-{first(legend where (each.type="right1")).location.x- first(legend where (each.type="right1")).shape.width/2,first(legend where (each.type="right1")).location.y- first(legend where (each.type="right1")).shape.height/2};
-			  CITY_EFFICIENCY<-	int((nbWalk))/100;
+			  CITY_EFFICIENCY<-	(length(people where (each.currentTransitStatus="shopping"))+ length(people where (each.currentTransitStatus="business")))/length(ViralPeople);
 			  draw "City Efficiency: " + CITY_EFFICIENCY color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
 			  draw rectangle(55,first(legend where (each.type="right1")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right1")).shape.height/2};
 			  draw rectangle(50,CITY_EFFICIENCY*first(legend where (each.type="right1")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - CITY_EFFICIENCY*first(legend where (each.type="right1")).shape.height/2};
