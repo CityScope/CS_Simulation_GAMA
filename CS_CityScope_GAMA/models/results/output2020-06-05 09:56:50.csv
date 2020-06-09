@@ -1,0 +1,2 @@
+time,cycle,date('now'),length(ViralPeople),length(building),length(building where (each.type = 'residential')),length(building where (each.type = 'shopping')),length(building where (each.type = 'business')),length(people where (each.macroTrip = false)),length(people where (each.macroTrip = true)),PANDEMIC_LEVEL,CITY_EFFICIENCY,SAFETY_LEVEL,nb_susceptible,nb_infected,nb_recovered,nb_death
+0.0,0,date ('2020-06-05 09:56:52'),0,30,10,10,10,100,0,0.0,1.0,0.0,0,0,0,0
