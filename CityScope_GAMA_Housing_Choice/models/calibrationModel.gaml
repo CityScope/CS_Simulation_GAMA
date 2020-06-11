@@ -1877,16 +1877,31 @@ experiment batch_save type: batch keep_seed: true until: cycle > 4 {
 		float propProfile7 <- list_prop_prof[7];
 		float totalPropInSelectedCity <- propProfile0 + propProfile1 +propProfile2 + propProfile3 + propProfile4 + propProfile5 + propProfile6 + propProfile7;
 		
-		list<float> list_mobility <- [];
-		loop i from: 0 to: length(peopleProportionInSelectedCity) - 1{
-			list_mobility << peopleProportionInSelectedCity.values[i];
-		}
 		
-		float propMob0 <- list_mobility[0];
-		float propMob1 <- list_mobility[1];
-		float propMob2 <- list_mobility[2];
-		float propMob3 <- list_mobility[3];
-		float propMob4 <- list_mobility[4];
+		float propMob0 <- 0.0;
+		float propMob1 <- 0.0;
+		float propMob2 <- 0.0;
+		float propMob3 <- 0.0;
+		float propMob4 <- 0.0;
+		
+		loop i from: 0 to:length(type_people) - 1{
+			if (propPeople_per_mobility_type['car'] != nil){
+				propMob0 <- propMob0 + propPeople_per_mobility_type['car'].values[i];
+			}				
+			if(propPeople_per_mobility_type['bus'] != nil){
+				propMob1 <- propMob1 + propPeople_per_mobility_type['bus'].values[i];	
+			}
+			if(propPeople_per_mobility_type['T'] != nil){
+				propMob2 <- propMob2 + propPeople_per_mobility_type['T'].values[i];	
+			}
+			if(propPeople_per_mobility_type['bike'] != nil){
+				propMob3 <- propMob3 + propPeople_per_mobility_type['bike'].values[i];	
+			}
+			if(propPeople_per_mobility_type['walking'] != nil){
+				propMob4 <- propMob4 + propPeople_per_mobility_type['walking'].values[i];	
+			}
+			
+		}
 		
 		ask simulations{
 			save[totalAreaBuilt, gridPriceMarketPerc, totalPropInSelectedCity, propProfile1, propProfile2, propProfile2, propProfile3, propProfile4, propProfile5, propProfile6, propProfile7, propMob0, propMob1, propMob2, propMob3, propMob4, meanTimeToMainActivity, meanDistanceToMainActivity] type: csv to: "../results/incentivizedScenarios/DiversityIncentive.csv" rewrite: false;
