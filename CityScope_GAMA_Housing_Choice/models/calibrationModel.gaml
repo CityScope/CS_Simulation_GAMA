@@ -10,6 +10,8 @@ model calibrationModel
 
 global{
 	
+	string selectedCity <- "CAMBRIDGE";
+	
 	file<geometry> blockGroup_shapefile <- file<geometry>("./../includesCalibration/City/volpe/tl_2015_25_bg_msa_14460_MAsss_TOWNS_Neighb.shp");
 	file<geometry> available_apartments <- file<geometry>("./../includesCalibration/City/volpe/apartments_march_great.shp");
 	file<geometry> buildings_shapefile <- file<geometry>("./../includesCalibration/City/volpe/BuildingsLatLongBlock.shp");
@@ -18,12 +20,12 @@ global{
 	file<geometry> bus_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_BUS_MAss.shp");
 	file<geometry> road_shapefile <- file<geometry>("./../includesCalibration/City/volpe/simplified_roads.shp");
 	file kendallBlocks_file <- file("./../includesCalibration/City/volpe/KendallBlockGroupstxt.txt");
-	file criteria_home_file <- file("./../includesCalibration/Criteria/CriteriaHome.csv");
+	file criteria_home_file <- file("./../includesCalibration/Criteria/incentivizedCriteria/CriteriaHomeDiversity.csv");
 	file activity_file <- file("./../includesCalibration/Criteria/ActivityPerProfile.csv");
 	file mode_file <- file("./../includesCalibration/Criteria/Modes.csv");
 	file profile_file <- file("./../includesCalibration/Criteria/Profiles.csv");
 	file weather_coeff <- file("../includesCalibration/Criteria/weather_coeff_per_month.csv");
-	file criteria_file <- file("../includesCalibration/Criteria/CriteriaFile.csv");
+	file criteria_file <- file("../includesCalibration/Criteria/incentivizedCriteria/CriteriaFileDiversity.csv");
 	file population_file <- file("../includesCalibration/City/censusDataGreaterBoston/censusDataClustered.csv");
 	geometry shape<-envelope(T_lines_shapefile);
 	
@@ -40,7 +42,8 @@ global{
 	int reference_rent <- 1500;
 	int days_per_month <- 20; //labour days per month
 	int movingPeople;
-	int peopleInMainCity;
+	int peopleInSelectedCity <- 0;
+	float propInSelectedCity;
 	float meanRentPeople;
 	float meanDiver <- 0.0;
 	float meanDiverNorm <- 0.0;
@@ -52,6 +55,7 @@ global{
 	float percForResidentialGrid <- 0.5; //variable for batch experiment
 	int nbFloorsGrid <- 30; //variable for batch experiment
 	float gridPriceMarketPerc <- 1.0; //percentage of the market price that grid buildings will offer (to everyone or specific profiles??) Vble for batch experiment
+	
 	
 	map<string,int> density_map<-["S"::15,"M"::55, "L"::89, "microUnit" :: 40]; //provisional. Ask Suleiman
 	list<blockGroup> kendallBlockList;
@@ -88,8 +92,8 @@ global{
 	map<road,float> congestion_map; 
 	map<string,int> nPeople_perProfile;
 	map<string,map<string,float>> peoplePerNeighbourhoodMap <- map([]);
-	map<string,float> peopleProportionInMainCity;
-	list<string> list_neighbourhoods <- [];
+	map<string,float> peopleProportionInSelectedCity;
+	list<string> list_cities <- [];
 	map<string,float> meanRent_perProfile;
 	float happyNeighbourhoodPeople;
 	map<string,float> happyNeighbourhood_perProfile;
@@ -104,6 +108,8 @@ global{
 	map<string,float> meanCommutingCost_perProfile;
 	map<string, unknown> cityMatrixData;
 	list<map<string, unknown>> cityMatrixCell;
+	int totalAreaBuilt;
+	
 	
 	
 	
@@ -162,7 +168,7 @@ global{
 		do countMobility;
 		do updateMeanDiver;
 		init <- 1;
-		//do save_info_cycle;
+		
 	}
 	
 	action createBlockGroups{
@@ -209,7 +215,7 @@ global{
 		create rentApartment from: available_apartments with: [rentAbs::int(read("Rent")), numberBedrooms::int(read("NBedrooms")), GEOIDAp::string(read("GEOID"))]{
 			associatedBlockGroup <- one_of(blockGroup where(each.GEOID = GEOIDAp));
 			if(empty(associatedBlockGroup) = true){
-				write "estoy vacio" + self;
+				//write "estoy vacio" + self;
 			}
 			if (associatedBlockGroup.city = 'DUXBURY'){
 				do die; //outliers. Normalisation affected
@@ -250,9 +256,10 @@ global{
 		
 		loop i from: 0 to: blockPopulationMatrix.rows - 1{
 			blockGroup asscBlock <- one_of(blockGroup where (each.GEOID = blockPopulationMatrix[1,i]));
-			if(list_neighbourhoods contains asscBlock.neighbourhood != true){
-				list_neighbourhoods << asscBlock.neighbourhood;
+			if(list_cities contains asscBlock.city != true){
+				list_cities << asscBlock.city;
 			}
+			//write "list_cities " + list_cities;
 			asscBlock.initDiversityNorm <- blockPopulationMatrix[17,i];
 			asscBlock.initTotalPeople <- blockPopulationMatrix[7,i];
 			asscBlock.totalPeople <- asscBlock.initTotalPeople;
@@ -265,9 +272,7 @@ global{
 			ask asscBlock{
 				do calculateDiversity;
 			}
-		}
-		int l1 <- length(list_neighbourhoods) - 1;
-	
+		}	
 		
 	}
 	
@@ -565,6 +570,7 @@ global{
 		startingPoint <- {startingPoint.x - brickSize / 2, startingPoint.y - brickSize / 2};
 		//write startingPoint;	
 		int cont <- 0;			
+		totalAreaBuilt <- 0;
 		bool noBuild;
 		loop i from: 0 to: 12{
 			loop j from: 0 to: 15{
@@ -621,6 +627,7 @@ global{
 						scale <- "microUnit";
 						category <-  "mixed";
 						nbFloors <- nbFloorsGrid; //variable batch experiment
+						totalAreaBuilt <- totalAreaBuilt + area*nbFloors*percForResidentialGrid;
 						type <- "BLDG";
 						FAR <- 4.0;
 						max_height <- 120.0;
@@ -1001,35 +1008,36 @@ global{
 		nPeople_perProfile <- actual_number_people_per_type;
 	}
 	
-	action countPopMainCity{
-		peopleInMainCity <- 0;
-		ask people where(each.living_place.satellite = false){
-			peopleInMainCity <- peopleInMainCity + 1*agent_per_point;
+	action countPopMainCity{		
+		ask people where(each.actualCity = selectedCity){
+			peopleInSelectedCity <- peopleInSelectedCity + agent_per_point;
 		}
 	}
 	
 	action countNeighbourhoods{
 		loop i from: 0 to: length(type_people) - 1{
 			map<string,float> peoplePerNeighbourhoodPartialMap <- map([]);
-			loop j from: 0 to: length(list_neighbourhoods) - 1{
+			float propInSelectedCity <- 0.0;
+			loop j from: 0 to: length(list_cities) - 1{
 				int number_peopleProfile_here <- 0;
 				ask people where(each.type = type_people[i]){
-					if((j != 0 and actualNeighbourhood = list_neighbourhoods[j]) or (j = 0 and living_place.satellite = false)){
+					if(actualCity = list_cities[j]){
 						number_peopleProfile_here <- number_peopleProfile_here + 1*agent_per_point;
 					}
 				}
 				if(nPeople_perProfile[type_people[i]] != 0){
-					peoplePerNeighbourhoodPartialMap[list_neighbourhoods[j]] <- number_peopleProfile_here / nPeople_perProfile[type_people[i]];
+					peoplePerNeighbourhoodPartialMap[list_cities[j]] <- number_peopleProfile_here / nPeople_perProfile[type_people[i]];
 				}
 				else{
-					peoplePerNeighbourhoodPartialMap[list_neighbourhoods[j]] <- 0.0;
+					peoplePerNeighbourhoodPartialMap[list_cities[j]] <- 0.0;
 				}
 				
-				if (j = 0 and peopleInMainCity != 0){
-					peopleProportionInMainCity[type_people[i]] <- number_peopleProfile_here / peopleInMainCity;
+				if (list_cities[j] = selectedCity and peopleInSelectedCity != 0){
+					peopleProportionInSelectedCity[type_people[i]] <- number_peopleProfile_here / nb_people;
+					
 				}
-				else if (j = 0 and peopleInMainCity = 0){
-					peopleProportionInMainCity[type_people[i]] <- 0.0;
+				else if (j = 0 and peopleInSelectedCity = 0){
+					peopleProportionInSelectedCity[type_people[i]] <- 0.0;
 				}
 			}
 			add peoplePerNeighbourhoodPartialMap at: type_people[i] to: peoplePerNeighbourhoodMap;
@@ -1161,13 +1169,6 @@ global{
 	action updateMeanDiver{
 		meanDiverNorm <- mean(blockGroup where(each.totalPeople != 0) collect each.diversityNorm);
 		meanDiver <- mean(blockGroup where(each.totalPeople != 0) collect each.diversity);
-	}
-	
-	action save_info_cycle{
-		save[init, cycle, nb_people, movingPeople, meanDiver] type:csv to:"../results/gridAddingBool/results_gral"+ boolGrid +".csv" rewrite: false header:true;
-		ask people{
-			save[init, cycle, type, living_place.associatedBlockGroup.lat, living_place.location.x, living_place.associatedBlockGroup.long, living_place.location.y, activity_place.lat, activity_place.location.x, activity_place.long, activity_place.location.y, actualNeighbourhood, actualCity, happyNeighbourhood, mobility_mode_main_activity, time_main_activity_min, distance_main_activity, payingRentAbs, CommutingCost, agent_per_point] type:csv to:"../results/gridAddingBool/results_segreg" + boolGrid +".csv" rewrite: false header:true;
-		}
 	}
 	
 	reflex peopleMove{
@@ -1779,56 +1780,56 @@ experiment show type: gui{
 			}
 		}
 		display PeoplePerNeighbourhood{			
-			chart "Proportion of people per neighbourhood [Undergrad]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.0,0.0} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+			chart "Proportion of people per neighbourhood [profile 0]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.0,0.0} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{					
 					loop i from: 0 to: length(peoplePerNeighbourhoodMap[type_people[0]].keys)-1	{
 					  data peoplePerNeighbourhoodMap[type_people[0]].keys[i] value:peoplePerNeighbourhoodMap[type_people[0]].values[i];
 					}
 			}
-			chart "Proportion of people per neighbourhood [Grad]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.3,0.0} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+			chart "Proportion of people per neighbourhood [profile 1]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.3,0.0} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{					
 					loop i from: 0 to: length(peoplePerNeighbourhoodMap[type_people[1]].keys)-1	{
 					  data peoplePerNeighbourhoodMap[type_people[1]].keys[i] value:peoplePerNeighbourhoodMap[type_people[1]].values[i];
 					}
 			}
-			chart "Proportion of people per neighbourhood [PhD]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.6,0.0} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+			chart "Proportion of people per neighbourhood [profile 2]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.6,0.0} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{					
 					loop i from: 0 to: length(peoplePerNeighbourhoodMap[type_people[2]].keys)-1	{
 					  data peoplePerNeighbourhoodMap[type_people[2]].keys[i] value:peoplePerNeighbourhoodMap[type_people[2]].values[i];
 					}
 			}
-			chart "Proportion of people per neighbourhood [YoungProf]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.0,0.3} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+			chart "Proportion of people per neighbourhood [profile 3]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.0,0.3} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{					
 					loop i from: 0 to: length(peoplePerNeighbourhoodMap[type_people[3]].keys)-1	{
 					  data peoplePerNeighbourhoodMap[type_people[3]].keys[i] value:peoplePerNeighbourhoodMap[type_people[3]].values[i];
 					}
 			}
-			chart "Proportion of people per neighbourhood [MidCareer]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.3,0.3} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+			chart "Proportion of people per neighbourhood [profile 4]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.3,0.3} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{					
 					loop i from: 0 to: length(peoplePerNeighbourhoodMap[type_people[4]].keys)-1	{
 					  data peoplePerNeighbourhoodMap[type_people[4]].keys[i] value:peoplePerNeighbourhoodMap[type_people[4]].values[i];
 					}
 			}
-			chart "Proportion of people per neighbourhood [Executives]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.6,0.3} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+			chart "Proportion of people per neighbourhood [profile 5]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.6,0.3} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{					
 					loop i from: 0 to: length(peoplePerNeighbourhoodMap[type_people[5]].keys)-1	{
 					  data peoplePerNeighbourhoodMap[type_people[5]].keys[i] value:peoplePerNeighbourhoodMap[type_people[5]].values[i];
 					}
 			}
-			chart "Proportion of people per neighbourhood [Worker]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.0,0.6} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+			chart "Proportion of people per neighbourhood [profile 6]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.0,0.6} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{					
 					loop i from: 0 to: length(peoplePerNeighbourhoodMap[type_people[6]].keys)-1	{
 					  data peoplePerNeighbourhoodMap[type_people[6]].keys[i] value:peoplePerNeighbourhoodMap[type_people[6]].values[i];
 					}
 			}
-			chart "Proportion of people per neighbourhood [Retiree]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.3,0.6} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+			chart "Proportion of people per neighbourhood [profile 7]" background:#white type: pie style:ring size: {0.3,0.3} position: {0.3,0.6} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{					
 					loop i from: 0 to: length(peoplePerNeighbourhoodMap[type_people[7]].keys)-1	{
@@ -1838,8 +1839,8 @@ experiment show type: gui{
 			chart "People distribution in Main City" background:#white type: pie style:ring size: {0.3,0.3} position: {0.6,0.6} color: #black axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{					
-					loop i from: 0 to: length(peopleProportionInMainCity.keys)-1	{
-					  data peopleProportionInMainCity.keys[i] value:peopleProportionInMainCity.values[i] color: color_per_type[type_people[i]];
+					loop i from: 0 to: length(peopleProportionInSelectedCity.keys)-1	{
+					  data peopleProportionInSelectedCity.keys[i] value:peopleProportionInSelectedCity.values[i] color: color_per_type[type_people[i]];
 					}
 			}
 		}
@@ -1855,21 +1856,40 @@ experiment show type: gui{
 }
 
 experiment batch_save type: batch keep_seed: true until: cycle > 4 {
-	//parameter "createGrid " var: boolGrid init: 0 min:0 max: 1 category: "Grid / No Grid difference ";
-	parameter "percentage Residential area in grid" var: percForResidentialGrid init: 0.5 min: 0.5 max: 1.0 step: 0.1 category: "Grid vbles";
-	parameter "percentage of market price for grid housing" var: gridPriceMarketPerc init: 0 min: 0 max: 1.0 step: 0.5 category: "Grid vables";
+	parameter "percentage of market price for grid housing" var: gridPriceMarketPerc init: 0.0 min: 0.0 max: 1.0 step: 0.1 category: "Grid vables";
 	parameter "number of floors for grid buildings" var: nbFloorsGrid init: 10 min: 10 max: 50 step: 5 category: "Grid vbles";
 	
 	reflex save_results{
-		int it;
-		int cpt <- 5;
+		list<float> list_prop_prof <- [];
+		loop i from: 0 to: length(type_people) - 1{
+			list_prop_prof << peopleProportionInSelectedCity.values[i];
+		}
+		//NOT GENERAL. COULD NOT WRITE AS A LIST WITH ONLY "," SEPARATORS
+		//MODIFY THIS DEPENDING ON THE NUMBER OF PROFILES AND MOBILITY MODES THAT ARE BEING CONSIDERED
+		
+		float propProfile0 <- list_prop_prof[0];
+		float propProfile1 <- list_prop_prof[1];
+		float propProfile2 <- list_prop_prof[2];
+		float propProfile3 <- list_prop_prof[3];
+		float propProfile4 <- list_prop_prof[4];
+		float propProfile5 <- list_prop_prof[5];
+		float propProfile6 <- list_prop_prof[6];
+		float propProfile7 <- list_prop_prof[7];
+		float totalPropInSelectedCity <- propProfile0 + propProfile1 +propProfile2 + propProfile3 + propProfile4 + propProfile5 + propProfile6 + propProfile7;
+		
+		list<float> list_mobility <- [];
+		loop i from: 0 to: length(peopleProportionInSelectedCity) - 1{
+			list_mobility << peopleProportionInSelectedCity.values[i];
+		}
+		
+		float propMob0 <- list_mobility[0];
+		float propMob1 <- list_mobility[1];
+		float propMob2 <- list_mobility[2];
+		float propMob3 <- list_mobility[3];
+		float propMob4 <- list_mobility[4];
+		
 		ask simulations{
-			it <- int(self);
-			save[int(self), nb_people, movingPeople, meanDiver, percForResidentialGrid, gridPriceMarketPerc, nbFloorsGrid] type: csv to: "../results/whatif/results_gral"+cpt+".csv" header: true;
-			ask people{
-				save[it, type, living_place.associatedBlockGroup.lat, living_place.location.x, living_place.lat, living_place.associatedBlockGroup.long, living_place.location.y, living_place.long, activity_place.lat, activity_place.location.x, activity_place.long, activity_place.location.y, actualNeighbourhood, actualCity, happyNeighbourhood, mobility_mode_main_activity, time_main_activity_min, distance_main_activity, payingRentAbs, CommutingCost, agent_per_point] type: csv to: "../results/whatif/results_segreg"+cpt+".csv" rewrite: false header: true;
-			}
-			cpt <- cpt + 1;
+			save[totalAreaBuilt, gridPriceMarketPerc, totalPropInSelectedCity, propProfile1, propProfile2, propProfile2, propProfile3, propProfile4, propProfile5, propProfile6, propProfile7, propMob0, propMob1, propMob2, propMob3, propMob4, meanTimeToMainActivity, meanDistanceToMainActivity] type: csv to: "../results/incentivizedScenarios/DiversityIncentive.csv" rewrite: false;
 		}
 	}
 }
