@@ -1855,7 +1855,7 @@ experiment show type: gui{
 	
 }
 
-experiment batch_save type: batch keep_seed: true until: cycle > 0 {
+experiment batch_save type: batch keep_seed: true until: cycle > 4 {
 	parameter "percentage of market price for grid housing" var: gridPriceMarketPerc init: 0.0 min: 0.0 max: 1.0 step: 0.1 category: "Grid vables";
 	parameter "number of floors for grid buildings" var: nbFloorsGrid init: 10 min: 10 max: 50 step: 5 category: "Grid vbles";
 	
