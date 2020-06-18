@@ -56,7 +56,9 @@ global{
 	init{
 		do createBuildings;
 		do createRoads;
-		do createGrid;
+		if (builtFloors != 0){
+			do createGrid;
+		}
 		do normaliseRents;
 		do importData;
 		do createPopulation;
@@ -208,7 +210,12 @@ global{
 		create people number: int(nbPeopleKendall/2){
 			type <- profileMap.keys[rnd_choice(profileMap.values)];
 			float maxRentProf <- rentMap[type];
-			livingPlace <- one_of(building where(each.usage = "R"));
+			if (devotedResidential != 0){
+				livingPlace <- one_of(building where(each.usage = "R"));
+			}
+			else{
+				livingPlace <- one_of(building where(each.usage = "R" and each.fromGrid = false));
+			}
 			//livingPlace <- one_of(building where (each.usage = "R" and each.rentPrice <= maxRentProf*maxRentPrice));
 			/***if (empty(livingPlace) = true){
 				livingPlace <- one_of(building where(each.usage = "R"));
