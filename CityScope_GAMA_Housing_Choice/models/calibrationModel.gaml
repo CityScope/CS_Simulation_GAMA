@@ -1895,7 +1895,7 @@ experiment batch_save type: batch keep_seed: true until: cycle > 4 {
 		float propMob4 <- people_per_Mobility_now['walking'];
 			
 		ask simulations{
-			save[totalAreaBuilt, gridPriceMarketPerc, totalPropInSelectedCity, propProfile1, propProfile2, propProfile2, propProfile3, propProfile4, propProfile5, propProfile6, propProfile7, propMob0, propMob1, propMob2, propMob3, propMob4, meanTimeToMainActivity, meanDistanceToMainActivity] type: csv to: "../results/incentivizedScenarios/DiversityIncentive.csv" rewrite: false;
+			save[totalAreaBuilt, gridPriceMarketPerc, totalPropInSelectedCity, propProfile1, propProfile2, propProfile2, propProfile3, propProfile4, propProfile5, propProfile6, propProfile7, propMob0, propMob1, propMob2, propMob3, propMob4, meanTimeToMainActivity, meanDistanceToMainActivity] type: csv to: "../results/incentivizedScenarios/DiversityIncentive.csv" rewrite: false header: false;
 		}
 	}
 }

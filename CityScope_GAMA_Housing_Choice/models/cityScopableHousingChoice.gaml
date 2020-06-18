@@ -14,19 +14,19 @@ global{
 	geometry shape<-envelope(roads_shapefile);
 	
 	
-	file calibratedCase <- file("../includesCalibration/Criteria/calibratedDataMLcomm.csv");
-	file diversityIncentive <- file("../results/incentivizedScenarios/MLresultsDiversityIncentive.csv");
-	file kendallFancyIncentive <- file("../results/incentivizedScenarios/MLresultsKendallFancyIncentive.csv");
-	file envFriendlyIncentive <- file("../results/incentivizedScenarios/MLresultsEnvFriendlyIncentive.csv");
-	file diversityKendallFancyIncentive <- file("../results/incentivizedScenarios/MLresultsDiversityKendallFancyIncentive.csv");
-	file diversityEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLresultsDiversityEnvFriendlyIncentive.csv");
-	file kendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLresultsKendallFancyEnvFriendlyIncentive.csv");
-	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenario/MLresultsDiveristyKendallFancyEnvFriendlyIncentive.csv");
+	file calibratedCase <- file("../results/incentivizedScenarios/MLResultsCalibratedData.csv");
+	file diversityIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityIncentive.csv");
+	file kendallFancyIncentive <- file("../results/incentivizedScenarios/MLResultsKendallFancyIncentive.csv");
+	file envFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyIncentive.csv");
+	file diversityKendallFancyIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityKendallFancyIncentive.csv");
+	file diversityEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityEnvFriendlyIncentive.csv");
+	file kendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyKendallFancyIncentive.csv");
+	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyKendallFancyDiversityIncentive.csv");
 	
 	//PARAMETERS
 	int builtFloors <- 10 parameter: "Built Floors: " category: "Area" min: 0 max: 50 step: 5;
 	float devotedResidential <- 0.5 parameter: "Percentage of area for residential use: " category: "Area" min: 0.4 max: 1.0 step: 0.1; //slider
-	float subsidyPerc <- 0.0 parameter: "Percentage of subsidy: " category: "Financial incentives " min: 0.0 max: 1.0 step: 0.1; //slider
+	float subsidyPerc <- 0.0 parameter: "Percentage of subsidy: " category: "Financial incentives " min: 0.0 max: 1.0 step: 0.05; //slider
 	bool kendallFancy <- false parameter: "Kendall fanciness incentive " category: "Behavioural incentives ";
 	bool diversityAcceptance <- false parameter: "Diversity acceptance incentive " category: "Behavioural incentives ";
 	bool environmentallyFriendly <- false parameter: "Environmentally friendly transport promotion " category: "Behavioural incentives ";
@@ -37,19 +37,6 @@ global{
 	float builtArea<- 0.0; //if Volpe grid, different floors for each building possible. builtArea is the one to search
 	float untilNowInKendall <- 0.0;
 	float propInKendall <- 0.0;
-	float propProf1;
-	float propProf2;
-	float propProf3;
-	float propProf4;
-	float propProf5;
-	float propProf6;
-	float propProf7;
-	float propProf8;
-	float mobProp1;
-	float mobProp2;
-	float mobProp3;
-	float mobProp4;
-	float mobProp5;
 	float meanCommTime;
 	float meanCommDist;
 	int minRentPrice;
@@ -58,13 +45,13 @@ global{
 	point startingPoint <- {1025, 1160}; 
 	float brickSize <- 21.3;
 	list<string> prof_list <- ['<$30,000','$30,000 - $44,999', '$45,000 - $59,999', '$60,000 - $99,999', '$100,000 - $124,999', '$125,000 - $149,999', '$150,000 - $199,999', '>$200,000'];
-	map<string> mobility_list <- ['car', 'bus', 'T', 'bike', 'walking'];
+	list<string> mobility_list <- ['car', 'bus', 'T', 'bike', 'walking'];
 	map<string,rgb> mobilityColorMap <- ['car'::#red, 'bus'::#yellow, 'T'::#orange, 'bike'::#blue, 'walking'::#green];
 	map<string,float> mobilityMap;
 	map<string,float> profileMap;
-	map<string,rgb> colorMap;
+	map<string,rgb> colorMap <- ['<$30,000'::#cyan,'$30,000 - $44,999'::#blue, '$45,000 - $59,999'::rgb(0,128,128), '$60,000 - $99,999'::#green, '$100,000 - $124,999'::#pink, '$125,000 - $149,999'::#purple, '$150,000 - $199,999'::rgb(182, 102, 210), '>$200,000'::#magenta];
 	map<string,float> rentMap;
-	list<string> listProfiles;
+	
 	
 	init{
 		do createBuildings;
@@ -116,7 +103,6 @@ global{
 		maxRentPrice <- max(building collect each.rentPrice);
 		minRentPrice <- min(building where(each.usage="R") collect each.rentPrice);
 		float geometricMean <- geometric_mean(building collect(each.rentPrice));
-		write "geometric mean " + geometricMean;
 		ask building where(each.usage="R"){
 			do normaliseRentPrice;
 		}
@@ -126,6 +112,14 @@ global{
 		create road from:roads_shapefile{
 			
 		}
+	}
+	
+	float interpValues(float x1,float x2,float x3,float y1,float y3){
+		float y2;
+		
+		y2 <- (x2 - x1)*(y3 - y1) / (x3 - x1) + y1;
+		
+		return y2;		
 	}
 	
 	action importData{
@@ -158,8 +152,9 @@ global{
 		float minDifferenceUntilNow <- 10000000000.0;
 		float minDifferenceNow <- 0.0;
 		int location <- 0;
+		int interpLocation <- 1;
 		
-		loop i from:1 to: data_matrix.rows - 1{ //provisional. Increase granularity with ML
+		loop i from:0 to: data_matrix.rows - 1{ //provisional. Increase granularity with ML
 			float areaValue <- data_matrix[0,i];
 			float perMarketPrice <- data_matrix[1,i];
 			if ((1 - subsidyPerc) = perMarketPrice){
@@ -167,44 +162,45 @@ global{
 				if(minDifferenceNow < minDifferenceUntilNow){
 					minDifferenceUntilNow <- minDifferenceNow;
 					location <- i;
+					if((builtArea - areaValue) < 0){
+						interpLocation <- location - 1;
+					}
+					else{
+						interpLocation <- location + 1;
+					}
 				}
 			}
 		}
 		untilNowInKendall <- propInKendall;
-		propInKendall <- data_matrix[2,location];
+		float areaValueLocation <- data_matrix[0,location];
+		float areaValueInterpLocation <- data_matrix[0,interpLocation];
+		float propInKendallLocation <- data_matrix[2,location];
+		float propInKendallInterpLocation <- data_matrix[2,interpLocation];
+		propInKendall <- interpValues(areaValueLocation, builtArea, areaValueInterpLocation, propInKendallLocation, propInKendallInterpLocation);
 		nbPeopleKendall <- int(propInKendall*initPopulation);
-		string prof1 <- prof_list[0];
-		propProf1 <- data_matrix[3,location];
-		string prof2 <- prof_list[1];
-		propProf2 <- data_matrix[4,location];
-		string prof3 <- prof_list[2];
-		propProf3 <- data_matrix[5,location];
-		string prof4 <- prof_list[3];
-		propProf4 <- data_matrix[6,location];
-		string prof5 <- prof_list[4];
-		propProf5 <- data_matrix[7,location];
-		string prof6 <- prof_list[5];
-		propProf6 <- data_matrix[8, location];
-		string prof7 <- prof_list[6];
-		propProf7 <- data_matrix[9,location];
-		string prof8 <- prof_list[7];
-		propProf8 <- data_matrix[10,location];
-		float lets_see <- propProf1 + propProf2 + propProf3 + propProf4 + propProf5 + propProf6 + propProf7 + propProf8;
-		mobProp1 <- data_matrix[11,location];
-		string mob1 <- mobility_list[0];
-		mobProp2 <- data_matrix[12,location];
-		string mob2 <- mobility_list[1];
-		mobProp3 <- data_matrix[13,location];
-		string mob3 <- mobility_list[2];
-		mobProp4 <- data_matrix[14,location];
-		string mob4 <- mobility_list[3];
-		mobProp5 <- data_matrix[15,location];
-		string mob5 <- mobility_list[4];
-		mobilityMap <- [mob1::mobProp1, mob2::mobProp2, mob3::mobProp3, mob4::mobProp4, mob5::mobProp5];
-		meanCommTime <- data_matrix[16,location];
-		meanCommDist <- data_matrix[17,location];
 		
-		profileMap <- [prof1::propProf1, prof2::propProf2, prof3::propProf3, prof4::propProf4, prof5::propProf5, prof6::propProf6, prof7::propProf7, prof8::propProf8];
+		loop i from:3 to:10{
+			string profi <- prof_list[i -3];
+			float propProfLocationi <- data_matrix[i,location];
+			float propProfInterpLocationi <- data_matrix[i,interpLocation];
+			float propProfi <- interpValues(areaValueLocation,builtArea,areaValueInterpLocation,propProfLocationi,propProfInterpLocationi);
+			profileMap[profi] <- propProfi;
+		}
+		
+		loop i from: 11 to:15{
+			float mobPropLocationi <- data_matrix[i,location];
+			float mobPropInterpLocationi <- data_matrix[i,interpLocation];
+			float mobPropi <- interpValues(areaValueLocation, builtArea, areaValueInterpLocation, mobPropLocationi, mobPropInterpLocationi);
+			string mobi <- mobility_list[i - 11];
+			mobilityMap[mobi] <- mobPropi;
+		}
+		
+		float meanCommTimeLocation <- data_matrix[16,location];
+		float meanCommTimeInterpLocation <- data_matrix[16,interpLocation];
+		meanCommTime <- interpValues(areaValueLocation, builtArea, areaValueInterpLocation, meanCommTimeLocation, meanCommTimeInterpLocation);
+		float meanCommDistLocation <- data_matrix[17,location];
+		float meanCommDistInterpLocation <- data_matrix[17,interpLocation];
+		meanCommDist <- interpValues(areaValueLocation, builtArea, areaValueInterpLocation, meanCommDistLocation, meanCommDistInterpLocation);
 		
 	}
 	
@@ -229,9 +225,7 @@ global{
 	action createGrid{
 		angle <- angle / 2;
 		float acum_area <- 0.0;
-		//write startingPoint;
-		startingPoint <- {startingPoint.x - brickSize / 2, startingPoint.y - brickSize / 2};
-		//write startingPoint;				
+		startingPoint <- {startingPoint.x - brickSize / 2, startingPoint.y - brickSize / 2};				
 		bool noBuild;
 		loop i from: 0 to: 12{
 			loop j from: 0 to: 15{
@@ -271,7 +265,6 @@ global{
 				}
 				
 				if(noBuild != true){
-					//write "building i "+ i + " j " + j;
 					create building{
 						fromGrid <- true;
 						int x <- j;
@@ -285,7 +278,6 @@ global{
 						heightValue <- builtFloors*5;
 						builtArea <- builtArea + shape.area*nbFloors*devotedResidential;
 						rentPrice <- (1-subsidyPerc)*3400;
-						//write "calc builtArea " + builtArea;
 					}				
 				}
 			}	
@@ -356,9 +348,9 @@ experiment visual type:gui{
 		            draw "Icons" at: { 40#px, y } color: text_color font: font("Helvetica", 20, #bold) perspective:false;
 		            y <- y + 30#px;
 		            
-		            loop i from: 0 to: length(listProfiles) - 1 {
-		            	draw square(10#px) at: {20#px, y} color:colorMap[listProfiles[i]] border: #white;
-		            	draw string(listProfiles[i]) at: {40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
+		            loop i from: 0 to: length(prof_list) - 1 {
+		            	draw square(10#px) at: {20#px, y} color:colorMap[prof_list[i]] border: #white;
+		            	draw string(prof_list[i]) at: {40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
 		            	y <- y + 25#px;
 		            } 
 		            y <- y + 100#px;

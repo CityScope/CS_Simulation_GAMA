@@ -1,3 +1,11 @@
 *
 !.gitignore
 !predictingValues.py
+!MLResultsDiversityEnvFriendlyIncentive.csv
+!MLResultsDiversityIncentive.csv
+!MLResultsDiversityKendallFancyIncentive.csv
+!MLResultsEnvFriendlyIncentive.csv
+!MLResultsEnvFriendlyKendallFancyDiversityIncentive.csv
+!MLResultsEnvFriendlyKendallFancyIncentive.csv
+!MLResultsKendallFancyIncentive.csv
+!MLResultsCalibratedData.csv
