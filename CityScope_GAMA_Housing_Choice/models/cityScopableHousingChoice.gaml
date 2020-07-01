@@ -39,7 +39,9 @@ global{
 	bool environmentallyFriendly <- false parameter: "Environmentally friendly transport promotion " category: "Behavioural incentives ";
 	int initPopulation <- 11585 max: 50000 parameter: "Population: " category: "Population";
 	
+	date starting_date <- date([2020,7,1,8,0,0]);
 	
+	float proportion_apart_reduction <- 0.05;
 	int nbPeopleKendall;
 	float builtArea<- 0.0; //if Volpe grid, different floors for each building possible. builtArea is the one to search
 	float untilNowInKendall <- 0.0;
@@ -54,6 +56,8 @@ global{
 	point startingPoint <- {1025, 1160}; 
 	float brickSize <- 21.3;
 	list<string> prof_list;
+	map<string,int> listAreasApartment <- ["S"::15,"M"::55,"L"::89];
+	int microUnitArea <- 40;
 	list<string> mobility_list <- ['car', 'bus', 'T', 'bike', 'walking'];
 	map<string,rgb> mobilityColorMap <- ['car'::#red, 'bus'::#yellow, 'T'::#orange, 'bike'::#blue, 'walking'::#green];
 	map<string,float> mobilityMap;
@@ -63,7 +67,8 @@ global{
 	map<string,rgb> colorMap;
 	map<string,float> rentMap;
 	map<string,map<string,int>> activity_data;
-	map<string,graph> graph_per_mobility;
+	map<string,graph> graph_per_mobility_road;
+	map<rgb,graph> graph_per_mobility_T;
 	map<string,rgb> color_per_mobility;
 	map<string,float> speed_per_mobility;
 	
@@ -90,11 +95,26 @@ global{
 	}
 	
 	action createBuildings{
-		create building from: buildings_shapefile with:[usage::string(read("Usage")), rentPrice::read("PRICE"), category::read("Category")]{
+		create building from: buildings_shapefile with:[usage::string(read("Usage")), rentPrice::read("PRICE"), category::read("Category"), scale::string(read("Scale")), heightValue::float(read("Max_Height"))]{
 			if(usage != "R"){
 				rentPrice <- 0.0;
 			}
-			heightValue <- 15;
+			//heightValue <- 15;
+			float rentPriceBuilding <- rentPrice;
+			float areaBuilding <- shape.area;
+			float areaApartment <- listAreasApartment[scale];
+			building ImTheBuilding <- self;
+			int nbFloors <- heightValue/5;
+			
+			if(usage = "R"){
+				create apartment number: int(areaBuilding / areaApartment*nbFloors *proportion_apart_reduction){
+					int numberApartment <- int(areaBuilding / areaApartment*nbFloors *proportion_apart_reduction);
+					//write "numberApartment " + numberApartment;
+					rent <- rentPriceBuilding;
+					associatedBuilding <- ImTheBuilding;
+					location <- associatedBuilding.location;
+				}
+			}
 			
 		}
 	}
@@ -127,10 +147,12 @@ global{
 	action compute_graph {
 		loop mobility_mode over: color_per_mobility.keys {
 			if(mobility_mode != "T"){
-				graph_per_mobility[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) use_cache false;
+				graph_per_mobility_road[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) use_cache false;
 			}
 			else{
-				graph_per_mobility[mobility_mode] <- as_edge_graph(T_line);
+				ask T_line{
+					graph_per_mobility_T[line] <- as_edge_graph(T_line);
+				}
 			}
 				
 		}
@@ -153,7 +175,6 @@ global{
 	
 	action createBusStops{
 		create bus_stop from: busStops_shapefile with: [route::int(read("ROUTE"))]{
-			closest_building_bus <- building with_min_of(each distance_to(self));
 			if (listBusRoutes contains route = false){
 				listBusRoutes << route;
 			}
@@ -173,7 +194,6 @@ global{
 	
 	action createTStops{
 		create T_stop from: TStops_shapefile with: [line::rgb(read("LINE")), station::string(read("STATION"))]{
-			closest_building_T <- building with_min_of(each distance_to(self));
 		}
 	}
 	
@@ -214,7 +234,12 @@ global{
 	
 	action createEntryPoints{
 		create entry_point from: entry_point_shapefile with: [type_entry::string(read("mobility"))]{
-			
+			entry_point ImTheEntry <- self;
+			create building{
+				ImTheEntry.associatedBuilding <- self;
+				location <- ImTheEntry.location;
+				isEntryPoint <- true;
+			}
 		}
 	}
 	
@@ -314,25 +339,24 @@ global{
 			liveInKendall <- true;	
 			type <- profileMap.keys[rnd_choice(profileMap.values)];
 			color <- colorMap[type];
-			float maxRentProf <- rentMap[type];
 			if (devotedResidential != 0){
-				livingPlace <- one_of(building where(each.usage = "R" or each.usage = "mixed"));
+				livingPlace <- one_of(apartment);
 			}
 			else{
-				livingPlace <- one_of(building where(each.usage = "R" or each.usage = "mixed" and each.fromGrid = false));
+				livingPlace <- one_of(apartment where each.associatedBuilding.fromGrid = false);
 			}
 			//livingPlace <- one_of(building where (each.usage = "R" and each.rentPrice <= maxRentProf*maxRentPrice));
 			/***if (empty(livingPlace) = true){
 				livingPlace <- one_of(building where(each.usage = "R"));
 			}***/
-			location <- any_location_in(livingPlace);
+			location <- any_location_in(livingPlace.associatedBuilding);
 			mobilityMode <- mobilityMap.keys[rnd_choice(mobilityMap.values)];
 			loop while: (mobilityMode = "T"){
 				mobilityMode <- mobilityMap.keys[rnd_choice(mobilityMap.values)];
 			}
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));	
 			closest_T_stop <- T_stop with_min_of(each distance_to(self));
-			current_place <- livingPlace;				
+			current_place <- livingPlace.associatedBuilding;				
 			do create_trip_objectives;
 		}
 		
@@ -347,10 +371,10 @@ global{
 			else{
 				livingPlace <- one_of(entry_point where (each.type_entry = "road"));
 			}
+			location <- livingPlace.associatedBuilding.location;
+			current_place <- livingPlace.associatedBuilding;
 			closest_bus_stop <- bus_stop with_min_of(each distance_to(self));	
 			closest_T_stop <- T_stop with_min_of(each distance_to(self));
-			location <- any_location_in(livingPlace);
-			current_place <- livingPlace;
 			do create_trip_objectives;
 		}
 	}
@@ -412,6 +436,17 @@ global{
 						heightValue <- builtFloors*5;
 						builtArea <- builtArea + shape.area*nbFloors*devotedResidential;
 						rentPrice <- (1-subsidyPerc)*3400;
+						
+						float areaBuilding <- shape.area;
+						float rentBuilding <- rentPrice;
+						building ImTheBuilding <- self;
+						int numberApartment <- int(areaBuilding/microUnitArea*devotedResidential*builtFloors * proportion_apart_reduction);
+						//write "number apartment " + numberApartment;
+						create apartment number: int(areaBuilding/microUnitArea*devotedResidential*builtFloors * proportion_apart_reduction){
+							rent <- rentBuilding;
+							associatedBuilding <- ImTheBuilding;
+							location <- associatedBuilding.location;
+						}
 					}				
 				}
 			}	
@@ -440,12 +475,17 @@ global{
 }
 
 	
-species entry_point parent: building{
+species entry_point parent: apartment{
 	string type_entry;
 	
 	aspect default{
 		draw square(50) color: #white;
 	}
+}
+
+species apartment{
+	int rent;
+	building associatedBuilding;
 }
 
 species building{
@@ -456,6 +496,8 @@ species building{
 	float normalisedRentPrice;
 	bool fromGrid <- false;
 	float heightValue;
+	string scale;
+	bool isEntryPoint <- false;
 	
 	action normaliseRentPrice{
 		normalisedRentPrice <- (rentPrice - minRentPrice)/(maxRentPrice - minRentPrice);
@@ -490,7 +532,6 @@ species T_line parent:road{
 }
 
 species bus_stop{
-	building closest_building_bus;
 	list<people> waiting_people;
 	int route;
 	
@@ -513,7 +554,7 @@ species bus skills: [moving] {
 	}
 	
 	reflex r {
-		do goto target: my_target.location on: graph_per_mobility["car"] speed:speed_per_mobility["bus"];
+		do goto target: my_target.location on: graph_per_mobility_road["car"] speed:speed_per_mobility["bus"];
 		int nb_passengers <- stop_passengers.values sum_of (length(each));
 			
 		if(location = my_target.location) {
@@ -539,7 +580,6 @@ species bus skills: [moving] {
 species T_stop{
 	string station;
 	rgb line;
-	building closest_building_T;
 	list<people> waiting_people;
 	
 	aspect default{
@@ -563,7 +603,7 @@ species T skills: [moving] {
 	}
 	
 	reflex r {
-		do goto target: my_target.location on: graph_per_mobility["T"] speed:speed_per_mobility["T"];
+		do goto target: my_target.location on: graph_per_mobility_T[line] speed:speed_per_mobility["T"];
 		int nb_passengers <- stop_passengers.values sum_of (length(each)); 
 			
 		if(location = my_target.location) {
@@ -573,7 +613,9 @@ species T skills: [moving] {
 			}
 			stop_passengers[my_target] <- [];
 			loop p over: my_target.waiting_people {
+				//write "p " + p;
 				T_stop b <- T_stop where(each.line = line) with_min_of(each distance_to(p.my_current_objective.place.location));
+				//write "b " + b;
 				add p to: stop_passengers[b];
 			}
 			my_target.waiting_people <- [];						
@@ -590,7 +632,7 @@ species people skills: [moving]{
 	string type;
 	rgb color;
 	string mobilityMode;
-	building livingPlace;
+	apartment livingPlace;
 	building current_place;
 	bool liveInKendall; 
 	list<trip_objective> objectives;
@@ -609,37 +651,66 @@ species people skills: [moving]{
 				list<building> possible_bds;
 				if (length(act_real) = 2) and (first(act_real) = "R") {
 					if(liveInKendall = true){
-						possible_bds <- building where ((each.usage = "R") or (each.usage = "mixed"));
+						if (devotedResidential > 0){
+							possible_bds <- building where ((each.usage = "R") or (each.usage = "mixed"));
+						}
+						else{
+							possible_bds <- building where ((each.usage = "R"));	
+						}
 					}
 					else{
 						if(mobilityMode = "T"){
-							possible_bds <- one_of(entry_point where (each.type_entry = "T"));
+							//possible_bds <- one_of(entry_point where (each.type_entry = "T"));
+							possible_bds <- livingPlace.associatedBuilding;
 						}
 						else{
-							possible_bds <- one_of(entry_point where (each.type_entry = "road"));
+							//possible_bds <- one_of(entry_point where (each.type_entry = "road"));
+							possible_bds <- livingPlace.associatedBuilding;
 						}
 					}
 				} 
 				else if (length(act_real) = 2) and (first(act_real) = "O") {
-					possible_bds <- building where ((each.usage = "O") or (each.usage = "mixed"));
+					if(devotedResidential < 1){
+						possible_bds <- building where ((each.usage = "O") or (each.usage = "mixed"));
+					}
+					else{
+						possible_bds <- building where ((each.usage = "O"));
+					}
 				} 
 				else {
 					if(liveInKendall = true){ //people not living inKendall only commute
-					
-						if(act_real = "restaurant"){
-							possible_bds <- building where(each.category = "Restaurant" or each.category = "mixed");
+						if(devotedResidential < 1){
+							if(act_real = "restaurant"){
+								possible_bds <- building where(each.category = "Restaurant" or each.category = "mixed");
+							}
+							else if(act_real = "A"){
+								possible_bds <- building where(each.category != "R");
+							}
+							else{
+								possible_bds <- building where (each.category = act_real or each.category = "mixed");
+							}
 						}
-						if(act_real = "A"){
-							possible_bds <- building where(each.category != "R");
-						}
-						possible_bds <- building where (each.category = act_real or each.category = "mixed");
+						else{
+							if(act_real = "restaurant"){
+								possible_bds <- building where(each.category = "Restaurant");
+							}
+							else if(act_real = "A"){
+								possible_bds <- building where(each.category != "R" and each.category != "mixed");
+							}
+							else{
+								possible_bds <- building where (each.category = act_real);
+							}
+						}			
+						
 					}
 					else{
 						if(mobilityMode = "T"){
-							possible_bds <- one_of(entry_point where (each.type_entry = "T"));
+							//possible_bds <- one_of(entry_point where (each.type_entry = "T"));
+							possible_bds <- livingPlace.associatedBuilding;
 						}
 						else{
-							possible_bds <- one_of(entry_point where (each.type_entry = "road"));
+							//possible_bds <- one_of(entry_point where (each.type_entry = "road"));
+							possible_bds <- livingPlace.associatedBuilding;
 						}
 					}
 				}
@@ -671,9 +742,9 @@ species people skills: [moving]{
 	reflex move when: (my_current_objective != nil) and (mobilityMode != "bus") and (mobilityMode != "T") {
 		if (mobilityMode in ["car"]) {
 			//do goto target: my_current_objective.place.location on: graph_per_mobility[mobilityMode] move_weights: congestion_map ;
-			do goto target: my_current_objective.place.location on: graph_per_mobility[mobilityMode];
+			do goto target: my_current_objective.place.location on: graph_per_mobility_road[mobilityMode];
 		}else {
-			do goto target: my_current_objective.place.location on: graph_per_mobility[mobilityMode]  ;
+			do goto target: my_current_objective.place.location on: graph_per_mobility_road[mobilityMode]  ;
 		}
 		
 		if (location = my_current_objective.place.location) {
@@ -689,13 +760,13 @@ species people skills: [moving]{
 	reflex move_bus when: (my_current_objective != nil) and (mobilityMode = "bus") {
 
 		if (bus_status = 0){
-			do goto target: closest_bus_stop.location on: graph_per_mobility["walking"];
+			do goto target: closest_bus_stop.location on: graph_per_mobility_road["walking"];
 			if(location = closest_bus_stop.location) {
 				add self to: closest_bus_stop.waiting_people;
 				bus_status <- 1;
 			}
 		} else if (bus_status = 2){
-			do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];		
+			do goto target: my_current_objective.place.location on: graph_per_mobility_road["walking"];		
 			
 			if (location = my_current_objective.place.location) {
 				current_place <- my_current_objective.place;
@@ -710,14 +781,14 @@ species people skills: [moving]{
 	reflex move_T when: (my_current_objective != nil) and (mobilityMode = "T") {
 
 		if (T_status = 0){
-			do goto target: closest_T_stop.location on: graph_per_mobility["walking"];
+			do goto target: closest_T_stop.location on: graph_per_mobility_road["walking"];
 			
 			if(location = closest_T_stop.location) {
 				add self to: closest_T_stop.waiting_people;
 				T_status <- 1;
 			}
 		} else if (T_status = 2){
-			do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];		
+			do goto target: my_current_objective.place.location on: graph_per_mobility_road["walking"];		
 			
 			if (location = my_current_objective.place.location) {
 				current_place <- my_current_objective.place;
@@ -731,17 +802,24 @@ species people skills: [moving]{
 	
 	
 	aspect default{
-		if(current_place is entry_point = false){
+		building ImTheCurrentPlace <- current_place;
+		bool ItIsEntryPoint <- false;
+		ask entry_point{
+			if (associatedBuilding = ImTheCurrentPlace){
+				ItIsEntryPoint <- true;
+			}
+		}
+		if(ItIsEntryPoint = false){
 			if (mobilityMode = "bike"){
-				draw squircle(20,20) at_location {location.x,location.y,livingPlace.heightValue} color:color ;
+			draw squircle(20,20) at_location {location.x,location.y} color:color ;
 			}
 			else if(mobilityMode = "car"){
-				draw triangle(20) at_location {location.x,location.y,livingPlace.heightValue} rotate: heading + 90 color:color;
+				draw triangle(20) at_location {location.x,location.y} rotate: heading + 90 color:color;
 			}
 			else{
-				draw circle(10) at_location {location.x,location.y,livingPlace.heightValue} color:color;
-			}				
-		}
+				draw circle(10) at_location {location.x,location.y} color:color;
+			}
+		}			
 	}
 }
 
@@ -768,7 +846,7 @@ experiment visual type:gui{
 			species people aspect: default;
 			
 			graphics "time" {
-				//draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.9,world.shape.height*0.55};
+				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.9,world.shape.height*0.55};
 			}
 	
 			/***overlay position: { 5, 5 } size: { 240 #px, 270 #px } background: rgb(50,50,50,125) transparency: 1.0 border: #black 
