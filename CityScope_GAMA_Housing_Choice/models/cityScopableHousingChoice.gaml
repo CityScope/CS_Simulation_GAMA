@@ -10,12 +10,13 @@ model cityScopableHousingChoice
 global{
 	
 	file<geometry>buildings_shapefile<-file<geometry>("./../includesCalibration/City/volpe/Buildings.shp");
-	file<geometry> roads_shapefile<-file<geometry>("./../includesCalibration/City/volpe/Roads.shp");
+	file<geometry> roads_shapefile<-file<geometry>("./../includesCalibration/City/volpe/Roads_big.shp");
 	file<geometry> busStops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_busStop.shp");
 	file<geometry> TStops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_TStops.shp");
 	file<geometry> entry_point_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_entry_points.shp");
 	file<geometry> Tline_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_Tline.shp");
-	geometry shape<-envelope(roads_shapefile);
+	file<geometry> roads_kendall_shapefile <- file<geometry>("./../includesCalibration/City/volpe/Roads.shp");
+	geometry shape<-envelope(roads_kendall_shapefile);
 	
 	
 	file calibratedCase <- file("../results/incentivizedScenarios/MLResultsCalibratedData.csv");
@@ -56,6 +57,7 @@ global{
 	point startingPoint <- {1025, 1160}; 
 	float brickSize <- 21.3;
 	list<string> prof_list;
+	list<rgb> list_T_lines;
 	map<string,int> listAreasApartment <- ["S"::15,"M"::55,"L"::89];
 	int microUnitArea <- 40;
 	list<string> mobility_list <- ['car', 'bus', 'T', 'bike', 'walking'];
@@ -150,9 +152,10 @@ global{
 				graph_per_mobility_road[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) use_cache false;
 			}
 			else{
-				ask T_line{
-					graph_per_mobility_T[line] <- as_edge_graph(T_line);
+				loop i from: 0 to: length(list_T_lines) - 1{
+					graph_per_mobility_T[list_T_lines[i]] <- as_edge_graph(T_line where(each.line = list_T_lines[i])) use_cache false;
 				}
+				write "graph_per_mobility_T " + graph_per_mobility_T;
 			}
 				
 		}
@@ -193,7 +196,7 @@ global{
 	}
 	
 	action createTStops{
-		create T_stop from: TStops_shapefile with: [line::rgb(read("LINE")), station::string(read("STATION"))]{
+		create T_stop from: TStops_shapefile with: [line::rgb(read("LINE")), station::string(read("STATION")), station_num::int(read("STOP_NUM"))]{
 		}
 	}
 	
@@ -218,9 +221,15 @@ global{
 		loop color_stops over: T_stops_per_color.keys{
 			create T{
 				line <- color_stops;
-				stops <- list(T_stop where (each.line = line));
+				//write "line "  + line;
+				list<T_stop> stops_list <- list(T_stop where (each.line = line));
+				//write "antes de ordenar " + stops_list;
+				stops <- stops_list sort_by (each.station_num);
+				//write "despues de ordenar " + stops;
 				location <- first(stops).location;
 				stop_passengers <- map<T_stop, list<people>>(stops collect(each::[]));
+				cont_station_num <- 0;
+				ascending <- true;
 			}
 		}
 		
@@ -229,6 +238,10 @@ global{
 	action createTlines{
 		create T_line from: Tline_shapefile with: [line::rgb(read("LINE"))]{
 			mobility_allowed <- ["T"];
+			if(list_T_lines contains line = false){
+				list_T_lines << line;
+			}
+			//write "list_T_lines " + list_T_lines;
 		}
 	}
 	
@@ -581,6 +594,7 @@ species T_stop{
 	string station;
 	rgb line;
 	list<people> waiting_people;
+	int station_num;
 	
 	aspect default{
 		if (station != "boundary"){
@@ -594,19 +608,52 @@ species T skills: [moving] {
 	map<T_stop,list<people>> stop_passengers ;
 	T_stop my_target;
 	rgb line;
+	int cont_station_num;
+	bool ascending;
 	
 	reflex new_target when: my_target = nil{
-		T_stop firstStop <- first(stops);
-		remove firstStop from: stops;
-		add firstStop to: stops; 
-		my_target <- firstStop;
+		
+		if (line = #red){
+			//write "tengo target nulo ";
+			//write "mi parada ahora sera " + stops[cont_station_num] + "con station QGIS number " + stops[cont_station_num].station_num;
+			//write "estoy en el contador " + cont_station_num;
+		}
+		
+		T_stop StopNow <- stops[cont_station_num];
+		
+		
+		
+		if(cont_station_num = length(stops)-1 and ascending = true){
+			cont_station_num <- cont_station_num - 1;
+			ascending <- false;
+		}
+		else if(cont_station_num = 0 and ascending = false){
+			cont_station_num <- cont_station_num + 1;
+			ascending <- true;
+		}
+		else {
+			if(ascending = true){
+				cont_station_num <- cont_station_num + 1;
+			}
+			else{
+				cont_station_num <- cont_station_num - 1;
+			}
+		}
+		if (line = #red){
+			//write "en la proxima la parada sera " + cont_station_num;
+			//write "seguira subiendo? " + ascending;
+		}
+		
+		my_target <- StopNow;
 	}
 	
 	reflex r {
 		do goto target: my_target.location on: graph_per_mobility_T[line] speed:speed_per_mobility["T"];
+		//write "line " + line;
+		//write "graph_per_mobility_T[line] " + graph_per_mobility_T[line];
 		int nb_passengers <- stop_passengers.values sum_of (length(each)); 
 			
-		if(location = my_target.location) {
+		if(self.location = my_target.location) {
 			ask stop_passengers[my_target] {
 				location <- myself.my_target.location;
 				T_status <- 2;
