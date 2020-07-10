@@ -16,7 +16,8 @@ global{
 	file<geometry> entry_point_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_entry_points.shp");
 	file<geometry> Tline_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_Tline.shp");
 	file<geometry> roads_kendall_shapefile <- file<geometry>("./../includesCalibration/City/volpe/Roads.shp");
-	geometry shape<-envelope(roads_kendall_shapefile);
+	//geometry shape<-envelope(roads_kendall_shapefile);
+	geometry shape<-envelope(roads_shapefile);
 	
 	
 	file calibratedCase <- file("../results/incentivizedScenarios/MLResultsCalibratedData.csv");
@@ -54,7 +55,8 @@ global{
 	int minRentPrice;
 	int maxRentPrice;
 	float angle <- atan((899.235 - 862.12)/(1083.42 - 1062.038));
-	point startingPoint <- {1025, 1160}; 
+	//point startingPoint <- {1025, 1160}; 
+	point startingPoint <- {2165, 2120};
 	float brickSize <- 21.3;
 	list<string> prof_list;
 	list<rgb> list_T_lines;
@@ -73,7 +75,7 @@ global{
 	map<rgb,graph> graph_per_mobility_T;
 	map<string,rgb> color_per_mobility;
 	map<string,float> speed_per_mobility;
-	
+	map<int,rgb> bus_route_colors <- [701::#yellow, 747::#red,69::#blue, 68::#green];
 	
 	init{
 		do createBuildings;
@@ -93,7 +95,10 @@ global{
 		do importOriginalValues;
 		do importData;
 		do activity_data_import;
-		do createPopulation;		
+		do createPopulation;	
+		
+		//for Tline debugging
+		
 	}
 	
 	action createBuildings{
@@ -177,7 +182,7 @@ global{
 	}
 	
 	action createBusStops{
-		create bus_stop from: busStops_shapefile with: [route::int(read("ROUTE"))]{
+		create bus_stop from: busStops_shapefile with: [route::int(read("ROUTE")), station_num::int(read("STOP_NUM"))]{
 			if (listBusRoutes contains route = false){
 				listBusRoutes << route;
 			}
@@ -188,9 +193,13 @@ global{
 		int cont <- 0;
 		create bus number: length(listBusRoutes){
 			route  <- listBusRoutes[cont];
-			stops <- (list(bus_stop) where (each.route = route));
+			//stops <- (list(bus_stop) where (each.route = route));
+			list<bus_stop> stops_list <- list(bus_stop where (each.route = route));
+			stops <- stops_list sort_by (each.station_num);
 			location <- first(stops).location;
 			stop_passengers <- map<bus_stop, list<people>>(stops collect(each::[]));
+			cont_station_num <- 0;
+			ascending <- true;
 			cont <- cont + 1;
 		}
 	}
@@ -230,6 +239,7 @@ global{
 				stop_passengers <- map<T_stop, list<people>>(stops collect(each::[]));
 				cont_station_num <- 0;
 				ascending <- true;
+				
 			}
 		}
 		
@@ -242,7 +252,22 @@ global{
 				list_T_lines << line;
 			}
 			//write "list_T_lines " + list_T_lines;
+		
+			changeIntensity1 <- rnd(0.3,1.0);
+			//write "changeIntensity1 " + changeIntensity1;
+			changeIntensity2 <- rnd(0.3,1.0);
+			//write "changeIntensity2 " + changeIntensity2;
+			changeIntensity3 <- rnd(0.3,1.0);
+			//write "changeIntensity3 " + changeIntensity3;
+			changeIntensity4 <- rnd(0.3,1.0);
+			//write "changeIntensity4 " + changeIntensity4;
+			changeIntensity5 <- rnd(0.3,1.0);
+			//write "changeIntensity5 " + changeIntensity5;
+			changeIntensity6 <- rnd(0.3,1.0);	
+			//write "changeIntensity6 " + changeIntensity6;
+		
 		}
+		
 	}
 	
 	action createEntryPoints{
@@ -538,18 +563,48 @@ species road{
 
 species T_line parent:road{
 	rgb line;
+	float changeIntensity1;
+	float changeIntensity2;
+	float changeIntensity3;
+	float changeIntensity4;
+	float changeIntensity5;
+	float changeIntensity6;
 	
 	aspect default{
 		draw shape color: line;
+	}
+	
+	aspect color_per_segment{
+	
+		if(line = #red){
+			draw shape color: rgb(255*changeIntensity1,0,255*changeIntensity2);
+			
+		}
+		else if(line = #green){
+			draw shape color: rgb(0,255*changeIntensity3,255*changeIntensity4);
+		}
+		else{
+			draw shape color: rgb(255*changeIntensity5,255*changeIntensity6,0);
+		}
+		//draw text: color: #white size: 5;
+		//draw " " + self at: location + {-3,3} color: #white font: font('Default', 16, #bold) ;
+		
 	}
 }
 
 species bus_stop{
 	list<people> waiting_people;
 	int route;
+	int station_num;
 	
 	aspect default{
 		draw square(10) color: #yellow;
+	}
+	
+	aspect debugging{
+		draw square(30) color: bus_route_colors[route];
+		draw " " + self at: location + {-3,-3} color: #white font: font('Default', 16, #bold) ;
+		//draw " " + route at: location + {6,6} color: #white font: font('Default', 16, #bold) ;
 	}
 }
 
@@ -558,12 +613,38 @@ species bus skills: [moving] {
 	map<bus_stop,list<people>> stop_passengers ;
 	bus_stop my_target;
 	int route;
+	int cont_station_num;
+	bool ascending;
 	
 	reflex new_target when: my_target = nil{
-		bus_stop firstStop <- first(stops);
+		/***bus_stop firstStop <- first(stops);
 		remove firstStop from: stops;
-		add firstStop to: stops; 
-		my_target <- firstStop;
+		add firstStop to: stops;
+		my_target <- firstStop;***/
+		
+		
+		bus_stop StopNow <- stops[cont_station_num];
+		
+		
+		
+		if(cont_station_num = length(stops)-1 and ascending = true){
+			cont_station_num <- cont_station_num - 1;
+			ascending <- false;
+		}
+		else if(cont_station_num = 0 and ascending = false){
+			cont_station_num <- cont_station_num + 1;
+			ascending <- true;
+		}
+		else {
+			if(ascending = true){
+				cont_station_num <- cont_station_num + 1;
+			}
+			else{
+				cont_station_num <- cont_station_num - 1;
+			}
+		}
+		
+		my_target <- StopNow;
 	}
 	
 	reflex r {
@@ -588,6 +669,12 @@ species bus skills: [moving] {
 	aspect default {
 		draw rectangle(60,20) color: #orange border: #black;
 	}
+	
+	aspect debugging {
+		draw rectangle(60,20) color: bus_route_colors[route] border: #black;
+		//draw "current_edge " + current_edge at: location + {-3,-100} color: #white font: font('Default', 50, #bold);
+		draw "" + my_target at: location + {-3,100} color: #white font: font('Default', 50, #bold);
+	}
 }
 
 species T_stop{
@@ -600,6 +687,14 @@ species T_stop{
 		if (station != "boundary"){
 			draw square(40) color: line;
 		}
+		
+	}
+	
+	aspect debugging{
+		if (station != "boundary"){
+			draw square(10) color: line;
+		}
+		draw " " + self at: location + {-3,-3} color: #white font: font('Default', 16, #bold) ;
 	}
 }
 
@@ -653,7 +748,7 @@ species T skills: [moving] {
 		//write "graph_per_mobility_T[line] " + graph_per_mobility_T[line];
 		int nb_passengers <- stop_passengers.values sum_of (length(each)); 
 			
-		if(self.location = my_target.location) {
+		if(location = my_target.location) {
 			ask stop_passengers[my_target] {
 				location <- myself.my_target.location;
 				T_status <- 2;
@@ -672,6 +767,12 @@ species T skills: [moving] {
 	
 	aspect default {
 		draw rectangle(60,20) color: line border: #black;
+	}
+	
+	aspect T_debugging {
+		draw rectangle(60,20) color: line border: #black;
+		//draw "current_edge " + current_edge at: location + {-3,-100} color: #white font: font('Default', 50, #bold);
+		//draw "my_target " + my_target at: location + {-3,100} color: #white font: font('Default', 50, #bold);
 	}
 }
 
@@ -951,4 +1052,31 @@ experiment visual type:gui{
 		}    
 }
 
+experiment debug_T type:gui{
+
+	output{
+		display map type: opengl draw_env: false  autosave: false background: #black 
+			{
+			species T_stop aspect: debugging;
+			species T aspect: T_debugging;
+			species T_line aspect: color_per_segment;
+			//species people aspect: default;
+			
+			}
+	}
+}
+
+experiment debug_BUS type:gui{
+
+	output{
+		display map type: opengl draw_env: false  autosave: false background: #black 
+			{
+			species bus_stop aspect: debugging;
+			species bus aspect: debugging;
+			species road aspect: default;
+			//species people aspect: default;
+			
+			}
+	}
+}
 
