@@ -97,8 +97,6 @@ global{
 		do activity_data_import;
 		do createPopulation;	
 		
-		//for Tline debugging
-		
 	}
 	
 	action createBuildings{
@@ -116,7 +114,6 @@ global{
 			if(usage = "R"){
 				create apartment number: int(areaBuilding / areaApartment*nbFloors *proportion_apart_reduction){
 					int numberApartment <- int(areaBuilding / areaApartment*nbFloors *proportion_apart_reduction);
-					//write "numberApartment " + numberApartment;
 					rent <- rentPriceBuilding;
 					associatedBuilding <- ImTheBuilding;
 					location <- associatedBuilding.location;
@@ -193,7 +190,6 @@ global{
 		int cont <- 0;
 		create bus number: length(listBusRoutes){
 			route  <- listBusRoutes[cont];
-			//stops <- (list(bus_stop) where (each.route = route));
 			list<bus_stop> stops_list <- list(bus_stop where (each.route = route));
 			stops <- stops_list sort_by (each.station_num);
 			location <- first(stops).location;
@@ -230,11 +226,8 @@ global{
 		loop color_stops over: T_stops_per_color.keys{
 			create T{
 				line <- color_stops;
-				//write "line "  + line;
 				list<T_stop> stops_list <- list(T_stop where (each.line = line));
-				//write "antes de ordenar " + stops_list;
 				stops <- stops_list sort_by (each.station_num);
-				//write "despues de ordenar " + stops;
 				location <- first(stops).location;
 				stop_passengers <- map<T_stop, list<people>>(stops collect(each::[]));
 				cont_station_num <- 0;
@@ -251,20 +244,13 @@ global{
 			if(list_T_lines contains line = false){
 				list_T_lines << line;
 			}
-			//write "list_T_lines " + list_T_lines;
 		
 			changeIntensity1 <- rnd(0.3,1.0);
-			//write "changeIntensity1 " + changeIntensity1;
 			changeIntensity2 <- rnd(0.3,1.0);
-			//write "changeIntensity2 " + changeIntensity2;
 			changeIntensity3 <- rnd(0.3,1.0);
-			//write "changeIntensity3 " + changeIntensity3;
 			changeIntensity4 <- rnd(0.3,1.0);
-			//write "changeIntensity4 " + changeIntensity4;
 			changeIntensity5 <- rnd(0.3,1.0);
-			//write "changeIntensity5 " + changeIntensity5;
-			changeIntensity6 <- rnd(0.3,1.0);	
-			//write "changeIntensity6 " + changeIntensity6;
+			changeIntensity6 <- rnd(0.3,1.0);
 		
 		}
 		
@@ -383,10 +369,6 @@ global{
 			else{
 				livingPlace <- one_of(apartment where each.associatedBuilding.fromGrid = false);
 			}
-			//livingPlace <- one_of(building where (each.usage = "R" and each.rentPrice <= maxRentProf*maxRentPrice));
-			/***if (empty(livingPlace) = true){
-				livingPlace <- one_of(building where(each.usage = "R"));
-			}***/
 			location <- any_location_in(livingPlace.associatedBuilding);
 			mobilityMode <- mobilityMap.keys[rnd_choice(mobilityMap.values)];
 			loop while: (mobilityMode = "T"){
@@ -479,7 +461,6 @@ global{
 						float rentBuilding <- rentPrice;
 						building ImTheBuilding <- self;
 						int numberApartment <- int(areaBuilding/microUnitArea*devotedResidential*builtFloors * proportion_apart_reduction);
-						//write "number apartment " + numberApartment;
 						create apartment number: int(areaBuilding/microUnitArea*devotedResidential*builtFloors * proportion_apart_reduction){
 							rent <- rentBuilding;
 							associatedBuilding <- ImTheBuilding;
@@ -617,12 +598,6 @@ species bus skills: [moving] {
 	bool ascending;
 	
 	reflex new_target when: my_target = nil{
-		/***bus_stop firstStop <- first(stops);
-		remove firstStop from: stops;
-		add firstStop to: stops;
-		my_target <- firstStop;***/
-		
-		
 		bus_stop StopNow <- stops[cont_station_num];
 		
 		
@@ -708,15 +683,7 @@ species T skills: [moving] {
 	
 	reflex new_target when: my_target = nil{
 		
-		if (line = #red){
-			//write "tengo target nulo ";
-			//write "mi parada ahora sera " + stops[cont_station_num] + "con station QGIS number " + stops[cont_station_num].station_num;
-			//write "estoy en el contador " + cont_station_num;
-		}
-		
 		T_stop StopNow <- stops[cont_station_num];
-		
-		
 		
 		if(cont_station_num = length(stops)-1 and ascending = true){
 			cont_station_num <- cont_station_num - 1;
@@ -734,18 +701,12 @@ species T skills: [moving] {
 				cont_station_num <- cont_station_num - 1;
 			}
 		}
-		if (line = #red){
-			//write "en la proxima la parada sera " + cont_station_num;
-			//write "seguira subiendo? " + ascending;
-		}
 		
 		my_target <- StopNow;
 	}
 	
 	reflex r {
 		do goto target: my_target.location on: graph_per_mobility_T[line] speed:speed_per_mobility["T"];
-		//write "line " + line;
-		//write "graph_per_mobility_T[line] " + graph_per_mobility_T[line];
 		int nb_passengers <- stop_passengers.values sum_of (length(each)); 
 			
 		if(location = my_target.location) {
@@ -755,9 +716,7 @@ species T skills: [moving] {
 			}
 			stop_passengers[my_target] <- [];
 			loop p over: my_target.waiting_people {
-				//write "p " + p;
 				T_stop b <- T_stop where(each.line = line) with_min_of(each distance_to(p.my_current_objective.place.location));
-				//write "b " + b;
 				add p to: stop_passengers[b];
 			}
 			my_target.waiting_people <- [];						
@@ -808,11 +767,9 @@ species people skills: [moving]{
 					}
 					else{
 						if(mobilityMode = "T"){
-							//possible_bds <- one_of(entry_point where (each.type_entry = "T"));
 							possible_bds <- livingPlace.associatedBuilding;
 						}
 						else{
-							//possible_bds <- one_of(entry_point where (each.type_entry = "road"));
 							possible_bds <- livingPlace.associatedBuilding;
 						}
 					}
@@ -853,11 +810,9 @@ species people skills: [moving]{
 					}
 					else{
 						if(mobilityMode = "T"){
-							//possible_bds <- one_of(entry_point where (each.type_entry = "T"));
 							possible_bds <- livingPlace.associatedBuilding;
 						}
 						else{
-							//possible_bds <- one_of(entry_point where (each.type_entry = "road"));
 							possible_bds <- livingPlace.associatedBuilding;
 						}
 					}

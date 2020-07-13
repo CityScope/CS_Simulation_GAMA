@@ -109,6 +109,8 @@ global{
 	map<string, unknown> cityMatrixData;
 	list<map<string, unknown>> cityMatrixCell;
 	int totalAreaBuilt;
+	int totalVacantSpacesInVolpe;
+	float occupancyInVolpe;
 	
 	
 	
@@ -162,7 +164,7 @@ global{
 		write "population created";
 		do countPopulation;
 		do countPopMainCity;
-		do countNeighbourhoods; //Kendall + planetary
+		do countNeighbourhoods; //Kendall + surroundings
 		do countRent;
 		do countHappyPeople;
 		do countMobility;
@@ -215,7 +217,6 @@ global{
 		create rentApartment from: available_apartments with: [rentAbs::int(read("Rent")), numberBedrooms::int(read("NBedrooms")), GEOIDAp::string(read("GEOID"))]{
 			associatedBlockGroup <- one_of(blockGroup where(each.GEOID = GEOIDAp));
 			if(empty(associatedBlockGroup) = true){
-				//write "estoy vacio" + self;
 			}
 			if (associatedBlockGroup.city = 'DUXBURY'){
 				do die; //outliers. Normalisation affected
@@ -229,7 +230,6 @@ global{
 	action calculateAverageFeatureBlockGroups{
 		//if vacantBedrooms = 0 in a certain blockGroup but vacantSpaces != 0 that means they are all studios
 		// we are interested in price per vacantSpace
-		//¿? should we consider that a studio can allocate 2 people. Bedrooms = 0 BUT vacantSpaces = 2
 		list<list<rentApartment>> listApartmentsInMe;
 		ask blockGroup where(empty(each.apartmentsInMe) = false and each.apartmentsInMe != [nil]){
 			listApartmentsInMe << apartmentsInMe;
@@ -259,7 +259,6 @@ global{
 			if(list_cities contains asscBlock.city != true){
 				list_cities << asscBlock.city;
 			}
-			//write "list_cities " + list_cities;
 			asscBlock.initDiversityNorm <- blockPopulationMatrix[17,i];
 			asscBlock.initTotalPeople <- blockPopulationMatrix[7,i];
 			asscBlock.totalPeople <- asscBlock.initTotalPeople;
@@ -284,7 +283,7 @@ global{
 		gen_apartment_list >>- [nil];
 		if(gen_apartment_list != []){		
 			float accummulated_rent <- 0.0;		
-			int numberApartmentsFromGrid <- 0;
+			int vacantSpacesFromGrid <- 0;
 			loop i from: 0 to: length(gen_apartment_list) - 1{
 				int availableBedrooms <- gen_apartment_list[i].numberBedrooms;
 				int availableSpaces;
@@ -295,17 +294,17 @@ global{
 					availableSpaces <- 1;
 				}
 				float pricePerVacancy <- gen_apartment_list[i].rentAbs / availableSpaces;
-				accummulated_rent <- accummulated_rent + pricePerVacancy;
+				accummulated_rent <- accummulated_rent + gen_apartment_list[i].rentAbs;
 				vacantSpaces_gen <- vacantSpaces_gen + availableSpaces;
 				vacantBedrooms_gen <- vacantBedrooms_gen + availableBedrooms;
 				if (gen_apartment_list[i].associatedBuilding != nil and empty(gen_apartment_list[i].associatedBuilding) != true){ //apartments that are not created from grid have no associatedBuilding yet
 					if (gen_apartment_list[i].associatedBuilding.fromGrid = true){
-						numberApartmentsFromGrid <- numberApartmentsFromGrid + 1;
+						vacantSpacesFromGrid <- vacantSpacesFromGrid + gen_apartment_list[i].numberBedrooms;
 					}
 				}
 			}
-			if ((length(gen_apartment_list) - numberApartmentsFromGrid) != 0){
-				rentAbsVacancy_gen <- accummulated_rent / (length(gen_apartment_list) - numberApartmentsFromGrid); //these ones do not have a price yet
+			if (vacantSpaces_gen - vacantSpacesFromGrid != 0){
+				rentAbsVacancy_gen <- accummulated_rent / (vacantSpaces_gen - vacantSpacesFromGrid); //these ones do not have a price yet
 			}
 			else{
 				blockGroup closestBlockGroup;
@@ -343,13 +342,10 @@ global{
 	
 	action identifyKendallBlocks{
 		matrix kendall_blocks <- matrix(kendallBlocks_file);
-		//write "matrix kendall blocks " + kendall_blocks;
 		list<string> kendallBlockListString;
 		
 		loop i from: 0 to: kendall_blocks.columns - 1{
-			//string name <- kendall_blocks[0,i];
 			string name_block <- kendall_blocks[i,0];
-			//write "name blockGroup kendall " + name_block;
 			if (i = 0){
 				name_block <- copy_between(name_block, 1, length(name_block));
 			}
@@ -358,7 +354,6 @@ global{
 				if(GEOID = kendallBlockListString[i]){
 					inKendall <- true;
 					kendallBlockList << self;
-					//write "im kendall block " + self;
 				}
 			}
 		}
@@ -431,13 +426,14 @@ global{
 					associatedBlockGroup <- blockGroupNow;
 					neighbourhood <- associatedBlockGroup.neighbourhood;
 					vacantSpaces <- associatedBlockGroup.vacantSpaces;
+					rentAbsVacancy <- associatedBlockGroup.rentAbsVacancy;
 					rentNormVacancy <- associatedBlockGroup.rentNormVacancy;
 					satellite <- true;
 					associatedBlockGroup.buildingsInMe << self;
 				}
 			}
 		}
-		ask building where(each.usage = "R" and each.satellite = false){
+		ask building where(each.usage = "R" and each.satellite = false){ //physical buildings
 			apartmentsInMe <- rentApartment inside(self);
 			if(empty(apartmentsInMe) = false){
 				loop j from:0 to: length(apartmentsInMe) - 1{
@@ -447,14 +443,22 @@ global{
 			}
 		}
 		if(empty(kendallApartmentList) = false){
-			loop while: empty(kendallApartmentList) = false {
+			loop while: (empty(kendallApartmentList) = false) {
 				kendallApartmentList[0].associatedBuilding <- one_of(building where(each.satellite = false and each.associatedBlockGroup = kendallApartmentList[0].associatedBlockGroup));
 				if((kendallApartmentList[0].associatedBuilding) is building != true){
-					kendallApartmentList[0].associatedBuilding <- building where(each.satellite = false) closest_to (self);
+					kendallApartmentList[0].associatedBuilding <- building where(each.satellite = false and each.usage = "R") closest_to (self);
 					if(kendallApartmentList[0].associatedBlockGroup != nil and empty(kendallApartmentList[0].associatedBlockGroup) != true){
-						kendallApartmentList[0].associatedBlockGroup.apartmentsInMe >- kendallApartmentList[0];
+						kendallApartmentList[0].associatedBlockGroup.apartmentsInMe >- kendallApartmentList[0]; //the building could be in another block group
 						kendallApartmentList[0].associatedBlockGroup  <- kendallApartmentList[0].associatedBuilding.associatedBlockGroup;
-						kendallApartmentList[0].associatedBlockGroup.apartmentsInMe << kendallApartmentList[0];
+						if (kendallApartmentList[0].associatedBlockGroup = nil){
+							
+						}
+						else{
+							kendallApartmentList[0].associatedBlockGroup.apartmentsInMe << kendallApartmentList[0];
+						}
+						kendallApartmentList[0].associatedBuilding.apartmentsInMe << kendallApartmentList[0];
+					}
+					else{
 						kendallApartmentList[0].associatedBuilding.apartmentsInMe << kendallApartmentList[0];
 					}
 				}
@@ -490,11 +494,6 @@ global{
 					rentAbs <- associatedBlockGroup.rentAbsVacancy*gridPriceMarketPerc;
 					associatedBuilding.rentNormVacancy <- associatedBlockGroup.rentNormVacancy*gridPriceMarketPerc;
 					associatedBuilding.rentAbsVacancy <- associatedBlockGroup.rentAbsVacancy*gridPriceMarketPerc;
-					//write "rentApartment" + rentApartment;
-					//write "associatedBuilding" + associatedBuilding;
-					//write "associatedBlockGroup" + associatedBlockGroup;
-					//write "associatedBlockGroup.rentAbsVacancy" + associatedBlockGroup.rentAbsVacancy;
-					//write "associatedBuilding.rentAbsVacancy " + associatedBuilding.rentAbsVacancy ;
 				}
 			}
 		}
@@ -538,7 +537,7 @@ global{
 	action createRoads{
 		create road from: road_shapefile{
 			mobility_allowed <- ["walking","bike","car","bus"];
-			capacity <- shape.perimeter / 10.0; //¿?¿?
+			capacity <- shape.perimeter / 10.0;
 			congestion_map [self] <- shape.perimeter;
 		}
 	}
@@ -566,11 +565,10 @@ global{
 	action createGridBuildings{
 		angle <- angle / 2;
 		float acum_area <- 0.0;
-		//write startingPoint;
-		startingPoint <- {startingPoint.x - brickSize / 2, startingPoint.y - brickSize / 2};
-		//write startingPoint;	
+		startingPoint <- {startingPoint.x - brickSize / 2, startingPoint.y - brickSize / 2};	
 		int cont <- 0;			
 		totalAreaBuilt <- 0;
+		totalVacantSpacesInVolpe <- 0;
 		bool noBuild;
 		loop i from: 0 to: 12{
 			loop j from: 0 to: 15{
@@ -610,7 +608,6 @@ global{
 				}
 				
 				if(noBuild != true){
-					//write "building i "+ i + " j " + j;
 					building imTheBuilding;
 					blockGroup imTheAssociatedBlockGroup;
 					create building{
@@ -633,12 +630,13 @@ global{
 						max_height <- 120.0;
 						satellite <- false;
 						if (density_map[scale]!=0){
-							supported_people <- int(area/density_map[scale])*nbFloors*percForResidentialGrid;	 //change from density_map to area per micro-unit
+							supported_people <- int(area/density_map[scale])*nbFloors*percForResidentialGrid;
 						}
 						else{
 							supported_people<-0;
 						}
 						vacantSpaces <- supported_people;
+						totalVacantSpacesInVolpe <- totalVacantSpacesInVolpe + vacantSpaces;
 						
 						imTheBuilding <- self;
 						ask blockGroup{
@@ -903,7 +901,6 @@ global{
 		int nPeople_created <- 0;
 		create people number: nb_agents{
 			nPeople_created <- nPeople_created + 1;
-			//write "nPeople_created " + nPeople_created;
 			type <- proportion_per_type_now.keys[rnd_choice(proportion_per_type.values)];
 			map<int,int> extract_map <- agent_per_point_type_map[type];
 			agent_per_point <- extract_map.keys[0];
@@ -978,9 +975,6 @@ global{
 				activity_place<-one_of(building where (each.category = principal_activity and each.satellite = false));
 			}
 			
-			//write "principal_activity " + principal_activity;
-			//write "activity_place " + activity_place;
-			
 			do calculate_possibleMobModes;
 			
 			bool possibilityToTakeT <- false;
@@ -992,9 +986,18 @@ global{
 				possibilityToTakeBus <- true;
 			}
 			
-			map<string,list<float>> mobilityAndTime<- evaluate_main_trip(location,activity_place, possibilityToTakeT, possibilityToTakeBus);
+			bool hasCar <- false;
+			bool hasBike <- false;
+			if(possibleMobModes contains "car" = true){
+				hasCar <- true;
+			}
+			if(possibleMobModes contains "bike" = true){
+				hasBike <- true;
+			}
+			
+			map<string,list<float>> mobilityAndTime<- evaluate_main_trip(location,activity_place, hasCar, hasBike, possibilityToTakeT, possibilityToTakeBus);
 			list<float> extract_list_here <- mobilityAndTime[mobilityAndTime.keys[0]];
-			time_main_activity <- extract_list_here[0];
+			time_main_activity <- extract_list_here[3]/60;
 			time_main_activity_min <- extract_list_here[3];
 			CommutingCost <- extract_list_here[1];
 			distance_main_activity <- extract_list_here[2];
@@ -1012,6 +1015,11 @@ global{
 		ask people where(each.actualCity = selectedCity){
 			peopleInSelectedCity <- peopleInSelectedCity + agent_per_point;
 		}
+		int peopleInVolpe;
+		ask people where(each.living_place.fromGrid = true){
+			peopleInVolpe <- peopleInVolpe + agent_per_point;
+		}
+		occupancyInVolpe <- peopleInVolpe / totalVacantSpacesInVolpe;
 	}
 	
 	action countNeighbourhoods{
@@ -1195,11 +1203,6 @@ global{
 		do updateMeanDiver;
 	}
 	
-	/***reflex save_info{
-		init <- 0;
-		do save_info_cycle;
-	}***/
-	
 }
 
 species blockGroup{
@@ -1327,7 +1330,6 @@ species building{
 		else{
 			draw shape color: rgb(50,50,50, 125);	
 		}
-		//draw shape color: #red;
 	}
 	
 }
@@ -1417,29 +1419,27 @@ species people{
 	}
 	
 	
-	map<string,list<float>> evaluate_main_trip(point origin_location, building destination, bool isthereT <- false, bool isthereBus <- false){
+	map<string,list<float>> evaluate_main_trip(point origin_location, building destination, bool hasCar, bool hasBike, bool isthereT <- false, bool isthereBus <- false){
 	
 		list<list> candidates;
 		list<float> commuting_cost_list;
 		list<float> distance_list;
 		list<float> time_list;
-		list<string> possibleMobModesNow <- [];
-		/***possibleMobModesNow <- possibleMobModes + 'fin'; //to avoid coupling
-		possibleMobModesNow >- 'fin';***/
-		possibleMobModesNow <- possibleMobModes;
+		list<string> possibleMobModesNow <- ["walking"];
 		
+		if(hasCar = true){
+			possibleMobModesNow << "car";
+		}
+		if(hasBike = true){
+			possibleMobModesNow << "bike";
+		}
 		if (isthereBus = true){
 			possibleMobModesNow << "bus";
-		}
-		else{
-			possibleMobModesNow >- "bus";
 		}
 		if(isthereT = true){
 			possibleMobModesNow << "T";
 		}
-		else{
-			possibleMobModesNow >- "T";
-		}
+		
 		
 		loop mode over:possibleMobModesNow{
 			list<float> characteristic<- charact_per_mobility[mode];
@@ -1508,7 +1508,6 @@ species people{
 			}
 		}
 		list<map> criteria_WM;
-		//write "destination category " + destination.category; 
 		loop i from: 0 to: length(vals)-1{
 			criteria_WM<< ["name"::"crit"+i, "weight"::vals[i]];
 		}
@@ -1534,7 +1533,6 @@ species people{
 		list<list> cands <- [];
 		float living_cost;
 		living_cost <- payingRent;
-		//float living_cost <- living_place.rentPriceNorm;
 		float possibleLivingCost;
 		float possibleLivingCostAbs;
 		float possibleDiversity;
@@ -1547,7 +1545,20 @@ species people{
 		string possibleMobility;
 		point locationPossibleMoveBuilding;
 		
-		possibleMoveBuilding <- one_of(building where(each.vacantSpaces >= 1*agent_per_point and (each != living_place) and each.outskirts = false));
+		
+		if(nbFloorsGrid > 0 and boolGrid = 1){
+			float a <- rnd(1.0);
+			if(a > 0.75){ //make Volpe exploration easier
+				possibleMoveBuilding <- one_of(building where(each.vacantSpaces >= agent_per_point and (each != living_place) and each.fromGrid = true));
+				if (possibleMoveBuilding = nil){
+					possibleMoveBuilding <- one_of(building where(each.vacantSpaces >= 1*agent_per_point and (each != living_place) and each.outskirts = false));
+				}
+			}
+			else{
+				possibleMoveBuilding <- one_of(building where(each.vacantSpaces >= 1*agent_per_point and (each != living_place) and each.outskirts = false));
+			}
+		}
+		
 		
 		if(possibleMoveBuilding != nil){//it is a building in Kendall or satellite blockGroup
 			if(possibleMoveBuilding.satellite = false){
@@ -1579,9 +1590,17 @@ species people{
 		if(possibleMoveBuilding.associatedBlockGroup.hasBus = true and activity_place.associatedBlockGroup.hasBus = true){
 			possibilityToTakeBus <- true;
 		}
-		map<string,list<float>> possibleTimeAndMob <- evaluate_main_trip(locationPossibleMoveBuilding,activity_place, possibilityToTakeT, possibilityToTakeBus); //list<float> is time and commuting_cost with respect to a reference_rent
+		bool hasCar <- false;
+		bool hasBike <- false;
+		if(possibleMobModes contains "car" = true){
+			hasCar <- true;
+		}
+		if(possibleMobModes contains "bike" = true){
+			hasBike <- true;
+		}
+		map<string,list<float>> possibleTimeAndMob <- evaluate_main_trip(locationPossibleMoveBuilding,activity_place, hasCar, hasBike, possibilityToTakeT, possibilityToTakeBus); //list<float> is time and commuting_cost with respect to a reference_rent
 		list<float> possible_extract_list <- possibleTimeAndMob[possibleTimeAndMob.keys[0]];
-		possibleTime <- possible_extract_list[0];
+		possibleTime <- possible_extract_list[3]/60;
 		possibleTimeMin <- possible_extract_list[3];
 		possibleCommutingCost <- possible_extract_list[1];
 		possibleMobility <- possibleTimeAndMob.keys[0];
@@ -1653,7 +1672,6 @@ species people{
 }
 
 experiment show type: gui{
-	parameter "createGrid " var: boolGrid init: 1 category: "Grid / No Grid difference ";
 	output{
 		display map type: opengl draw_env: false background: #black{
 			species blockGroup aspect: default;
@@ -1849,7 +1867,7 @@ experiment show type: gui{
 		monitor "Mean diversity" value: meanDiver;
 		monitor "Number of people represented" value: nb_people;
 		monitor "Number of agents used" value: nb_agents;
-		
+		monitor "Volpe Occupancy " value: occupancyInVolpe;		
 		
 	}
 	
