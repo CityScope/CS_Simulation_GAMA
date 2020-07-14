@@ -20,14 +20,22 @@ global{
 	geometry shape<-envelope(roads_shapefile);
 	
 	
-	file calibratedCase <- file("../results/incentivizedScenarios/MLResultsCalibratedData.csv");
+	/***file calibratedCase <- file("../results/incentivizedScenarios/MLResultsCalibratedData.csv");
 	file diversityIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityIncentive.csv");
 	file kendallFancyIncentive <- file("../results/incentivizedScenarios/MLResultsKendallFancyIncentive.csv");
 	file envFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyIncentive.csv");
 	file diversityKendallFancyIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityKendallFancyIncentive.csv");
 	file diversityEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityEnvFriendlyIncentive.csv");
 	file kendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyKendallFancyIncentive.csv");
-	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyKendallFancyDiversityIncentive.csv");
+	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyKendallFancyDiversityIncentive.csv");***/
+	file calibratedCase <- file("../results/incentivizedScenarios/CalibratedData.csv");
+	file diversityIncentive <- file("../results/incentivizedScenarios/DiversityIncentive.csv");
+	file kendallFancyIncentive <- file("../results/incentivizedScenarios/KendallFancyIncentive.csv");
+	file envFriendlyIncentive <- file("../results/incentivizedScenarios/EnvFriendlyIncentive.csv");
+	file diversityKendallFancyIncentive <- file("../results/incentivizedScenarios/DiversityKendallFancyIncentive.csv");
+	file diversityEnvFriendlyIncentive <- file("../results/incentivizedScenarios/DiversityEnvFriendlyIncentive.csv");
+	file kendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/EnvFriendlyKendallFancyIncentive.csv");
+	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/EnvFriendlyKendallFancyDiversityIncentive.csv");
 	file activity_file <- file("../includesCalibration/Criteria/ActivityPerProfile.csv");
 	file originalProfiles <- file("../includesCalibration/Criteria/Profiles.csv");
 	file mode_file <- file("../includesCalibration/Criteria/Modes.csv");
@@ -52,6 +60,7 @@ global{
 	list<int> listBusRoutes;
 	float meanCommTime;
 	float meanCommDist;
+	float propVolpe;
 	int minRentPrice;
 	int maxRentPrice;
 	float angle <- atan((899.235 - 862.12)/(1083.42 - 1062.038));
@@ -269,8 +278,13 @@ global{
 	
 	float interpValues(float x1,float x2,float x3,float y1,float y3){
 		float y2;
+		if(x3 != x1){
+			y2 <- (x2 - x1)*(y3 - y1) / (x3 - x1) + y1;
+		}
+		else{
+			y2 <- y1; //and equal to y3
+		}
 		
-		y2 <- (x2 - x1)*(y3 - y1) / (x3 - x1) + y1;
 		
 		return y2;		
 	}
@@ -307,23 +321,36 @@ global{
 		int location <- 0;
 		int interpLocation <- 1;
 		
-		loop i from:0 to: data_matrix.rows - 1{ //provisional. Increase granularity with ML
-			float areaValue <- data_matrix[0,i];
-			float perMarketPrice <- data_matrix[1,i];
-			if ((1 - subsidyPerc) = perMarketPrice){
-				minDifferenceNow <- abs(builtArea - areaValue);
-				if(minDifferenceNow < minDifferenceUntilNow){
-					minDifferenceUntilNow <- minDifferenceNow;
-					location <- i;
-					if((builtArea - areaValue) < 0){
-						interpLocation <- location - 1;
-					}
-					else{
-						interpLocation <- location + 1;
+		if(builtArea != 0){
+				loop i from:0 to: data_matrix.rows - 1{ //provisional. Increase granularity with ML
+				float areaValue <- data_matrix[0,i];
+				float perMarketPrice <- data_matrix[1,i];
+				if ((1 - subsidyPerc) = perMarketPrice){
+					minDifferenceNow <- abs(builtArea - areaValue);
+					if(minDifferenceNow < minDifferenceUntilNow){
+						minDifferenceUntilNow <- minDifferenceNow;
+						location <- i;
+						if(location != data_matrix.rows - 1 and data_matrix[1,location] = data_matrix[1,location + 1]){
+							if((builtArea - areaValue) < 0){
+							interpLocation <- location - 1;
+							}
+							else{
+								interpLocation <- location + 1;
+							}
+						}
+						else{
+							interpLocation <- location;
+						}
+						
 					}
 				}
 			}
 		}
+		else{
+			location <- 0;
+			interpLocation <- 0;
+		}
+
 		untilNowInKendall <- propInKendall;
 		float areaValueLocation <- data_matrix[0,location];
 		float areaValueInterpLocation <- data_matrix[0,interpLocation];
@@ -355,16 +382,30 @@ global{
 		float meanCommDistLocation <- data_matrix[17,location];
 		float meanCommDistInterpLocation <- data_matrix[17,interpLocation];
 		meanCommDist <- interpValues(areaValueLocation, builtArea, areaValueInterpLocation, meanCommDistLocation, meanCommDistInterpLocation);
-		
+		float propVolpeLocation <- data_matrix[18,location];
+		float propVolpeInterpLocation <- data_matrix[18,interpLocation];
+		propVolpe <- interpValues(areaValueLocation, builtArea, areaValueInterpLocation, propVolpeLocation, propVolpeInterpLocation);
 	}
 	
 	action createPopulation{
+		int numberApartmentsVolpe <- count(apartment, each.associatedBuilding.fromGrid = true);				
+		int peopleInVolpe <- int(numberApartmentsVolpe*propVolpe);
+		int countRemaining <- peopleInVolpe;
 		create people number: int(nbPeopleKendall/agent_per_point){
 			liveInKendall <- true;	
 			type <- profileMap.keys[rnd_choice(profileMap.values)];
 			color <- colorMap[type];
 			if (devotedResidential != 0){
-				livingPlace <- one_of(apartment);
+				if(countRemaining > 0){
+					countRemaining <- countRemaining - agent_per_point;
+					livingPlace <- one_of(apartment where each.associatedBuilding.fromGrid = true);
+					if(livingPlace = nil){
+						livingPlace <- one_of(apartment);
+					}
+				}
+				else{
+					livingPlace <- one_of(apartment);
+				}
 			}
 			else{
 				livingPlace <- one_of(apartment where each.associatedBuilding.fromGrid = false);
