@@ -18,6 +18,7 @@ nameFileIN = "DiversityIncentive.csv"
 nameFileOUT = "MLResultsDiversityIncentive.csv"
 nameGraph1 = "DiversityIncentive1.png"
 nameGraph2 = "DiversityIncentive2.png"
+nameGraph3 = "DiversityIncentive3.png"
 nameStatFile = "DiversityIncentiveStats.csv"
 max_seedValue = 20000
 
@@ -37,7 +38,7 @@ T = []
 
 estimators = [ #different ML estimators can be used and tested
     # ('linear', LinearRegression()),
-    ('decision_tree', tree.DecisionTreeRegressor(criterion = 'mse', max_depth = 3)),
+    ('decision_tree', tree.DecisionTreeRegressor(criterion = 'mse', max_depth = 5)),
     #('decision_tree', tree.DecisionTreeRegressor()),
     #('kNN_uniform', KNeighborsRegressor(n_neighbors=7, weights='distance'))
 ]
@@ -66,6 +67,7 @@ def R_squaredText(predictedVals, expectedVals):
     errorPropWalking = sqrt(mean_squared_error(expectedVals[:, 13], predictedVals[:, 13], sample_weight=None, multioutput='uniform_average',squared='True'))
     errorTime = sqrt(mean_squared_error(expectedVals[:, 14], predictedVals[:, 14], sample_weight=None, multioutput='uniform_average',squared='True'))
     errorDist = sqrt(mean_squared_error(expectedVals[:, 15], predictedVals[:, 15], sample_weight=None, multioutput='uniform_average',squared='True'))
+    errorVolpeOccupancy = sqrt(mean_squared_error(expectedVals[:, 16], predictedVals[:, 16], sample_weight=None, multioutput='uniform_average',squared='True'))
     print("Error prop Kendall " + str(errorPropSelectedCity))
     print("Error prop Prof1 " + str(errorPropProf1))
     print("Error prop Prof2 " + str(errorPropProf2))
@@ -83,8 +85,9 @@ def R_squaredText(predictedVals, expectedVals):
     print("Error prop Walking " + str(errorPropWalking))
     print("Error comm time " + str(errorTime))
     print("Error comm distance " + str(errorDist))
+    print("Volpe Occupancy Error " + str(errorVolpeOccupancy))
     print("R2 score " + str(r2_score(expectedVals,predictedVals)))
-    errors = [errorPropSelectedCity, errorPropProf1, errorPropProf2, errorPropProf3, errorPropProf4, errorPropProf5, errorPropProf6, errorPropProf7, errorPropProf8, errorPropCar, errorPropBus, errorPropT, errorPropBike, errorPropWalking, errorTime, errorDist, (r2_score(expectedVals,predictedVals))]
+    errors = [errorPropSelectedCity, errorPropProf1, errorPropProf2, errorPropProf3, errorPropProf4, errorPropProf5, errorPropProf6, errorPropProf7, errorPropProf8, errorPropCar, errorPropBus, errorPropT, errorPropBike, errorPropWalking, errorTime, errorDist, errorVolpeOccupancy, (r2_score(expectedVals,predictedVals))]
     return errors
 
 
@@ -148,14 +151,28 @@ def showGraphs(R2,Y_simulated,Y_predicted):
     plt.title('mean commuting time')
     plt.ylabel('time[min]')
 
-    ax2 = fig1.add_subplot(224)
-    ax2.plot(range(0, Y_predicted.shape[0]), Y_predicted[:, 15], 'o', label='yPredicted')
-    ax2.plot(range(0, Y_simulated.shape[0]), Y_simulated[:, 15], 'o', label='ysimulated')
+    ax7 = fig1.add_subplot(224)
+    ax7.plot(range(0, Y_predicted.shape[0]), Y_predicted[:, 15], 'o', label='yPredicted')
+    ax7.plot(range(0, Y_simulated.shape[0]), Y_simulated[:, 15], 'o', label='ysimulated')
     plt.title('mean commuting distance')
     plt.ylabel('distance[m]')
 
+    fig2 = plt.figure()
+    manager = plt.get_current_fig_manager()
+    manager.resize(*manager.window.maxsize())
+
+    ax8 = fig2.add_subplot(221)
+    ax8.plot(range(0, Y_predicted.shape[0]), Y_predicted[:, 16], 'o', label='yPredicted')
+    ax8.plot(range(0, Y_simulated.shape[0]), Y_simulated[:, 16], 'o', label='ysimulated')
+    plt.title('Volpe occupancy')
+    plt.ylabel('[%]')
+
     fig1.savefig(nameGraph2)
     plt.show()
+
+    fig2.savefig(nameGraph3)
+    plt.show()
+
     print("R2 score final " + str(R2))
     errors = R_squaredText(Y_predicted,Y_simulated)
     return errors
@@ -175,9 +192,9 @@ for rndseedValue in range(0,max_seedValue):
 
 
     train_features0 = importedData[0:index,0:2]
-    train_results0 = importedData[0:index,2:18]
+    train_results0 = importedData[0:index,2:19]
     test_features0 = importedData[index:importedData.shape[0],0:2]
-    test_results0 = importedData[index:importedData.shape[0],2:18]
+    test_results0 = importedData[index:importedData.shape[0],2:19]
 
     cont = 0
     mat = np.zeros((5670, 2))
@@ -201,7 +218,7 @@ errors = showGraphs(R2_final,test_simulated_final,test_predicted_final)
 results_allcolumns = np.concatenate((mat,results_mas_final),axis=1)
 firstlineRaw = importedDataRaw[0,:]
 
-results_allrows = np.zeros((5671,18))
+results_allrows = np.zeros((5671,19))
 
 for i in range(0,5671):
     if i == 0:
