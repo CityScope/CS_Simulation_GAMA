@@ -109,8 +109,8 @@ global{
 	map<string, unknown> cityMatrixData;
 	list<map<string, unknown>> cityMatrixCell;
 	int totalAreaBuilt;
-	int totalVacantSpacesInVolpe;
-	float occupancyInVolpe;
+	int totalVacantSpacesInVolpe <- 0;
+	float occupancyInVolpe <- 0.0;
 	
 	
 	
@@ -1019,7 +1019,9 @@ global{
 		ask people where(each.living_place.fromGrid = true){
 			peopleInVolpe <- peopleInVolpe + agent_per_point;
 		}
-		occupancyInVolpe <- peopleInVolpe / totalVacantSpacesInVolpe;
+		if(totalVacantSpacesInVolpe != 0){
+			occupancyInVolpe <- peopleInVolpe / totalVacantSpacesInVolpe;
+		}
 	}
 	
 	action countNeighbourhoods{
