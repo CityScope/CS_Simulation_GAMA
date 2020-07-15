@@ -85,6 +85,7 @@ global{
 	map<string,rgb> color_per_mobility;
 	map<string,float> speed_per_mobility;
 	map<int,rgb> bus_route_colors <- [701::#yellow, 747::#red,69::#blue, 68::#green];
+	list<apartment> gridApartments <- [];
 	
 	init{
 		do createBuildings;
@@ -398,7 +399,8 @@ global{
 			if (devotedResidential != 0){
 				if(countRemaining > 0){
 					countRemaining <- countRemaining - agent_per_point;
-					livingPlace <- one_of(apartment where each.associatedBuilding.fromGrid = true);
+					//livingPlace <- apartment where each.associatedBuilding.fromGrid = true;
+					livingPlace <- one_of(gridApartments);
 					if(livingPlace = nil){
 						livingPlace <- one_of(apartment);
 					}
@@ -506,6 +508,7 @@ global{
 							rent <- rentBuilding;
 							associatedBuilding <- ImTheBuilding;
 							location <- associatedBuilding.location;
+							gridApartments << self;
 						}
 					}				
 				}
