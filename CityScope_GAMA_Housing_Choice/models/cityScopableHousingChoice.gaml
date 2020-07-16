@@ -20,6 +20,7 @@ global{
 	geometry shape<-envelope(roads_shapefile);
 	
 	
+	
 	/***file calibratedCase <- file("../results/incentivizedScenarios/MLResultsCalibratedData.csv");
 	file diversityIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityIncentive.csv");
 	file kendallFancyIncentive <- file("../results/incentivizedScenarios/MLResultsKendallFancyIncentive.csv");
@@ -90,6 +91,7 @@ global{
 	init{
 		do createBuildings;
 		do createRoads;
+		do createMinorRoads;
 		do createTlines;
 		do characteristic_file_import;
 		do compute_graph;
@@ -154,6 +156,12 @@ global{
 	
 	action createRoads{
 		create road from:roads_shapefile{
+			mobility_allowed <-["walking","bike","car","bus"];
+		}
+	}
+	
+	action createMinorRoads{
+		create minor_road from:roads_kendall_shapefile{
 			mobility_allowed <-["walking","bike","car","bus"];
 		}
 	}
@@ -586,6 +594,10 @@ species road{
 	}
 }
 
+species minor_road parent: road{
+	
+}
+
 species T_line parent:road{
 	rgb line;
 	float changeIntensity1;
@@ -983,7 +995,8 @@ experiment visual type:gui{
 		display map type: opengl draw_env: false  autosave: false background: #black 
 			{
 			species building aspect: default;
-			species road;
+			species road aspect: default;
+			species minor_road aspect: default;
 			species bus_stop aspect: default;
 			species bus aspect: default;
 			species T_stop aspect: default;
@@ -1073,6 +1086,7 @@ experiment debug_BUS type:gui{
 			species bus_stop aspect: debugging;
 			species bus aspect: debugging;
 			species road aspect: default;
+			species minor_road aspect: default;
 			//species people aspect: default;
 			
 			}
