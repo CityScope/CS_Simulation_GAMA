@@ -16,8 +16,10 @@ global{
 	file<geometry> entry_point_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_entry_points.shp");
 	file<geometry> Tline_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_Tline.shp");
 	file<geometry> roads_kendall_shapefile <- file<geometry>("./../includesCalibration/City/volpe/Roads.shp");
+	file<geometry> arbol_navidad_shp <- file<geometry>("./../includesCalibration/City/volpe/arbol_navidad.shp");
 	//geometry shape<-envelope(roads_kendall_shapefile);
 	geometry shape<-envelope(roads_shapefile);
+	//geometry shape<-envelope(arbol_navidad_shp);
 	
 	
 	
@@ -65,8 +67,9 @@ global{
 	int minRentPrice;
 	int maxRentPrice;
 	float angle <- atan((899.235 - 862.12)/(1083.42 - 1062.038));
-	//point startingPoint <- {1025, 1160}; 
-	point startingPoint <- {2165, 2120};
+	//point startingPoint <- {1025, 1160}; //kendall_roads
+	point startingPoint <- {2165, 2120}; //roads_big
+	//point startingPoint <- {4205,3830};
 	float brickSize <- 21.3;
 	list<string> prof_list;
 	list<rgb> list_T_lines;
@@ -91,6 +94,7 @@ global{
 	init{
 		do createBuildings;
 		do createRoads;
+		//do createBubble;
 		do createMinorRoads;
 		do createTlines;
 		do characteristic_file_import;
@@ -159,6 +163,12 @@ global{
 			mobility_allowed <-["walking","bike","car","bus"];
 		}
 	}
+	
+	/***action createBubble{
+		
+		create bubble from: arbol_navidad_shp;
+		
+	}***/
 	
 	action createMinorRoads{
 		create minor_road from:roads_kendall_shapefile{
@@ -275,7 +285,7 @@ global{
 	}
 	
 	action createEntryPoints{
-		create entry_point from: entry_point_shapefile with: [type_entry::string(read("mobility"))]{
+		create entry_point from: entry_point_shapefile with: [type_entry::string(read("mobility")), associatedBubble::int(read("asscBuble"))]{
 			entry_point ImTheEntry <- self;
 			create building{
 				ImTheEntry.associatedBuilding <- self;
@@ -545,6 +555,13 @@ global{
 
 }
 
+species bubble parent: building{
+	float occupancy;
+	
+	aspect default {
+		draw shape*occupancy color: rgb(50,50,50,125);
+	}
+}
 	
 species entry_point parent: apartment{
 	string type_entry;
@@ -557,6 +574,7 @@ species entry_point parent: apartment{
 species apartment{
 	int rent;
 	building associatedBuilding;
+	bubble associatedBubble; //only for apartments of type entry_point
 }
 
 species building{
@@ -652,6 +670,7 @@ species bus skills: [moving] {
 	int route;
 	int cont_station_num;
 	bool ascending;
+	int stop_time;
 	
 	reflex new_target when: my_target = nil{
 		bus_stop StopNow <- stops[cont_station_num];
@@ -679,9 +698,14 @@ species bus skills: [moving] {
 	}
 	
 	reflex r {
-		do goto target: my_target.location on: graph_per_mobility_road["car"] speed:speed_per_mobility["bus"];
-		int nb_passengers <- stop_passengers.values sum_of (length(each));
-			
+		if(stop_time = 0){
+			do goto target: my_target.location on: graph_per_mobility_road["car"] speed:speed_per_mobility["bus"]*0.5;
+			int nb_passengers <- stop_passengers.values sum_of (length(each));	
+		}
+		else{
+			stop_time <- stop_time - 1;
+		}
+		
 		if(location = my_target.location) {
 			ask stop_passengers[my_target] {
 				location <- myself.my_target.location;
@@ -693,7 +717,8 @@ species bus skills: [moving] {
 				add p to: stop_passengers[b] ;
 			}
 			my_target.waiting_people <- [];						
-			my_target <- nil;			
+			my_target <- nil;		
+			stop_time <- 30;	
 		}
 	}
 	
@@ -736,6 +761,7 @@ species T skills: [moving] {
 	rgb line;
 	int cont_station_num;
 	bool ascending;
+	int stop_time;
 	
 	reflex new_target when: my_target = nil{
 		
@@ -762,8 +788,14 @@ species T skills: [moving] {
 	}
 	
 	reflex r {
-		do goto target: my_target.location on: graph_per_mobility_T[line] speed:speed_per_mobility["T"];
-		int nb_passengers <- stop_passengers.values sum_of (length(each)); 
+		if (stop_time = 0){
+			do goto target: my_target.location on: graph_per_mobility_T[line] speed:speed_per_mobility["T"]*0.5;
+			int nb_passengers <- stop_passengers.values sum_of (length(each)); 
+		}
+		else{
+			stop_time <- stop_time - 1;
+		}
+		
 			
 		if(location = my_target.location) {
 			ask stop_passengers[my_target] {
@@ -776,7 +808,8 @@ species T skills: [moving] {
 				add p to: stop_passengers[b];
 			}
 			my_target.waiting_people <- [];						
-			my_target <- nil;			
+			my_target <- nil;	
+			stop_time <- 30;		
 		}
 	}
 	
@@ -907,10 +940,16 @@ species people skills: [moving]{
 		}
 		
 		if (location = my_current_objective.place.location) {
+			if(liveInKendall = false and location = livingPlace.associatedBuilding.location){
+				do goto target: livingPlace.associatedBubble.location on: graph_per_mobility_road["car"];
+			}
 			//if(mobilityMode = "car" and updatePollution = true) {do updatePollutionMap;}					
-			current_place <- my_current_objective.place;
-			location <- any_location_in(current_place);
-			my_current_objective <- nil;	
+			else{
+				current_place <- my_current_objective.place;
+				location <- any_location_in(current_place);
+				my_current_objective <- nil;
+			}
+				
 		} else {
 			//if ((current_edge != nil) and (mobilityMode in ["car"])) {road(current_edge).current_concentration <- road(current_edge).current_concentration + 1; }
 		}
@@ -1004,9 +1043,10 @@ experiment visual type:gui{
 			species T_line aspect: default;
 			//species entry_point aspect: default;
 			species people aspect: default;
+			species bubble aspect: default;
 			
 			graphics "time" {
-				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.9,world.shape.height*0.55};
+				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.7,world.shape.height*0.55};
 			}
 	
 			/***overlay position: { 5, 5 } size: { 240 #px, 270 #px } background: rgb(50,50,50,125) transparency: 1.0 border: #black 
@@ -1035,8 +1075,10 @@ experiment visual type:gui{
 		            y <- y + 100#px;
 		            draw "OUTPUT: " at:{40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
 		            y <- y + 50#px;
-		            draw "Percentage of people working and living in Kendall: " + string(int(propInKendall*100) ) + " %" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            draw "Percentage of people working "  at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
 		            y <- y + 50 #px;    
+	              	draw "and living in Kendall: " + string(int(propInKendall*100) ) + " %" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		            y <- y + 50 #px; 
 		            draw rectangle(int(propInKendall*250)#px,10#px) at: {40#px+int(propInKendall*250/2)#px, y} color:#white border: #white;
 		            y <- y + 50#px;
 		            draw "Mean Commuting Distance: " + string(meanCommDist with_precision 2) + " m" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
@@ -1051,13 +1093,13 @@ experiment visual type:gui{
 		            
 		    	}
 		    	
-		    	chart "Mobility Modes" background:#black  type: pie size: {0.5,0.5} position: {world.shape.width*0.7,world.shape.height*0.7} color: #white axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+		    	chart "Mobility Modes" background:#black  type: pie size: {0.4,0.4} position: {world.shape.width*1,world.shape.height*0.6} color: #white axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 				tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 				{
 					loop i from: 0 to: length(mobilityMap.keys)-1	{
 					  data mobilityMap.keys[i] value: mobilityMap.values[i] color:mobilityColorMap[mobilityMap.keys[i]];
 					}
-				}	***/    	
+				}   ***/	
 		    	
 	    	}
 	    	

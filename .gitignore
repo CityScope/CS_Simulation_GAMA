@@ -12,3 +12,9 @@ CS_CityScope_GAMA/.project
 
 CS_CityScope_GAMA_Housing_Choice/results
 *.png
+CityScope_GAMA_Housing_Choice/includesCalibration/City/volpe/arbol_navidad.cpg
+CityScope_GAMA_Housing_Choice/includesCalibration/City/volpe/arbol_navidad.dbf
+CityScope_GAMA_Housing_Choice/includesCalibration/City/volpe/arbol_navidad.prj
+CityScope_GAMA_Housing_Choice/includesCalibration/City/volpe/arbol_navidad.qpj
+CityScope_GAMA_Housing_Choice/includesCalibration/City/volpe/arbol_navidad.shp
+CityScope_GAMA_Housing_Choice/includesCalibration/City/volpe/arbol_navidad.shx
