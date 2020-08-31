@@ -16,10 +16,8 @@ global{
 	file<geometry> entry_point_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_entry_points.shp");
 	file<geometry> Tline_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_Tline.shp");
 	file<geometry> roads_kendall_shapefile <- file<geometry>("./../includesCalibration/City/volpe/Roads.shp");
-	file<geometry> arbol_navidad_shp <- file<geometry>("./../includesCalibration/City/volpe/arbol_navidad.shp");
 	//geometry shape<-envelope(roads_kendall_shapefile);
 	geometry shape<-envelope(roads_shapefile);
-	//geometry shape<-envelope(arbol_navidad_shp);
 	
 	
 	
@@ -93,7 +91,6 @@ global{
 	init{
 		do createBuildings;
 		do createRoads;
-		//do createBubble;
 		do createMinorRoads;
 		do createTlines;
 		do characteristic_file_import;
@@ -163,11 +160,6 @@ global{
 		}
 	}
 	
-	/***action createBubble{
-		
-		create bubble from: arbol_navidad_shp;
-		
-	}***/
 	
 	action createMinorRoads{
 		create minor_road from:roads_kendall_shapefile{
@@ -284,7 +276,7 @@ global{
 	}
 	
 	action createEntryPoints{
-		create entry_point from: entry_point_shapefile with: [type_entry::string(read("mobility")), associatedBubble::int(read("asscBuble"))]{
+		create entry_point from: entry_point_shapefile with: [type_entry::string(read("mobility"))]{
 			entry_point ImTheEntry <- self;
 			create building{
 				ImTheEntry.associatedBuilding <- self;
@@ -553,14 +545,6 @@ global{
 	
 
 }
-
-species bubble parent: building{
-	float occupancy;
-	
-	aspect default {
-		draw shape*occupancy color: rgb(50,50,50,125);
-	}
-}
 	
 species entry_point parent: apartment{
 	string type_entry;
@@ -573,7 +557,6 @@ species entry_point parent: apartment{
 species apartment{
 	int rent;
 	building associatedBuilding;
-	bubble associatedBubble; //only for apartments of type entry_point
 }
 
 species building{
@@ -939,18 +922,9 @@ species people skills: [moving]{
 		}
 		
 		if (location = my_current_objective.place.location) {
-			if(liveInKendall = false and location = livingPlace.associatedBuilding.location){
-				do goto target: livingPlace.associatedBubble.location on: graph_per_mobility_road["car"];
-			}
-			//if(mobilityMode = "car" and updatePollution = true) {do updatePollutionMap;}					
-			else{
 				current_place <- my_current_objective.place;
 				location <- any_location_in(current_place);
 				my_current_objective <- nil;
-			}
-				
-		} else {
-			//if ((current_edge != nil) and (mobilityMode in ["car"])) {road(current_edge).current_concentration <- road(current_edge).current_concentration + 1; }
 		}
 	}
 	
@@ -1042,7 +1016,6 @@ experiment visual type:gui{
 			species T_line aspect: default;
 			//species entry_point aspect: default;
 			species people aspect: default;
-			species bubble aspect: default;
 			
 			/***graphics "time" {
 				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.7,world.shape.height*0.55};
