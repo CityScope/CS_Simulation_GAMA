@@ -82,7 +82,6 @@ global{
 	map<string,float> originalProportions;
 	map<string,float> outKendallProportions;
 	map<string,rgb> colorMap;
-	map<string,float> rentMap;
 	map<string,map<string,int>> activity_data;
 	map<string,graph> graph_per_mobility_road;
 	map<rgb,graph> graph_per_mobility_T;
@@ -1045,16 +1044,17 @@ experiment visual type:gui{
 			species people aspect: default;
 			species bubble aspect: default;
 			
-			graphics "time" {
+			/***graphics "time" {
 				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.7,world.shape.height*0.55};
-			}
+			}***/
 	
-			/***overlay position: { 5, 5 } size: { 240 #px, 270 #px } background: rgb(50,50,50,125) transparency: 1.0 border: #black 
+			overlay position: {5,5} size: { 260 #px,750 #px } background: rgb(50,50,50,125) transparency: 1.0 border: #black 
 		        {            	
-		            rgb text_color<-#white;
-		            float y <- 30#px;
-		            float x <- world.shape.height*1.75;
-		            draw "Icons" at: { 40#px, y } color: text_color font: font("Helvetica", 20, #bold) perspective:false;
+		           rgb text_color<-#white;
+		           float y <- 30#px;
+		           float y2 <- world.shape.height*0.1;
+		           float x <- world.shape.width*0.1;
+		           draw "Icons" at: { 40#px, y } color: text_color font: font("Helvetica", 20, #bold) perspective:false;
 		            y <- y + 30#px;
 		            
 		            loop i from: 0 to: length(prof_list) - 1 {
@@ -1062,30 +1062,36 @@ experiment visual type:gui{
 		            	draw string(prof_list[i]) at: {40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
 		            	y <- y + 25#px;
 		            } 
+		          //  y <- y + 100#px;
+		         	 y <- y + 50#px;
+		            draw "Input: " at:{40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
+		            y <- y + 50#px;
+		            draw "BuiltArea: " +  string(builtArea with_precision 2) + " m2" at:{40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
+		            y <- y + 50#px;
+		           // draw rectangle(builtArea/1000#px,10#px) at: {40#px+builtArea/2/1000#px, y} color:#white border: #white;
+		          //  y <- y + 50#px;
+		            draw "Subsidy: " + string(int(subsidyPerc*100)) + " %" at:{40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
 		            y <- y + 100#px;
-		            draw "INPUT: " at:{40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		           // draw rectangle(int(subsidyPerc*250)#px,10#px) at: {40#px+int(subsidyPerc*250/2)#px, y} color:#white border: #white;
+		           // y <- y + 100#px;
+		            draw "Output: " at:{40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
 		            y <- y + 50#px;
-		            draw "BuiltArea: " +  string(builtArea with_precision 2) + " m2" at:{40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
-		            y <- y + 50#px;
-		            draw rectangle(builtArea/1000#px,10#px) at: {40#px+builtArea/2/1000#px, y} color:#white border: #white;
-		            y <- y + 50#px;
-		            draw "Percentage of subsidy: " + string(int(subsidyPerc*100)) + " %" at:{40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
-		            y <- y + 50#px;
-		            draw rectangle(int(subsidyPerc*250)#px,10#px) at: {40#px+int(subsidyPerc*250/2)#px, y} color:#white border: #white;
-		            y <- y + 100#px;
-		            draw "OUTPUT: " at:{40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
-		            y <- y + 50#px;
-		            draw "Percentage of people working "  at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
-		            y <- y + 50 #px;    
-	              	draw "and living in Kendall: " + string(int(propInKendall*100) ) + " %" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		          //  draw "Percentage of people working "  at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		           // y <- y + 50 #px;    
+	              //	draw "and living in Kendall: " + string(int(propInKendall*100) ) + " %" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		           draw "n_Kendall " + string(int(propInKendall*100) ) + " %" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
 		            y <- y + 50 #px; 
-		            draw rectangle(int(propInKendall*250)#px,10#px) at: {40#px+int(propInKendall*250/2)#px, y} color:#white border: #white;
+		            draw "n_Volpe: " + string(int(propVolpe*100)) + " %" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
 		            y <- y + 50#px;
-		            draw "Mean Commuting Distance: " + string(meanCommDist with_precision 2) + " m" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		           // draw rectangle(int(propInKendall*250)#px,10#px) at: {40#px+int(propInKendall*250/2)#px, y} color:#white border: #white;
+		          //  y <- y + 50#px;
+		          //  draw "Mean Commuting Distance: " + string(meanCommDist with_precision 2) + " m" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		           draw "d_comm: " + string(meanCommDist with_precision 2) + " m" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
 		            y <- y + 50#px;
 		                       
 		          
-		            draw "Mean Commuting Time: " + string(meanCommTime with_precision 2) + " min" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		           // draw "Mean Commuting Time: " + string(meanCommTime with_precision 2) + " min" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",25,#plain) perspective: false;
+		           draw "t_comm: " + string(meanCommTime with_precision 2) + " min" at: {40#px, y + 4#px} color: text_color font: font("Helvetica",16,#plain) perspective: false;
 		            y <- y + 50#px;
 		            
 		           
@@ -1093,13 +1099,13 @@ experiment visual type:gui{
 		            
 		    	}
 		    	
-		    	chart "Mobility Modes" background:#black  type: pie size: {0.4,0.4} position: {world.shape.width*1,world.shape.height*0.6} color: #white axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
+		    	chart "Mobility Modes" background:#black  type: pie size: {0.4,0.4} position: {world.shape.width*0.88,2#px} color: #white axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
 				tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 				{
 					loop i from: 0 to: length(mobilityMap.keys)-1	{
 					  data mobilityMap.keys[i] value: mobilityMap.values[i] color:mobilityColorMap[mobilityMap.keys[i]];
 					}
-				}   ***/	
+				}	
 		    	
 	    	}
 	    	

@@ -14,12 +14,12 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import random
 
-nameFileIN = "DiversityIncentive.csv"
-nameFileOUT = "MLResultsDiversityIncentive.csv"
-nameGraph1 = "DiversityIncentive1.png"
-nameGraph2 = "DiversityIncentive2.png"
-nameGraph3 = "DiversityIncentive3.png"
-nameStatFile = "DiversityIncentiveStats.csv"
+nameFileIN = "calibratedData.csv"
+nameFileOUT = "MLResultsCalibratedDataK.csv"
+nameGraph1 = "calibratedData1K.png"
+nameGraph2 = "calibratedData2K.png"
+nameGraph3 = "calibratedData3K.png"
+nameStatFile = "calibratedDataStatsK.csv"
 max_seedValue = 20000
 
 log = []
@@ -38,9 +38,10 @@ T = []
 
 estimators = [ #different ML estimators can be used and tested
     # ('linear', LinearRegression()),
-    ('decision_tree', tree.DecisionTreeRegressor(criterion = 'mse', max_depth = 5)),
+    #('decision_tree', tree.DecisionTreeRegressor(criterion = 'mse', max_depth = 5)),
     #('decision_tree', tree.DecisionTreeRegressor()),
-    #('kNN_uniform', KNeighborsRegressor(n_neighbors=7, weights='distance'))
+    ('kNN_uniform', KNeighborsRegressor(n_neighbors=4, weights='distance'))
+    #('kNN_uniform', KNeighborsRegressor(n_neighbors=8))
 ]
 
 
@@ -87,6 +88,23 @@ def R_squaredText(predictedVals, expectedVals):
     print("Error comm distance " + str(errorDist))
     print("Volpe Occupancy Error " + str(errorVolpeOccupancy))
     print("R2 score " + str(r2_score(expectedVals,predictedVals)))
+    print("R2 score Kendall " + str(r2_score(expectedVals[:,0], predictedVals[:,0])))
+    print("R2 score Prof1 " + str(r2_score(expectedVals[:, 1], predictedVals[:, 1])))
+    print("R2 score Prof2 " + str(r2_score(expectedVals[:, 2], predictedVals[:, 2])))
+    print("R2 score Prof3 " + str(r2_score(expectedVals[:, 3], predictedVals[:, 3])))
+    print("R2 score Prof4 " + str(r2_score(expectedVals[:, 4], predictedVals[:, 4])))
+    print("R2 score Prof5 " + str(r2_score(expectedVals[:, 5], predictedVals[:, 5])))
+    print("R2 score Prof6 " + str(r2_score(expectedVals[:, 6], predictedVals[:, 6])))
+    print("R2 score Prof7 " + str(r2_score(expectedVals[:, 7], predictedVals[:, 7])))
+    print("R2 score Prof8 " + str(r2_score(expectedVals[:, 8], predictedVals[:, 8])))
+    print("R2 score Car " + str(r2_score(expectedVals[:, 9], predictedVals[:, 9])))
+    print("R2 score Bus " + str(r2_score(expectedVals[:, 10], predictedVals[:, 10])))
+    print("R2 score T " + str(r2_score(expectedVals[:, 11], predictedVals[:, 11])))
+    print("R2 score Bike " + str(r2_score(expectedVals[:, 12], predictedVals[:, 12])))
+    print("R2 score Walking " + str(r2_score(expectedVals[:, 13], predictedVals[:, 13])))
+    print("R2 score time " + str(r2_score(expectedVals[:, 14], predictedVals[:, 14])))
+    print("R2 score distance " + str(r2_score(expectedVals[:, 15], predictedVals[:, 15])))
+    print("R2 score Volpe occ " + str(r2_score(expectedVals[:, 16], predictedVals[:, 16])))
     errors = [errorPropSelectedCity, errorPropProf1, errorPropProf2, errorPropProf3, errorPropProf4, errorPropProf5, errorPropProf6, errorPropProf7, errorPropProf8, errorPropCar, errorPropBus, errorPropT, errorPropBike, errorPropWalking, errorTime, errorDist, errorVolpeOccupancy, (r2_score(expectedVals,predictedVals))]
     return errors
 
@@ -187,7 +205,12 @@ for rndseedValue in range(0,max_seedValue):
     for i in range(50): #Shuffle Data 50 times
         np.random.shuffle(importedData)
 
+    list = importedData[:,0]
+    maxValue = max(list)
+    minValue = min(list)
 
+    for i in range(0,100):
+        importedData[i,0] = (importedData[i,0]-minValue)/(maxValue-minValue)
     index = int(round(importedData.shape[0]*0.8))
 
 
@@ -201,8 +224,9 @@ for rndseedValue in range(0,max_seedValue):
     # mat[0,:] = importedDataRaw[0,0:1] #first case (current non-built situation)
     for price in arange(0, 1.05, 0.05):
         for area in range(10000, 2710000, 10000):
-            mat[cont, 0] = area
+            mat[cont, 0] = (area - minValue) / (maxValue - minValue)
             mat[cont, 1] = price
+            #mat[cont, 2] = area
             cont = cont + 1
 
     R2_value, results_mas, test_predicted = predictions(train_features0, train_results0, test_features0, test_results0, mat)
@@ -214,6 +238,9 @@ for rndseedValue in range(0,max_seedValue):
         test_predicted_final = test_predicted
 
 errors = showGraphs(R2_final,test_simulated_final,test_predicted_final)
+
+for i in range(0,5670):
+    mat[i,0] = mat[i,0]*(maxValue - minValue) + minValue
 
 results_allcolumns = np.concatenate((mat,results_mas_final),axis=1)
 firstlineRaw = importedDataRaw[0,:]
