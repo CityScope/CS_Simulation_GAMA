@@ -16,7 +16,7 @@ global{
 	file<geometry> entry_point_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_entry_points.shp");
 	file<geometry> Tline_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_Tline.shp");
 	file<geometry> roads_kendall_shapefile <- file<geometry>("./../includesCalibration/City/volpe/Roads.shp");
-	//file<geometry> arbol_navidad_shp <- file<geometry>("./../includesCalibration/City/volpe/arbol_navidad.shp");
+	file<geometry> arbol_navidad_shp <- file<geometry>("./../includesCalibration/City/volpe/arbol_navidad.shp");
 	//geometry shape<-envelope(roads_kendall_shapefile);
 	geometry shape<-envelope(roads_shapefile);
 	//geometry shape<-envelope(arbol_navidad_shp);
