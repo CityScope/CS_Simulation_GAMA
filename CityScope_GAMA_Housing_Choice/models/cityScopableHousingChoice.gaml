@@ -1015,7 +1015,7 @@ experiment visual type:gui{
 			species T aspect: default;
 			species T_line aspect: default;
 			//species entry_point aspect: default;
-			species people aspect: default;
+			//species people aspect: default;
 			
 			/***graphics "time" {
 				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.7,world.shape.height*0.55};

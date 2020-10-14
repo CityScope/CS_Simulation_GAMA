@@ -14,12 +14,12 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import random
 
-nameFileIN = "calibratedData.csv"
-nameFileOUT = "MLResultsCalibratedDataK.csv"
-nameGraph1 = "calibratedData1K.png"
-nameGraph2 = "calibratedData2K.png"
-nameGraph3 = "calibratedData3K.png"
-nameStatFile = "calibratedDataStatsK.csv"
+nameFileIN = "KendallFancyIncentive.csv"
+nameFileOUT = "MLResultsKendallFancyIncentiveK.csv"
+nameGraph1 = "KendallFancyIncentive1K.png"
+nameGraph2 = "KendallFancyIncentive2K.png"
+nameGraph3 = "KendallFancyIncentive3K.png"
+nameStatFile = "KendallFancyIncentiveStatsK.csv"
 max_seedValue = 20000
 
 log = []
