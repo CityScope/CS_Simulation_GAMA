@@ -11,6 +11,15 @@ model calibrateDataPercentage
 
 global{
 	
+	//note that the dynamics of this model are very similar to the main model. The difference is: in the main model people use some criteria f(income profile) to choose their housing and mobility options
+	//in this case we have info about the outcome (data of which census block group people working in Kendall live as well as transportation statistics). Two types of errors (housing and mobility) are 
+	// defined so that a criteria exploration process can be held and the combination of criteria leading to the minimum amount of error is identified
+	
+	//comments of parts of code that are similar or even identical to that in the main model are, thus, omited
+	
+	
+	/////////////////////////////////       SHAPEFILES          /////////////////////////////////////////////////
+	
 	file<geometry> blockGroup_shapefile <- file<geometry>("./../includesCalibration/City/volpe/tl_2015_25_bg_msa_14460_MAsss_TOWNS_Neighb.shp");
 	file<geometry> available_apartments <- file<geometry>("./../includesCalibration/City/volpe/apartments_march_great.shp");
 	file<geometry> buildings_shapefile <- file<geometry>("./../includesCalibration/City/volpe/BuildingsLatLongBlock.shp");
@@ -18,59 +27,63 @@ global{
 	file<geometry> T_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_NODE_MAss_color.shp");
 	file<geometry> bus_stops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/MBTA_BUS_MAss.shp");
 	file<geometry> road_shapefile <- file<geometry>("./../includesCalibration/City/volpe/simplified_roads.shp");
+	
+	// GEOID collection of the census block groups belonging to the area of interest (this could have been done directly in QGIS)
+	
 	file kendallBlocks_file <- file("./../includesCalibration/City/volpe/KendallBlockGroupstxt.txt");
-	file criteria_home_file <- file("./../includesCalibration/Criteria/CriteriaHome.csv");
-	file activity_file <- file("./../includesCalibration/Criteria/ActivityPerProfile.csv");
-	file mode_file <- file("./../includesCalibration/Criteria/Modes.csv");
-	file profile_file <- file("./../includesCalibration/Criteria/Profiles.csv");
+	
+	
+	
+	////////////////////////////////        CSV FILES         ///////////////////////////////////////////////////////
+	
+	file criteria_home_file <- file("./../includesCalibration/Criteria/CriteriaHome.csv"); //home preference parameters f(income profile). Starting points will be taken from here
+	file activity_file <- file("./../includesCalibration/Criteria/ActivityPerProfile.csv"); //daily activity schedules for each agent f(income profile)
+	file mode_file <- file("./../includesCalibration/Criteria/Modes.csv"); //available mobility modes and their characteristics (as for now only walking, biking, metro (T), bus and car are considered
+	file profile_file <- file("./../includesCalibration/Criteria/Profiles.csv"); //income profiles and their incidence
 	file weather_coeff <- file("../includesCalibration/Criteria/weather_coeff_per_month.csv");
-	file criteria_file <- file("../includesCalibration/Criteria/CriteriaFile.csv");
-	file population_file <- file("../includesCalibration/City/censusDataGreaterBoston/censusDataClustered.csv");
-	file real_Kendall_data_file <- file("../includesCalibration/City/censusDataGreaterBoston/kendallWorkersCleaned.csv");
-	file real_mobility_data_file <- file("../includesCalibration/Criteria/realKendallMobility.csv");
+	file criteria_file <- file("../includesCalibration/Criteria/CriteriaFile.csv"); //synthetic criteria file for mobility preferences
+	file population_file <- file("../includesCalibration/City/censusDataGreaterBoston/censusDataClustered.csv"); //real census data of the area of interest (used to calculate diversity metrics)
+	file real_Kendall_data_file <- file("../includesCalibration/City/censusDataGreaterBoston/kendallWorkersCleaned.csv"); //census block groups where people working in the area of interest live (this data is only available for a small propotion of them, it will be extrapolated to the whoel amount of workers, once their preference criteria is identified)
+	file real_mobility_data_file <- file("../includesCalibration/Criteria/realKendallMobility.csv"); //transportation data 
 	geometry shape<-envelope(T_lines_shapefile);
 	
+	//list of neighbourhoods needs to be changed for each calibration scenario (Cambridge, Boston, Hamburg etc)
 	list<string> list_neighbourhoods <- ["Area 2/MIT",'The Port','Neighborhood Nine','East Cambridge','Cambridgeport','Riverside','Mid-Cambridge','Wellington-Harrington','Cambridge Highlands','Strawberry Hill','West Cambridge','North Cambridge','BOSTON','ARLINGTON','SOMERVILLE','WEYMOUTH','MARBLEHEAD','DANVERS','SALEM','BEVERLY','LYNN','NORTH ANDOVER','BOXFORD','IPSWICH','MIDDLETON','TOPSFIELD','LAWRENCE','ESSEX','WENHAM','HAMILTON','MANCHESTER','PEABODY','NORTH READING','LYNNFIELD','ANDOVER','GEORGETOWN','ROWLEY','METHUEN','HAVERHILL','NEWBURY','GROVELAND','WEST NEWBURY','MERRIMAC','NEWBURYPORT','ROCKPORT','GLOUCESTER','READING','WAKEFIELD','SAUGUS','AMESBURY','FOXBOROUGH','SHARON','QUINCY','WELLESLEY','NEEDHAM','DOVER','CANTON','WESTWOOD','NORWOOD','HULL','COHASSET','HINGHAM','SCITUATE','MEDFIELD','MILTON','SHERBORN','NATICK','FRAMINGHAM','GROTON','LITTLETON','AYER','TEWKSBURY','WILMINGTON','RANDOLPH','AVON','HOLBROOK','NORFOLK','WRENTHAM','WALPOLE','MILLIS','MEDWAY','HOLLISTON','BURLINGTON','MEDFORD','BROOKLINE','DEDHAM','BRAINTREE','BELLINGHAM','FRANKLIN','TYNGSBOROUGH','WESTFORD','CHELSEA','REVERE','EVERETT','NEWTON','WATERTOWN','MALDEN','STOUGHTON','WINTHROP','ABINGTON','ROCKLAND','CONCORD','CARLISLE','BILLERICA','BEDFORD','STONEHAM','MELROSE','LOWELL','WALTHAM','STOW','ACTON','CHELMSFORD','LINCOLN','SUDBURY','WESTON','MAYNARD','MARLBOROUGH','HUDSON','NORWELL','HANOVER','PEMBROKE','HANSON','BROCKTON','WEST BRIDGEWATER','DRACUT','BELMONT','ASHLAND','HOPKINTON','PEPPERELL','TOWNSEND','MARSHFIELD','WHITMAN','WOBURN','WINCHESTER','EAST BRIDGEWATER','MIDDLEBOROUGH','PLYMPTON','BRIDGEWATER','LAKEVILLE','KINGSTON','WAREHAM','PLYMOUTH','LEXINGTON','DUXBURY','CARVER','MARION','MATTAPOISETT','SWAMPSCOTT','SALISBURY','NAHANT','OUTSKIRTS'];
-	map<string, map<string,float>> neighbourhoods_real <- map([]);
-	map<string, map<string,int>> neighbourhoods_real_int <- map([]);
-	map<string, map<string,float>> neighbourhoods_now <- map([]);
-	map<string, map<string,int>> neighbourhoods_now_int <- map([]);
+	map<string, map<string,float>> neighbourhoods_real <- map([]); //map of all the neighbourhoods availble. Within each element there is a map that represents the percentage of people of type j that live there according to real data
+	map<string, map<string,int>> neighbourhoods_real_int <- map([]); //same but in number of people of type j that live there
+	map<string, map<string,float>> neighbourhoods_now <- map([]); //same as neighbourhoods_real but instead of based on real data, based on simulation results
+	map<string, map<string,int>> neighbourhoods_now_int <- map([]); //same as neighbourhoods_real_int but instead of based on real data, based on simulation results
 	
 	
 	int it;
-	int nb_people <- 996; //for example. Nearly x2 of vacant spaces in Kendall
+	int nb_people <- 996; //number of people for whom there is data regarding their census block group
 	float maxRent;
 	float minRent;
 	float maxDiversity;
 	float minDiversity;
-	int realTotalPeople <- 0;
-	int realTotalAgents <- 0;
 	bool weatherImpact<-false;
 	float weather_of_day min: 0.0 max: 1.0;	
-	int reference_rent <- 1500;
+	int reference_rent <- 1500; //commuting costs will be calculated as a percentage of this reference rent price
 	int days_per_month <- 20; //labour days per month
 	int movingPeople;
-	int peopleInMainCity;
-	float meanRentPeople;
 	float meanDiver <- 0.0;
 	float meanDiverNorm <- 0.0;
-	float propCar;
-	int intCar;
+	float propCar; //percentage of people using cars
+	int intCar; //number (int) of people using cars
 	float propBike;
 	int intBike;
-	float propTransit;
+	float propTransit; //T + bus
 	int intTransit;
 	float propWalking;
 	int intWalking;
-	float mobilityError;
-	float mobilityErrorInt;
-	float housingErrorTotal;
+	float mobilityError; //mean square root error of percentage of mobility choice usage
+	float mobilityErrorInt; //RMSE of number of people using a mobility choice that differs what data says
+	float housingErrorTotal; //idem for housing error
 	float housingErrorTotalInt;
-	float meanHousingError;
-	matrix kendall_real_pop;
+	matrix kendall_real_pop; //real population in the area of interest
 	
-	float price_main_trip_30000 <- -0.95;
-	float price_main_trip_30000_44999 <- -0.9;
+	float price_main_trip_30000 <- -0.95; //starting value for importance given to commuting cost for income profile <$30,000 
+	float price_main_trip_30000_44999 <- -0.9; //idem for income profile 30,000-44,999
 	float price_main_trip_45000_59999 <- -0.8;
 	float price_main_trip_60000_99999 <- -0.7;
 	float price_main_trip_100000_124999 <- -0.6;
@@ -80,7 +93,7 @@ global{
 	
 	list<float> price_main_trip_list <- [price_main_trip_30000, price_main_trip_30000_44999, price_main_trip_45000_59999, price_main_trip_60000_99999, price_main_trip_100000_124999, price_main_trip_125000_149999, price_main_trip_150000_199999, price_main_trip_200000];
 	
-	float time_main_trip_30000 <- -0.7;
+	float time_main_trip_30000 <- -0.7; //stating value for commuting time for income profile <$30,000
 	float time_main_trip_30000_44999 <- -0.75;
 	float time_main_trip_45000_59999 <- -0.8;
 	float time_main_trip_60000_99999 <- -0.85;
@@ -91,7 +104,7 @@ global{
 	
 	list<float> time_main_trip_list <- [time_main_trip_30000, time_main_trip_30000_44999, time_main_trip_45000_59999, time_main_trip_60000_99999, time_main_trip_100000_124999, time_main_trip_125000_149999, time_main_trip_150000_199999, time_main_trip_200000];
 	
-	float pattern_main_trip_30000 <- 1.0;
+	float pattern_main_trip_30000 <- 1.0; //starting value for social pattern imprtance of mobility mode for income profile <$30,000
 	float pattern_main_trip_30000_44999 <- 1.0;
 	float pattern_main_trip_45000_59999 <- 0.95;
 	float pattern_main_trip_60000_99999 <- 0.8;
@@ -102,7 +115,7 @@ global{
 	
 	list<float> pattern_main_trip_list <- [pattern_main_trip_30000, pattern_main_trip_30000_44999, pattern_main_trip_45000_59999, pattern_main_trip_60000_99999, pattern_main_trip_100000_124999, pattern_main_trip_125000_149999, pattern_main_trip_150000_199999, pattern_main_trip_200000];
 	
-	float difficulty_main_trip_30000 <- -0.65;
+	float difficulty_main_trip_30000 <- -0.65; //starting value for difficulty importance when commuting for income profile <$30,000
 	float difficulty_main_trip_30000_44999 <- -0.65;
 	float difficulty_main_trip_45000_59999 <- -0.7;
 	float difficulty_main_trip_60000_99999 <- -0.75;
@@ -113,7 +126,7 @@ global{
 	
 	list<float> difficulty_main_trip_list <- [difficulty_main_trip_30000, difficulty_main_trip_30000_44999, difficulty_main_trip_45000_59999, difficulty_main_trip_60000_99999, difficulty_main_trip_100000_124999, difficulty_main_trip_125000_149999, difficulty_main_trip_150000_199999, difficulty_main_trip_200000];
 	
-	matrix criteriaHome_matrix <- matrix(criteria_home_file);
+	matrix criteriaHome_matrix <- matrix(criteria_home_file); //starting values for housing preferences are taken from the synthetic Criteria file (price importance, diversity acceptance, prefered zone and importance of this zone)
 		
 	float price_home_30000 <- criteriaHome_matrix[1,0];
 	float price_home_30000_44999 <- criteriaHome_matrix[1,1];
@@ -138,7 +151,7 @@ global{
 	
 	list<float> divacc_list <- [diver_home_30000, diver_home_30000_44999, diver_home_45000_59999, diver_home_60000_99999, diver_home_100000_124999, diver_home_125000_149999, diver_home_150000_199999, diver_home_200000];
 	
-	int zone_home_30000 <- 0;
+	int zone_home_30000 <- 0; //position of the prefered zone within the complete list of neighbourhoods
 	int zone_home_30000_44999 <- 0;
 	int zone_home_45000_59999 <- 7;
 	int zone_home_60000_99999 <- 7;
@@ -162,34 +175,29 @@ global{
 	
 	
 	map<string,int> density_map<-["S"::15,"M"::55, "L"::89];
-	list<blockGroup> kendallBlockList;
-	list<rentApartment> kendallApartmentList;
-	map<string,map<string,list<float>>> weights_map <- map([]);
+	list<blockGroup> kendallBlockList; //list of census block groups within the area of interest
+	list<rentApartment> kendallApartmentList; //available apartments within the area of interest (Padmapper, March 2020)
+	map<string,map<string,list<float>>> weights_map <- map([]); //imporance of each mobility mode criteria f(income profile, destination)
 	list<string> type_people;
-	map<string,float> priceImp_map;
-	map<string,float> divacc_map;
-	map<string,string> vacancyPerPerson_list;
-	map<string,float> vacancyPerPersonWeight_list;
-	map<string,string> pattern_map;
-	map<string,float> patternWeight_map;
-	map<string,list<float>> charact_per_mobility;
+	map<string,float> priceImp_map; //housing price importance f(income profile)
+	map<string,float> divacc_map; // diversity acceptance f(income profile)
+	map<string,string> pattern_map; //preferred zone map f(income profile)
+	map<string,float> patternWeight_map; //weight given to this preferred zone f(income profile)
+	map<string,list<float>> charact_per_mobility;  ////characteristics of each mobility mode (fixed price, waiting time etc)
 	map<string,rgb> color_per_mobility;
-	map<string,float> width_per_mobility;
 	map<string,float> speed_per_mobility;
 	map<string,float> weather_coeff_per_mobility;
-	map<string,graph> graph_per_mobility;
+	map<string,graph> graph_per_mobility; //road / metro line topology for each mobility mode
 	map<string,rgb> color_per_type;	
-	map<string, float> proba_bike_per_type;
-	map<string, float> proba_car_per_type;
-	map<string, float> proportion_per_type;
+	map<string, float> proba_bike_per_type; //probability of owning a bike f(income profile)
+	map<string, float> proba_car_per_type; //idem for cars
 	map<string,string> main_activity_map;
-	map<string,float> time_importance_per_type;
+	map<string,float> time_importance_per_type; //importance given to commuting time f(income profile)
 	list<list<float>> weather_of_month;
 	map<road,float> congestion_map; 
-	map<string,map<string,float>> propPeople_per_mobility_type <- map([]);
 	list<string> allPossibleMobilityModes;
-	map<string,float> people_per_Mobility_now;
-	map<string,int> people_per_Mobility_now_int;
+	map<string,float> people_per_Mobility_now; //percentage of people using mobility mode i
+	map<string,int> people_per_Mobility_now_int; //number (int) of people using mobility mode i
 
 		
 	init{
@@ -245,9 +253,9 @@ global{
 	action createBlockGroups{
 		create blockGroup from: blockGroup_shapefile with:[GEOID::string(read("GEOID")), lat::float(read("INTPTLAT")), long::float(read("INTPTLON")), city::string(read("TOWN")), neighbourhood::string(read("Neighbourh"))]{
 		}
-		ask blockGroup{		
+		ask blockGroup{ //discussed in main model
 			busStop closestBusStop <- busStop closest_to(self);
-			if(closestBusStop != nil){
+			if(closestBusStop != nil){ 
 				float distancia <- distance_to(self.location, closestBusStop.location);
 				float distancia2 <- distance_to(any_location_in(self), closestBusStop.location);
 				if(distancia < 700 or distancia2 < 700){
@@ -282,7 +290,7 @@ global{
 		}
 	}
 	
-	action createApartments{
+	action createApartments{ //discussed in main model
 		create rentApartment from: available_apartments with: [rentAbs::int(read("Rent")), numberBedrooms::int(read("NBedrooms")), GEOIDAp::string(read("GEOID"))]{
 			associatedBlockGroup <- one_of(blockGroup where(each.GEOID = GEOIDAp));
 			if (associatedBlockGroup = nil){
@@ -295,7 +303,7 @@ global{
 		}
 	}
 	
-	action calculateAverageFeatureBlockGroups{
+	action calculateAverageFeatureBlockGroups{ //discussed in main model
 		//if vacantBedrooms = 0 in a certain blockGroup but vacantSpaces != 0 that means they are all studios
 		// we are interested in price per vacantSpace
 		list<list<rentApartment>> listApartmentsInMe;
@@ -343,7 +351,7 @@ global{
 		
 	}
 	
-	list calculate_Features(list<rentApartment> gen_apartment_list){
+	list calculate_Features(list<rentApartment> gen_apartment_list){ //discussed in main model
 		int vacantSpaces_gen;
 		int vacantBedrooms_gen;
 		float rentAbsVacancy_gen;
@@ -391,7 +399,7 @@ global{
 		minDiversity <- min(blockGroup where(each.totalPeople != 0) collect each.diversity);
 	}
 	
-	action identifyKendallBlocks{
+	action identifyKendallBlocks{ //discussed in main model
 		matrix kendall_blocks <- matrix(kendallBlocks_file);
 		list<string> kendallBlockListString;
 		
@@ -448,7 +456,7 @@ global{
 		}
 	}
 	
-	action createBuildings{
+	action createBuildings{ //discussed in main model
 		create building from: buildings_shapefile with:[usage::string(read("Usage")),scale::string(read("Scale")),category::string(read("Category")), FAR::float(read("FAR")), max_height::float(read("Max_Height")), type::string(read("TYPE")), neighbourhood::string(read("NAME")), ID::int(read("BUILDING_I")),lat::float(read("Latitude")), long::float(read("Longitude")), GEOIDBuild::string(read("GEOID"))]{
 			area <- shape.area;
 			perimeter <- shape.perimeter;	
@@ -590,15 +598,13 @@ global{
 			type_people << criteriaHome_matrix[0,i];
 			priceImp_map << (type_people[i]::priceImp_list[i]);						
 			divacc_map << (type_people[i]:: divacc_list[i]);
-			vacancyPerPerson_list << (type_people[i]::criteriaHome_matrix[3,i]);
-			vacancyPerPersonWeight_list << (type_people[i]::criteriaHome_matrix[4,i]);
 			pattern_map << (type_people[i]::pattern_list[i]);
 			patternWeight_map << (type_people[i]::patternWeight_list[i]);		
 			 
 		}
 	}
 	
-	action  criteria_file_import{
+	action  criteria_file_import{ //discussed in main model
 		matrix criteria_matrix <- matrix (criteria_file);
 		int nbCriteria <- criteria_matrix[1,0] as int;
 		int nbTO <- criteria_matrix[1,1] as int ;
@@ -617,7 +623,7 @@ global{
 						if(index>4){
 							add float(criteria_matrix[index,i]) to: l2;
 						}
-						if(index = 1){
+						if(index = 1){ //criteria for main activity commuting trip os directly taken from the parameters we are iteraring through
 							add price_main_trip_list[i - 5] to: l2;
 						}
 						if(index = 2){
@@ -654,7 +660,6 @@ global{
 				allPossibleMobilityModes << mobility_type;
 				charact_per_mobility[mobility_type] <- vals;
 				color_per_mobility[mobility_type]<- rgb(mode_matrix[7,i]);
-				width_per_mobility[mobility_type]<- float(mode_matrix[8,i]);
 				speed_per_mobility[mobility_type]<- float(mode_matrix[9,i]);
 				weather_coeff_per_mobility[mobility_type]<- float(mode_matrix[10,i]);
 			}
@@ -669,14 +674,12 @@ global{
 				color_per_type[profil_type] <- rgb(profile_matrix[1,i]);
 				proba_car_per_type[profil_type]<-float(profile_matrix[2,i]);
 				proba_bike_per_type[profil_type]<-float(profile_matrix[3,i]);
-				proportion_per_type[profil_type]<-float(profile_matrix[4,i]);
 			}
 		}	
 		
 		color_per_type [] >>- "nil";
 		proba_car_per_type [] >>- "nil";
 		proba_bike_per_type [] >>- "nil";
-		proportion_per_type [] >>- "nil";
 	}
 	
 	action compute_graph{
@@ -688,7 +691,7 @@ global{
 	}
 	
 	
-	action activityDataImport{
+	action activityDataImport{ //discussed in main model
 		matrix activity_matrix <- matrix(activity_file);
 		loop i from: 1 to: activity_matrix.rows -1{
 			map<string,int> activities;
@@ -766,7 +769,7 @@ global{
 		weather_of_day<- gauss(weather_m[0],weather_m[1]);
 	}
 	
-	action createPopulation{
+	action createPopulation{ //creation of a reduced population based on the available data. Criteria will be then extrapolated to the real amount of people working in the area
 		
 		kendall_real_pop <- matrix(real_Kendall_data_file);
 		string name_pop <- kendall_real_pop[0,0];
@@ -774,12 +777,12 @@ global{
 		
 		loop i from: 0 to: kendall_real_pop.rows - 1{
 			create people number: kendall_real_pop[1,i]{
-				type <- kendall_real_pop[2,i];
-				agent_per_point <- 1; //for calibration each point will represent a person
-				real_GEOID <- kendall_real_pop[0,i];
+				type <- kendall_real_pop[2,i]; //the income profile has been approximated to the income profile that has the greatest incidence within the census block group where the person lives
+				agent_per_point <- 1; //for calibration each point will represent a person (there are not so many people)
+				real_GEOID <- kendall_real_pop[0,i]; //GEOID of the actual census block group where this person lives
 				realBlockGroup <- one_of(blockGroup where(each.GEOID = real_GEOID));
 				
-				living_place <- one_of(building where (each.vacantSpaces >= 1*agent_per_point and each.outskirts = false));
+				living_place <- one_of(building where (each.vacantSpaces >= 1*agent_per_point and each.outskirts = false)); //the objective is to get to the point where the simulation ends up inferring (based on the preference criteria) where this person will live and that it matches the real data. But for a first iteration a random living place is assigned to them
 				
 				if (living_place != nil){
 					actualCity <- living_place.associatedBlockGroup.city;
@@ -789,7 +792,7 @@ global{
 				}
 				else{
 					living_place <- one_of(building where(each.outskirts = true));
-					living_place.peopleWhoJustCame <- living_place.peopleWhoJustCame + 1*agent_per_point;
+					living_place.peopleWhoJustCame <- living_place.peopleWhoJustCame + 1*agent_per_point; //monitoring attribute to check whether it is necessary to update the diversity metric
 					actualNeighbourhood <- living_place.associatedBlockGroup.neighbourhood;
 					actualCity <- living_place.associatedBlockGroup.city;
 				}
@@ -808,6 +811,8 @@ global{
 				living_place.associatedBlockGroup.populationBlockGroup[type] <- living_place.associatedBlockGroup.populationBlockGroup[type] + 1 * agent_per_point;
 				living_place.associatedBlockGroup.peopleInMe << self;
 				
+				
+				//discussed in main model
 				actualPatternWeight <- calculate_patternWeight(actualNeighbourhood);
 				list<string> extract_list <- pattern_map[type];
 				if (living_place.neighbourhood = extract_list[0]){
@@ -874,7 +879,7 @@ global{
 		}
 	}
 	
-	action import_mobility_data{
+	action import_mobility_data{ //import real transportation data
 		matrix kendall_real_mobility <- matrix(real_mobility_data_file);
 		propCar <- kendall_real_mobility[1,2];
 		intCar <- propCar * nb_people;
@@ -886,25 +891,24 @@ global{
 		intWalking <- propWalking * nb_people;
 	}
 	
-	action countMobility{
-		mobilityError <- 0.0;
-		mobilityErrorInt <- 0.0;
-		float errorPropCar;
-		float errorIntCar;
+	action countMobility{ //mobility error computation
+		mobilityError <- 0.0; //difference in percentage between simulation and real transportation data (in general terms)
+		mobilityErrorInt <- 0.0; //difference in number of people btw simulation and real transporation data
+		float errorPropCar; //same as mobility error but just for car usage
+		float errorIntCar;  //same as mobilityErrorInt but just for car usage
 		float errorPropTransit;
 		float errorIntTransit;
 		float errorPropBike;
 		float errorIntBike;
 		float errorPropWalking;
 		float errorIntWalking;
-		float propBus;
+		float propBus; //transit = T + bus, but in the simulation we will have the breakdown of each of them
 		int intBus;
 		float propT;
 		int intT;
 		float propTransitNow;
 		int intTransitNow;
-		
-		propPeople_per_mobility_type <- map([]);	
+	
 		loop i from: 0 to: length(allPossibleMobilityModes) - 1{
 			loop j from:0 to: length(type_people) - 1{
 				int nPeople <- 0;
@@ -912,14 +916,14 @@ global{
 					nPeople <- nPeople + agent_per_point;
 				}
 				
-				people_per_Mobility_now[allPossibleMobilityModes[i]] <- nPeople/nb_people;	
+				people_per_Mobility_now[allPossibleMobilityModes[i]] <- nPeople/nb_people;	//percentage of people agents that use mobility mode i regardless of their income profile
 				people_per_Mobility_now_int[allPossibleMobilityModes[i]] <- nPeople;		
 			}
 		}
 		loop i from: 0 to: length(people_per_Mobility_now) - 1{
 			if (people_per_Mobility_now.keys[i] = "walking"){
-				errorPropWalking <- (people_per_Mobility_now.values[i] - propWalking)^2;
-				errorIntWalking <- (people_per_Mobility_now_int.values[i] - intWalking)^2;				
+				errorPropWalking <- (people_per_Mobility_now.values[i] - propWalking)^2; // Squared error in percentage for people walking
+ 				errorIntWalking <- (people_per_Mobility_now_int.values[i] - intWalking)^2; //Squared error in number of people for people walking	
 			}
 			else if(people_per_Mobility_now.keys[i] = "car"){
 				errorPropCar <- (people_per_Mobility_now.values[i] - propCar)^2;
@@ -940,12 +944,12 @@ global{
 		}
 		propTransitNow <- propBus + propT;
 		intTransitNow <- intBus + intT;
-		errorPropTransit <- (propTransitNow - propTransit)^2;
+		errorPropTransit <- (propTransitNow - propTransit)^2; //Squared error for transit (once the error for bus and bus have been calculated separately)
 		errorIntTransit <- (intTransitNow - intTransit)^2;
-		mobilityError <- 1/4*(errorPropWalking + errorPropCar + errorPropBike + errorPropTransit);
-		mobilityErrorInt <- 1/2*(errorIntWalking + errorIntCar + errorIntBike + errorIntTransit);
-		mobilityError <- sqrt(mobilityError);
-		mobilityErrorInt <- sqrt(mobilityErrorInt);
+		mobilityError <- 1/4*(errorPropWalking + errorPropCar + errorPropBike + errorPropTransit); //MSE for mobility error in percentage
+		mobilityErrorInt <- 1/2*(errorIntWalking + errorIntCar + errorIntBike + errorIntTransit); //MSE for mobility error in number of people
+		mobilityError <- sqrt(mobilityError); //RMSE for mobility error in percentage
+		mobilityErrorInt <- sqrt(mobilityErrorInt); //RMSE for mobility error in number of people
 
 	}
 	
@@ -954,25 +958,25 @@ global{
 		meanDiver <- mean(blockGroup where(each.totalPeople != 0) collect each.diversity);
 	}
 	
-	action calculateRealPercentages{
+	action calculateRealPercentages{ //definition of maps that will gather housing info (based on data and simulations). 
 		loop i from: 0 to: length(list_neighbourhoods) - 1{
-			map<string, float> local_neighbourhoods_real <- map([]);
-			map<string, float> local_neighbourhoods_now <- map([]);
-			map<string, int> local_neighbourhoods_real_int <- map([]);
+			map<string, float> local_neighbourhoods_real <- map([]); //according to real data, percentage of people of type j that live in neighbourhood i
+			map<string, float> local_neighbourhoods_now <- map([]); //according to the simulation, percentage of people of type j that live in neighbourhood i
+			map<string, int> local_neighbourhoods_real_int <- map([]); //same but measured in number of people
 			map<string, int> local_neighbourhoods_now_int <- map([]);
 			loop j from: 0 to: length(type_people)- 1{
-				local_neighbourhoods_real[type_people[j]] <- 0;
+				local_neighbourhoods_real[type_people[j]] <- 0; //initialization in zero in each iteration. Each time we start counting from zero and ask every agent where they are living
 				local_neighbourhoods_now[type_people[j]] <- 0;
 				local_neighbourhoods_real_int[type_people[j]] <- 0;
 				local_neighbourhoods_now_int[type_people[j]] <- 0;
 			}
-			add local_neighbourhoods_real to: neighbourhoods_real at: list_neighbourhoods[i];
+			add local_neighbourhoods_real to: neighbourhoods_real at: list_neighbourhoods[i]; 
 			add local_neighbourhoods_now to: neighbourhoods_now at: list_neighbourhoods[i];
 			add local_neighbourhoods_real_int to: neighbourhoods_real_int at: list_neighbourhoods[i];
 			add local_neighbourhoods_now_int to: neighbourhoods_now_int at: list_neighbourhoods[i];
 		}
 		
-		loop i from:0 to: kendall_real_pop.rows - 1{
+		loop i from:0 to: kendall_real_pop.rows - 1{ //read and write data to the corresponding map
 			blockGroup blockGroupNow <- one_of(blockGroup where(each.GEOID = kendall_real_pop[0,i]));
 			string blockGroupNeighbourhood <- blockGroupNow.neighbourhood;
 			int nPeopleHere <- kendall_real_pop[1,i];
@@ -989,18 +993,18 @@ global{
 		}
 	}
 	
-	action computeErrorHousing{
+	action computeErrorHousing{ //housing error computing
 		housingErrorTotal <- 0.0;		
 		ask people{
 			 map<string, int> extract_map_neighbourhoods_now_int <- map([]);			
 			 extract_map_neighbourhoods_now_int <- neighbourhoods_now_int[actualNeighbourhood];
-			 extract_map_neighbourhoods_now_int[type] <- extract_map_neighbourhoods_now_int[type] + 1*agent_per_point;
+			 extract_map_neighbourhoods_now_int[type] <- extract_map_neighbourhoods_now_int[type] + 1*agent_per_point; //add oneself to according to their income profile to the corresponding population map of the neighbourhood they are living in 
 			 add extract_map_neighbourhoods_now_int to: neighbourhoods_now_int at: actualNeighbourhood;
 			 
 		}
 		
-		float localHousingError <- 0.0;
-		float localHousingErrorInt <- 0.0;
+		float localHousingError <- 0.0; //error in percentage
+		float localHousingErrorInt <- 0.0; //error in number of people
 		loop i from:0 to: length(list_neighbourhoods) - 1{
 			
 			map<string, float> extract_neighbourhoods_now <- map([]);
@@ -1014,20 +1018,20 @@ global{
 			
 			
 			loop j from: 0 to: length(type_people) - 1{
-				extract_neighbourhoods_now[type_people[j]] <- extract_neighbourhoods_now_int[type_people[j]] / nb_people;				
+				extract_neighbourhoods_now[type_people[j]] <- extract_neighbourhoods_now_int[type_people[j]] / nb_people;	 //calculation of percentage of people of type j that live in neighbourhood i			
 				
-				localHousingError <- (extract_neighbourhoods_now[type_people[j]] - extract_neighbourhoods_real[type_people[j]])^2;
-				localHousingErrorInt <- (extract_neighbourhoods_now_int[type_people[j]] - extract_neighbourhoods_real_int[type_people[j]])^2;
+				localHousingError <- (extract_neighbourhoods_now[type_people[j]] - extract_neighbourhoods_real[type_people[j]])^2; //Squared error btw simulation and reality in percentage
+				localHousingErrorInt <- (extract_neighbourhoods_now_int[type_people[j]] - extract_neighbourhoods_real_int[type_people[j]])^2; //same but in number of people
 			}
 			add extract_neighbourhoods_now to: neighbourhoods_now at: list_neighbourhoods[i] ;
 			housingErrorTotal <- housingErrorTotal + localHousingError;
 			housingErrorTotalInt <- housingErrorTotalInt + localHousingErrorInt;
 		}
-		housingErrorTotal <- sqrt(housingErrorTotal / (length(list_neighbourhoods) - 1));
-		housingErrorTotalInt <- sqrt(housingErrorTotalInt) / (length(list_neighbourhoods) - 1);
+		housingErrorTotal <- sqrt(housingErrorTotal / (length(list_neighbourhoods) - 1)); //RMSE of housing error in percentage
+		housingErrorTotalInt <- sqrt(housingErrorTotalInt) / (length(list_neighbourhoods) - 1); //same but in number of people
 	}
 
-	reflex peopleMove{
+	reflex peopleMove{ //discussed in main model
 		movingPeople <- 0;
 		ask blockGroup{
 			sthHasChanged <- false;
@@ -1049,7 +1053,7 @@ global{
 	}
 }
 
-species blockGroup{
+species blockGroup{ //discussed in main model
 	string GEOID;
 	float lat;
 	float long;
@@ -1118,7 +1122,7 @@ species rentApartment{
 	}
 }
 
-species building{
+species building{ 
 	blockGroup associatedBlockGroup;
 	string usage;
 	string scale;
@@ -1187,7 +1191,7 @@ species road{
 	}
 }
 
-species people{
+species people{ //discussed in main model
 	string type;
 	int agent_per_point;
 	building living_place;
@@ -1466,7 +1470,7 @@ species people{
 	}
 }
 
-experiment gui_lets_see type: gui{
+experiment gui_lets_see type: gui{ //gui created just to see if the code was working correctly
 	output{
 		display map type: opengl draw_env: false background: #black{
 			species blockGroup aspect: default;
@@ -1507,6 +1511,8 @@ experiment gui_lets_see type: gui{
 }
 
 experiment exploration type: batch keep_seed: true until: (movingPeople < 0.1*nb_people ) or ( cycle > 4 ) {
+	//exploration of all the parameters (4 housing related preference parameters, 4 mobility related preference parameters multiplied by 8 income profiles  ==> 64 parameters to explore
+	
 	parameter "Price Importance main trip <$30000 " var: price_main_trip_30000 init: -0.6 min: -1.0 max: 0.0 step: 0.1;
 	parameter "Price Importance main trip $300000 - $44999 " var: price_main_trip_30000_44999 init: -0.5 min: -1.0 max: 0.0 step: 0.1;
 	parameter "Price Importance main trip $45000 - $59999 " var: price_main_trip_45000_59999 init: -0.1 min: -1.0 max: 0.0 step: 0.1;
@@ -1581,6 +1587,7 @@ experiment exploration type: batch keep_seed: true until: (movingPeople < 0.1*nb
 	
     
    
+   //simple objective optimization. Multi-objective optimization has been narrowed down to the minimization of the sum of both errors. simple hill-climbing algorithm has been deployed
     method hill_climbing iter_max: 100 minimize: housingErrorTotal + mobilityError;
     /***method annealing 
     	temp_init: 100 temp_end:1
@@ -1595,14 +1602,14 @@ experiment exploration type: batch keep_seed: true until: (movingPeople < 0.1*nb
         nb_prelim_gen: 1 max_gen: 20; 
     
    ***/
-   reflex save_results_explo {
+   reflex save_results_explo { //after each iteration the 64 parameters along with the corresponding errors and the amount of people thath would still want to live (expected to approach an asymptote after 4 iterations) have been recorded
         int cpt <- 0;
         int it;
         ask simulations {
         	it <- int(self);
             save [int(self), movingPeople, housingErrorTotal, mobilityError ,price_main_trip_30000, price_main_trip_30000_44999, price_main_trip_45000_59999, price_main_trip_60000_99999, price_main_trip_100000_124999, price_main_trip_125000_149999, price_main_trip_150000_199999, price_main_trip_200000, time_main_trip_30000, time_main_trip_30000_44999, time_main_trip_45000_59999, time_main_trip_60000_99999, time_main_trip_100000_124999, time_main_trip_125000_149999, time_main_trip_150000_199999, time_main_trip_200000, pattern_main_trip_30000, pattern_main_trip_30000_44999, pattern_main_trip_45000_59999, pattern_main_trip_60000_99999, pattern_main_trip_100000_124999, pattern_main_trip_125000_149999, pattern_main_trip_150000_199999, pattern_main_trip_200000, difficulty_main_trip_30000, difficulty_main_trip_30000_44999, difficulty_main_trip_45000_59999, difficulty_main_trip_60000_99999, difficulty_main_trip_100000_124999, difficulty_main_trip_125000_149999, difficulty_main_trip_150000_199999, difficulty_main_trip_200000, price_home_30000, price_home_30000_44999, price_home_45000_59999, price_home_60000_99999, price_home_100000_124999, price_home_125000_149999, price_home_150000_199999, price_home_200000, diver_home_30000, diver_home_30000_44999, diver_home_45000_59999, diver_home_60000_99999, diver_home_100000_124999, diver_home_125000_149999, diver_home_150000_199999, diver_home_200000, zone_home_30000, zone_home_30000_44999, zone_home_45000_59999, zone_home_60000_99999, zone_home_100000_124999, zone_home_125000_149999, zone_home_150000_199999, zone_home_200000, pattern_home_30000, pattern_home_30000_44999, pattern_home_45000_59999, pattern_home_60000_99999, pattern_home_100000_124999, pattern_home_125000_149999, pattern_home_150000_199999, pattern_home_200000] 
                    to: "../results/calibrateData/hillClimbing/parameterValues "+ cpt +".csv" type: "csv" rewrite: (int(self) = 0) ? true : false header: true;      
-        	ask people{
+        	ask people{ //this could be omitted
 				save[type, living_place.location.x, living_place.location.y, living_place.associatedBlockGroup.GEOID, activity_place.ID, activity_place.location.x, activity_place.location.y, activity_place.lat, activity_place.long, actualNeighbourhood, actualCity, happyNeighbourhood, mobility_mode_main_activity, time_main_activity_min, distance_main_activity, CommutingCost, living_place.rentNormVacancy, agent_per_point] type:csv to:"../results/calibrateData/hillClimbing/resultingPeopleChoice "+ cpt + it +".csv" rewrite: false header:true;	
 			}
 			cpt <- cpt + 1;
