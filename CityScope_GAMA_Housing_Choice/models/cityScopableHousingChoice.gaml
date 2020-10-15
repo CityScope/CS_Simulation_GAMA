@@ -9,6 +9,9 @@ model cityScopableHousingChoice
 
 global{
 	
+	
+	/////////////////////////////////       SHAPEFILES          /////////////////////////////////////////////////
+	
 	file<geometry>buildings_shapefile<-file<geometry>("./../includesCalibration/City/volpe/Buildings.shp");
 	file<geometry> roads_shapefile<-file<geometry>("./../includesCalibration/City/volpe/Roads_big.shp");
 	file<geometry> busStops_shapefile <- file<geometry>("./../includesCalibration/City/volpe/kendall_busStop.shp");
@@ -21,6 +24,11 @@ global{
 	
 	
 	
+	////////////////////////////////        CSV FILES         ///////////////////////////////////////////////////////
+	
+	// result files where granularity has been improved through ML techniques (can be used as an alternative to the results obtained directly through GAMA batch experiments in each case)
+	// each file corresponding to the results obtained when people's behavioural criteria change (calibrated criteria with real data or when some behavioural placeholder incentives are applied)
+	
 	/***file calibratedCase <- file("../results/incentivizedScenarios/MLResultsCalibratedData.csv");
 	file diversityIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityIncentive.csv");
 	file kendallFancyIncentive <- file("../results/incentivizedScenarios/MLResultsKendallFancyIncentive.csv");
@@ -29,6 +37,8 @@ global{
 	file diversityEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityEnvFriendlyIncentive.csv");
 	file kendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyKendallFancyIncentive.csv");
 	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyKendallFancyDiversityIncentive.csv");***/
+	
+	//results for GAMA batch experiments. Granularity is lower than in the ML results, but this can be used as a first iteration applying simple ot double interpolations
 	file calibratedCase <- file("../results/incentivizedScenarios/CalibratedData.csv");
 	file diversityIncentive <- file("../results/incentivizedScenarios/DiversityIncentive.csv");
 	file kendallFancyIncentive <- file("../results/incentivizedScenarios/KendallFancyIncentive.csv");
@@ -37,11 +47,18 @@ global{
 	file diversityEnvFriendlyIncentive <- file("../results/incentivizedScenarios/DiversityEnvFriendlyIncentive.csv");
 	file kendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/EnvFriendlyKendallFancyIncentive.csv");
 	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/EnvFriendlyKendallFancyDiversityIncentive.csv");
+	
+	
 	file activity_file <- file("../includesCalibration/Criteria/ActivityPerProfile.csv");
 	file originalProfiles <- file("../includesCalibration/Criteria/Profiles.csv");
 	file mode_file <- file("../includesCalibration/Criteria/Modes.csv");
 	
-	//PARAMETERS
+	
+	
+	////////////////////////////////        PARAMETERS         ///////////////////////////////////////////////////////
+	
+	
+	//parameters to be manipulated on the GAMA user interface (t=0 scenario thus changed)
 	int builtFloors <- 10 parameter: "Built Floors: " category: "Area" min: 0 max: 50 step: 5;
 	float devotedResidential <- 0.5 parameter: "Percentage of area for residential use: " category: "Area" min: 0.4 max: 1.0 step: 0.1; //slider
 	float subsidyPerc <- 0.0 parameter: "Percentage of subsidy: " category: "Financial incentives " min: 0.0 max: 1.0 step: 0.05; //slider
@@ -52,16 +69,19 @@ global{
 	
 	date starting_date <- date([2020,7,1,8,0,0]);
 	
+	
+	
+	////////////////////////////////        VARIABLES         ///////////////////////////////////////////////////////
+	
 	float proportion_apart_reduction <- 0.05;
 	int nbPeopleKendall;
-	float builtArea<- 0.0; //if Volpe grid, different floors for each building possible. builtArea is the one to search
-	float untilNowInKendall <- 0.0;
-	float propInKendall <- 0.0;
+	float builtArea<- 0.0; //amount of m2 built in the grid
+	float propInKendall <- 0.0; //proportion of people working in the area of interest that live within a 20-minute walking dist
 	int agent_per_point <- 4;
 	list<int> listBusRoutes;
-	float meanCommTime;
+	float meanCommTime; //mean commuting time for people working in the area of interest
 	float meanCommDist;
-	float propVolpe;
+	float propVolpe; //proportion of area built in the grid that is actually occupied by people working in the area
 	int minRentPrice;
 	int maxRentPrice;
 	float angle <- atan((899.235 - 862.12)/(1083.42 - 1062.038));
@@ -69,24 +89,24 @@ global{
 	point startingPoint <- {2165, 2120}; //roads_big
 	//point startingPoint <- {4205,3830};
 	float brickSize <- 21.3;
-	list<string> prof_list;
+	list<string> prof_list; //income profile list
 	list<rgb> list_T_lines;
 	map<string,int> listAreasApartment <- ["S"::15,"M"::55,"L"::89];
-	int microUnitArea <- 40;
+	int microUnitArea <- 40; //m2
 	list<string> mobility_list <- ['car', 'bus', 'T', 'bike', 'walking'];
 	map<string,rgb> mobilityColorMap <- ['car'::#red, 'bus'::#yellow, 'T'::#orange, 'bike'::#blue, 'walking'::#green];
-	map<string,float> mobilityMap;
-	map<string,float> profileMap;
-	map<string,float> originalProportions;
-	map<string,float> outKendallProportions;
+	map<string,float> mobilityMap; //proportion of people working in the area of interest that make use of mobility mode i to commute
+	map<string,float> profileMap; //proportion of people working and living within the area of interest (in CAMBRIDGE, Kendall) f(income profile)
+	map<string,float> originalProportions; //total proportions of workers from the area of interest f(income profile)
+	map<string,float> outKendallProportions; //prop of people f(income profile) that work in the area of interest but do not live within the area
 	map<string,rgb> colorMap;
-	map<string,map<string,int>> activity_data;
-	map<string,graph> graph_per_mobility_road;
-	map<rgb,graph> graph_per_mobility_T;
+	map<string,map<string,int>> activity_data; //daily schedules f(income profile)
+	map<string,graph> graph_per_mobility_road; //topology of maps for road mobility modes
+	map<rgb,graph> graph_per_mobility_T; //idem but for metro (T)
 	map<string,rgb> color_per_mobility;
 	map<string,float> speed_per_mobility;
 	map<int,rgb> bus_route_colors <- [701::#yellow, 747::#red,69::#blue, 68::#green];
-	list<apartment> gridApartments <- [];
+	list<apartment> gridApartments <- []; //list of apartments created within the grid
 	
 	init{
 		do createBuildings;
@@ -111,7 +131,7 @@ global{
 		
 	}
 	
-	action createBuildings{
+	action createBuildings{ //creation of buildings of the area of interest from the shapefile (those that are not being built in the grid). SUBSIDIES do not apply to these
 		create building from: buildings_shapefile with:[usage::string(read("Usage")), rentPrice::read("PRICE"), category::read("Category"), scale::string(read("Scale")), heightValue::float(read("Max_Height"))]{
 			if(usage != "R"){
 				rentPrice <- 0.0;
@@ -123,6 +143,9 @@ global{
 			building ImTheBuilding <- self;
 			int nbFloors <- heightValue/5;
 			
+			//out of the people who live and work within the area of interest, there are certain that live within the grid apartments (according to the Volpe occcupancy for Cambridge) 
+			// but those who live outside the grid need to be located in a building from the shapefile. This geolocation is not known, so a reduced number of apartments is created in 
+			// the buildings with Residential usage f(number of floors) to scatter the people throughout the area of interest
 			if(usage = "R"){
 				create apartment number: int(areaBuilding / areaApartment*nbFloors *proportion_apart_reduction){
 					int numberApartment <- int(areaBuilding / areaApartment*nbFloors *proportion_apart_reduction);
@@ -144,7 +167,7 @@ global{
 		}
 	}
 	
-	action importOriginalValues{
+	action importOriginalValues{ //import the original occupancy values from all the precooked what-if scenarios
 		matrix data_matrix <- matrix(originalProfiles);
 		
 		loop i from: 0 to: data_matrix.rows - 1{
@@ -161,7 +184,7 @@ global{
 	}
 	
 	
-	action createMinorRoads{
+	action createMinorRoads{ //these will not be used for motion. Problems merging major and minor roads. This should be fixed so that we end up with only a set of roads
 		create minor_road from:roads_kendall_shapefile{
 			mobility_allowed <-["walking","bike","car","bus"];
 		}
@@ -173,7 +196,7 @@ global{
 				graph_per_mobility_road[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) use_cache false;
 			}
 			else{
-				loop i from: 0 to: length(list_T_lines) - 1{
+				loop i from: 0 to: length(list_T_lines) - 1{ //metros are only allowed to move in the lines of their same color
 					graph_per_mobility_T[list_T_lines[i]] <- as_edge_graph(T_line where(each.line = list_T_lines[i])) use_cache false;
 				}
 				write "graph_per_mobility_T " + graph_per_mobility_T;
@@ -182,7 +205,7 @@ global{
 		}
 	}
 	
-	action characteristic_file_import {
+	action characteristic_file_import { //characteristics (speed and color) depending on the mobility mode
 		matrix mode_matrix <- matrix (mode_file);
 		loop i from: 0 to:  mode_matrix.rows - 1 {
 			string mobility_type <- mode_matrix[0,i];
@@ -200,21 +223,21 @@ global{
 	action createBusStops{
 		create bus_stop from: busStops_shapefile with: [route::int(read("ROUTE")), station_num::int(read("STOP_NUM"))]{
 			if (listBusRoutes contains route = false){
-				listBusRoutes << route;
+				listBusRoutes << route; //record of the total amount of different bus routes available
 			}
 		}
 	}
 	
 	action createBus {
 		int cont <- 0;
-		create bus number: length(listBusRoutes){
+		create bus number: length(listBusRoutes){ //a bus per route
 			route  <- listBusRoutes[cont];
 			list<bus_stop> stops_list <- list(bus_stop where (each.route = route));
-			stops <- stops_list sort_by (each.station_num);
-			location <- first(stops).location;
-			stop_passengers <- map<bus_stop, list<people>>(stops collect(each::[]));
+			stops <- stops_list sort_by (each.station_num); //order the stations belonging to bus route i. Buses will go back and forth linearly within the routes (in GameIt the route was circular)
+			location <- first(stops).location; //starting point
+			stop_passengers <- map<bus_stop, list<people>>(stops collect(each::[])); 
 			cont_station_num <- 0;
-			ascending <- true;
+			ascending <- true; //boolean attribute to control the linear route (whether we are ascending the route or descending)
 			cont <- cont + 1;
 		}
 	}
@@ -227,31 +250,31 @@ global{
 	action createT{
 		list<T_stop> T_stops_list <- list(T_stop);
 		map<rgb, list<T_stop>> T_stops_per_color;
-		list<rgb> already_color;
+		list<rgb> already_color; //T line color that has already been registered
 		loop indiv_stop over: T_stops_list{
 			rgb indiv_color <- indiv_stop.line;
 			if (already_color contains indiv_color = false){
 				already_color << indiv_color;
-				list<T_stop> equal_color_list <- [];
+				list<T_stop> equal_color_list <- []; //T stops belonging to the same color (and thus line)
 				loop equal_color over: T_stops_list{
 					if (equal_color != self and equal_color.line = indiv_color){
-						equal_color_list << equal_color;
+						equal_color_list << equal_color; //list of stops that are from the same color as the T stop being considered
 					}
 				}
-				T_stops_per_color[indiv_color] <- equal_color_list;
+				T_stops_per_color[indiv_color] <- equal_color_list; //list of T stops sorted by color  
 			}
 		}
 		
 		loop color_stops over: T_stops_per_color.keys{
-			create T{
+			create T{ //a T element for each color (line)
 				line <- color_stops;
-				list<T_stop> stops_list <- list(T_stop where (each.line = line));
-				stops <- stops_list sort_by (each.station_num);
-				location <- first(stops).location;
+				list<T_stop> stops_list <- list(T_stop where (each.line = line)); //stops belonging to that line
+				stops <- stops_list sort_by (each.station_num); //order f(number)
+				location <- first(stops).location; //starting point
 				stop_passengers <- map<T_stop, list<people>>(stops collect(each::[]));
 				cont_station_num <- 0;
-				ascending <- true;
-				
+				ascending <- true; //linear route (just like buses). Boolean attribute to monitor if we are ascending or descencing within the route
+				 
 			}
 		}
 		
@@ -264,7 +287,7 @@ global{
 				list_T_lines << line;
 			}
 		
-			changeIntensity1 <- rnd(0.3,1.0);
+			changeIntensity1 <- rnd(0.3,1.0); //different colors used in the debug aspect 
 			changeIntensity2 <- rnd(0.3,1.0);
 			changeIntensity3 <- rnd(0.3,1.0);
 			changeIntensity4 <- rnd(0.3,1.0);
@@ -275,20 +298,20 @@ global{
 		
 	}
 	
-	action createEntryPoints{
-		create entry_point from: entry_point_shapefile with: [type_entry::string(read("mobility"))]{
+	action createEntryPoints{ //entry points to the area of interest (very visual way of showing commuting people)
+		create entry_point from: entry_point_shapefile with: [type_entry::string(read("mobility"))]{ //each entry point type indicates the mobility mode allowed to use it
 			entry_point ImTheEntry <- self;
-			create building{
-				ImTheEntry.associatedBuilding <- self;
+			create building{ //abstraction of the entry point as a building to be equally possible to live within a physical building in the area of interest or out of it (in an entry point but hidden while out of the commuting time)
+				ImTheEntry.associatedBuilding <- self; 
 				location <- ImTheEntry.location;
-				isEntryPoint <- true;
+				isEntryPoint <- true; //this is equivalent to the satellite boolean in the main model (isEntryPoint = true if the building is an abstraction of the entry point or =false if we are talking about a physical building)
 			}
 		}
 	}
 	
-	float interpValues(float x1,float x2,float x3,float y1,float y3){
+	float interpValues(float x1,float x2,float x3,float y1,float y3){ //interpolation formula
 		float y2;
-		if(x3 != x1){
+		if(x3 != x1){ //Avoid division by 0
 			y2 <- (x2 - x1)*(y3 - y1) / (x3 - x1) + y1;
 		}
 		else{
@@ -301,6 +324,7 @@ global{
 	
 	action importData{
 		matrix data_matrix;
+		//different combinatorials depending on the applied behavioural incentives
 		if(kendallFancy = false and diversityAcceptance = false and environmentallyFriendly = false){
 			data_matrix <- matrix(calibratedCase);
 		}
@@ -332,15 +356,15 @@ global{
 		int interpLocation <- 1;
 		
 		if(builtArea != 0){
-				loop i from:0 to: data_matrix.rows - 1{ //provisional. Increase granularity with ML
+				loop i from:0 to: data_matrix.rows - 1{
 				float areaValue <- data_matrix[0,i];
 				float perMarketPrice <- data_matrix[1,i];
-				if ((1 - subsidyPerc) = perMarketPrice){
+				if ((1 - subsidyPerc) = perMarketPrice){ //within the selected financial subsidy we will look for the upper and lower bound to perform the interpolation
 					minDifferenceNow <- abs(builtArea - areaValue);
 					if(minDifferenceNow < minDifferenceUntilNow){
 						minDifferenceUntilNow <- minDifferenceNow;
 						location <- i;
-						if(location != data_matrix.rows - 1 and data_matrix[1,location] = data_matrix[1,location + 1]){
+						if(location != data_matrix.rows - 1 and data_matrix[1,location] = data_matrix[1,location + 1]){ //this could have been performed easier (!)
 							if((builtArea - areaValue) < 0){
 							interpLocation <- location - 1;
 							}
@@ -361,12 +385,17 @@ global{
 			interpLocation <- 0;
 		}
 
-		untilNowInKendall <- propInKendall;
+		//interpolation of the outputs that are taken from precooked what-if scenarios (in the main model): 
+		//proportion of people working and living within the area of interest. In general and f(income profile)
+		//proportion of usage of each mobility mode
+		//mean commuting time, distance
+		//occupation of the extra residential area in the grid (in CAMBRIDGE, Volpe)
+		
 		float areaValueLocation <- data_matrix[0,location];
 		float areaValueInterpLocation <- data_matrix[0,interpLocation];
 		float propInKendallLocation <- data_matrix[2,location];
 		float propInKendallInterpLocation <- data_matrix[2,interpLocation];
-		propInKendall <- interpValues(areaValueLocation, builtArea, areaValueInterpLocation, propInKendallLocation, propInKendallInterpLocation);
+		propInKendall <- interpValues(areaValueLocation, builtArea, areaValueInterpLocation, propInKendallLocation, propInKendallInterpLocation); 
 		nbPeopleKendall <- int(propInKendall*initPopulation);
 		
 		loop i from:3 to:10{
@@ -398,16 +427,16 @@ global{
 	}
 	
 	action createPopulation{
-		int numberApartmentsVolpe <- count(apartment, each.associatedBuilding.fromGrid = true);				
+		int numberApartmentsVolpe <- count(apartment, each.associatedBuilding.fromGrid = true); //number of extra dwelling units available (built area is translated into dwelling units based on the CS vision -micro units are built 40m2 each-)
 		int peopleInVolpe <- int(numberApartmentsVolpe*propVolpe);
 		int countRemaining <- peopleInVolpe;
 		create people number: int(nbPeopleKendall/agent_per_point){
 			liveInKendall <- true;	
-			type <- profileMap.keys[rnd_choice(profileMap.values)];
-			color <- colorMap[type];
-			if (devotedResidential != 0){
+			type <- profileMap.keys[rnd_choice(profileMap.values)]; //random choice based on the proportions of people present f (income profile)
+			color <- colorMap[type]; 
+			if (devotedResidential != 0){ //if there is indeed extra area built in the grid
 				if(countRemaining > 0){
-					countRemaining <- countRemaining - agent_per_point;
+					countRemaining <- countRemaining - agent_per_point; //remaining available dwelling units within the grid
 					//livingPlace <- apartment where each.associatedBuilding.fromGrid = true;
 					livingPlace <- one_of(gridApartments);
 					if(livingPlace = nil){
@@ -421,7 +450,7 @@ global{
 			else{
 				livingPlace <- one_of(apartment where each.associatedBuilding.fromGrid = false);
 			}
-			location <- any_location_in(livingPlace.associatedBuilding);
+			location <- any_location_in(livingPlace.associatedBuilding); //living place of type apartament is a point. We want people agents to be scattered within the associated building of this apartment
 			mobilityMode <- mobilityMap.keys[rnd_choice(mobilityMap.values)];
 			loop while: (mobilityMode = "T"){
 				mobilityMode <- mobilityMap.keys[rnd_choice(mobilityMap.values)];
@@ -432,13 +461,13 @@ global{
 			do create_trip_objectives;
 		}
 		
-		create people number: int((initPopulation - nbPeopleKendall)/agent_per_point){
+		create people number: int((initPopulation - nbPeopleKendall)/agent_per_point){ //those who live outside of the area of interest
 			liveInKendall <- false;
 			type <- outKendallProportions.keys[rnd_choice(outKendallProportions.values)];
 			color <- colorMap[type];
 			mobilityMode <- mobilityMap.keys[rnd_choice(mobilityMap.values)];
 			if(mobilityMode = "T"){
-				livingPlace <- one_of(entry_point where (each.type_entry = "T"));
+				livingPlace <- one_of(entry_point where (each.type_entry = "T")); //their entry point depends on the mobility mode chosen and the entry point typology
 			}
 			else{
 				livingPlace <- one_of(entry_point where (each.type_entry = "road"));
@@ -455,9 +484,9 @@ global{
 		angle <- angle / 2;
 		float acum_area <- 0.0;
 		startingPoint <- {startingPoint.x - brickSize / 2, startingPoint.y - brickSize / 2};				
-		bool noBuild;
-		loop i from: 0 to: 12{
-			loop j from: 0 to: 15{
+		bool noBuild; //grid elements where buildings cannot be constructed (for space reasons)
+		loop i from: 0 to: 12{ //this is not generic. For the specific case of Kendall (Volpe site)
+			loop j from: 0 to: 15{ 
 				noBuild <- false;
 				if(i = 12 and j > 11){
 					noBuild <- true;
@@ -505,15 +534,16 @@ global{
 						category <- "mixed";
 						//scale <- "microUnit";
 						nbFloors <- builtFloors; //variable batch experiment
-						heightValue <- builtFloors*5;
+						heightValue <- builtFloors*5; //5 meters per floors
 						builtArea <- builtArea + shape.area*nbFloors*devotedResidential;
-						rentPrice <- (1-subsidyPerc)*3400;
+						rentPrice <- (1-subsidyPerc)*3400; //3400 is the mean rent price for the Kendall area (according to Padmapper, June 2020).The idea was to segregate income profiles f(rent) within the area of interest just for visualizing, but at this point it has not been performed
 						
 						float areaBuilding <- shape.area;
 						float rentBuilding <- rentPrice;
 						building ImTheBuilding <- self;
 						int numberApartment <- int(areaBuilding/microUnitArea*devotedResidential*builtFloors * proportion_apart_reduction);
 						create apartment number: int(areaBuilding/microUnitArea*devotedResidential*builtFloors * proportion_apart_reduction){
+							//these apartments are used to scatter people throughout the area of interest based on building heights (respecting the real proportions of people that would live in the newly built area). It is just for visualization purposes
 							rent <- rentBuilding;
 							associatedBuilding <- ImTheBuilding;
 							location <- associatedBuilding.location;
@@ -525,7 +555,7 @@ global{
 		}
 	}
 	
-	action activity_data_import {
+	action activity_data_import { //daily schedules f(income profile). Based on GameIt
 		matrix activity_matrix <- matrix (activity_file);
 		loop i from: 1 to:  activity_matrix.rows - 1 {
 			string people_type <- activity_matrix[0,i];
@@ -546,7 +576,7 @@ global{
 
 }
 	
-species entry_point parent: apartment{
+species entry_point parent: apartment{ //in order to make entry points the virtual living places of people who do not live in the area of interest, "apartment" has to be the parent and thus inherit the attributes
 	string type_entry;
 	
 	aspect default{
@@ -568,7 +598,7 @@ species building{
 	bool fromGrid <- false;
 	float heightValue;
 	string scale;
-	bool isEntryPoint <- false;
+	bool isEntryPoint <- false; //boolean that implies whether we are talking about a physical building within the area of interest or an abstraction relating to an entry point
 	
 	action normaliseRentPrice{
 		normalisedRentPrice <- (rentPrice - minRentPrice)/(maxRentPrice - minRentPrice);
@@ -594,13 +624,13 @@ species road{
 	}
 }
 
-species minor_road parent: road{
+species minor_road parent: road{ //just for visulizing. Major and minor roads should be unified
 	
 }
 
 species T_line parent:road{
 	rgb line;
-	float changeIntensity1;
+	float changeIntensity1; //just for debugging aspect
 	float changeIntensity2;
 	float changeIntensity3;
 	float changeIntensity4;
@@ -647,27 +677,25 @@ species bus_stop{
 
 species bus skills: [moving] {
 	list<bus_stop> stops; 
-	map<bus_stop,list<people>> stop_passengers ;
+	map<bus_stop,list<people>> stop_passengers ; //people waiting in the stop
 	bus_stop my_target;
 	int route;
 	int cont_station_num;
-	bool ascending;
-	int stop_time;
+	bool ascending; //boolean attribute to indicate if the bus is ascending or descending in the route formed by the stops
+	int stop_time; //time for bus users to get in or out of the bus
 	
-	reflex new_target when: my_target = nil{
+	reflex new_target when: my_target = nil{ //at each time step a bus has a target (a station). When it gets there, target turns to nill. Necesarry to register the next stop as the new target
 		bus_stop StopNow <- stops[cont_station_num];
 		
-		
-		
-		if(cont_station_num = length(stops)-1 and ascending = true){
-			cont_station_num <- cont_station_num - 1;
+		if(cont_station_num = length(stops)-1 and ascending = true){ //last stop of the line
+			cont_station_num <- cont_station_num - 1; 
 			ascending <- false;
 		}
-		else if(cont_station_num = 0 and ascending = false){
+		else if(cont_station_num = 0 and ascending = false){ //first stop of the line
 			cont_station_num <- cont_station_num + 1;
 			ascending <- true;
 		}
-		else {
+		else { //rest of the stops
 			if(ascending = true){
 				cont_station_num <- cont_station_num + 1;
 			}
@@ -680,27 +708,27 @@ species bus skills: [moving] {
 	}
 	
 	reflex r {
-		if(stop_time = 0){
-			do goto target: my_target.location on: graph_per_mobility_road["car"] speed:speed_per_mobility["bus"]*0.5;
+		if(stop_time = 0){ //waiting time over. Move
+			do goto target: my_target.location on: graph_per_mobility_road["car"] speed:speed_per_mobility["bus"]*0.5; //speed reduced just for visualizing
 			int nb_passengers <- stop_passengers.values sum_of (length(each));	
 		}
 		else{
-			stop_time <- stop_time - 1;
+			stop_time <- stop_time - 1; //waiting time
 		}
 		
 		if(location = my_target.location) {
-			ask stop_passengers[my_target] {
-				location <- myself.my_target.location;
-				bus_status <- 2;
+			ask stop_passengers[my_target] { //passengers whose target is the location where the bus just got
+				location <- myself.my_target.location; //they descend
+				bus_status <- 2; //bus_status = 2 is off the bus
 			}
-			stop_passengers[my_target] <- [];
-			loop p over: my_target.waiting_people {
-				bus_stop b <- bus_stop where (each.route = route) with_min_of(each distance_to(p.my_current_objective.place.location));
-				add p to: stop_passengers[b] ;
+			stop_passengers[my_target] <- []; //there are no people in the bus whose target is the station where we just got
+			loop p over: my_target.waiting_people { //take the people who were wainting in this bus stop
+				bus_stop b <- bus_stop where (each.route = route) with_min_of(each distance_to(p.my_current_objective.place.location)); //they will descend in the bus stop that is closest to their objective
+				add p to: stop_passengers[b] ; //these are part of stop_passengers list in the bus now
 			}
 			my_target.waiting_people <- [];						
 			my_target <- nil;		
-			stop_time <- 30;	
+			stop_time <- 30; //secs (witing time)
 		}
 	}
 	
@@ -745,6 +773,7 @@ species T skills: [moving] {
 	bool ascending;
 	int stop_time;
 	
+	//same logic as the bus. Check the explanations in that species
 	reflex new_target when: my_target = nil{
 		
 		T_stop StopNow <- stops[cont_station_num];
@@ -828,17 +857,17 @@ species people skills: [moving]{
 				string act_real <- one_of(parse_act);
 				list<building> possible_bds;
 				if (length(act_real) = 2) and (first(act_real) = "R") {
-					if(liveInKendall = true){
-						if (devotedResidential > 0){
-							possible_bds <- building where ((each.usage = "R") or (each.usage = "mixed"));
+					if(liveInKendall = true){ 
+						if (devotedResidential > 0){ //if there is something constructed in the grid with residential purposes
+							possible_bds <- building where ((each.usage = "R") or (each.usage = "mixed")); //possible housing options. Previously built buildings or grid buildings 
 						}
 						else{
-							possible_bds <- building where ((each.usage = "R"));	
+							possible_bds <- building where ((each.usage = "R")); //there is no grid, so previously buitl buildings (from shapefile)
 						}
 					}
-					else{
+					else{ //commuting people from areas out of that of interest
 						if(mobilityMode = "T"){
-							possible_bds <- livingPlace.associatedBuilding;
+							possible_bds <- livingPlace.associatedBuilding; //living place is an entry point, with a building associated for its abstraction.
 						}
 						else{
 							possible_bds <- livingPlace.associatedBuilding;
@@ -846,7 +875,7 @@ species people skills: [moving]{
 					}
 				} 
 				else if (length(act_real) = 2) and (first(act_real) = "O") {
-					if(devotedResidential < 1){
+					if(devotedResidential < 1){ //if not everything built in the grid is just for residential purposes
 						possible_bds <- building where ((each.usage = "O") or (each.usage = "mixed"));
 					}
 					else{
@@ -854,13 +883,13 @@ species people skills: [moving]{
 					}
 				} 
 				else {
-					if(liveInKendall = true){ //people not living inKendall only commute
+					if(liveInKendall = true){ //people not living inKendall only commute. It is assumed that their social life does not happen within the area of interest (Kendall)
 						if(devotedResidential < 1){
 							if(act_real = "restaurant"){
 								possible_bds <- building where(each.category = "Restaurant" or each.category = "mixed");
 							}
 							else if(act_real = "A"){
-								possible_bds <- building where(each.category != "R");
+								possible_bds <- building where(each.category != "R"); 
 							}
 							else{
 								possible_bds <- building where (each.category = act_real or each.category = "mixed");
@@ -888,7 +917,7 @@ species people skills: [moving]{
 						}
 					}
 				}
-				building act_build <- one_of(possible_bds);
+				building act_build <- one_of(possible_bds); //actual building is one of the possible ones
 				if (act_build= nil) {write "problem with act_real: " + act_real;}
 				do create_activity(act_real,act_build,activities[act]);
 			}
@@ -899,9 +928,9 @@ species people skills: [moving]{
 		create trip_objective {
 			name <- act_name;
 			place <- act_place;
-			starting_hour <- act_time;
+			starting_hour <- act_time; //hourly schedules
 			starting_minute <- rnd(60);
-			myself.objectives << self;
+			myself.objectives << self; //collection of objectives within a day
 		}
 	} 
 	
@@ -909,19 +938,19 @@ species people skills: [moving]{
 		do wander speed:0.01;
 		my_current_objective <- objectives first_with ((each.starting_hour = current_date.hour) and (current_date.minute >= each.starting_minute) and (current_place != each.place) );
 		if (my_current_objective != nil) {
-			current_place <- nil;
+			current_place <- nil; //moving
 		}
 	}
 	
-	reflex move when: (my_current_objective != nil) and (mobilityMode != "bus") and (mobilityMode != "T") {
-		if (mobilityMode in ["car"]) {
+	reflex move when: (my_current_objective != nil) and (mobilityMode != "bus") and (mobilityMode != "T") { //T and bus need from different moving patterns
+		if (mobilityMode in ["car"]) { //slowing down the speed because of congestion has not been implemented yet
 			//do goto target: my_current_objective.place.location on: graph_per_mobility[mobilityMode] move_weights: congestion_map ;
 			do goto target: my_current_objective.place.location on: graph_per_mobility_road[mobilityMode];
 		}else {
 			do goto target: my_current_objective.place.location on: graph_per_mobility_road[mobilityMode]  ;
 		}
 		
-		if (location = my_current_objective.place.location) {
+		if (location = my_current_objective.place.location) { //I got to my destination
 				current_place <- my_current_objective.place;
 				location <- any_location_in(current_place);
 				my_current_objective <- nil;
@@ -930,13 +959,13 @@ species people skills: [moving]{
 	
 	reflex move_bus when: (my_current_objective != nil) and (mobilityMode = "bus") {
 
-		if (bus_status = 0){
+		if (bus_status = 0){ //going to the closest bus stop
 			do goto target: closest_bus_stop.location on: graph_per_mobility_road["walking"];
 			if(location = closest_bus_stop.location) {
-				add self to: closest_bus_stop.waiting_people;
-				bus_status <- 1;
+				add self to: closest_bus_stop.waiting_people; //when I get there, I am part of the waiting people
+				bus_status <- 1; //bus_status = 1 means: waiting for the byus within the bus stop
 			}
-		} else if (bus_status = 2){
+		} else if (bus_status = 2){ //I already got out of the bus in the bus stop closest to my destination
 			do goto target: my_current_objective.place.location on: graph_per_mobility_road["walking"];		
 			
 			if (location = my_current_objective.place.location) {
@@ -944,12 +973,12 @@ species people skills: [moving]{
 				closest_bus_stop <- bus_stop with_min_of(each distance_to(self));						
 				location <- any_location_in(current_place);
 				my_current_objective <- nil;	
-				bus_status <- 0;
+				bus_status <- 0; //when the time arrives, I will be in the mode where I have to walk to the closest bus stop
 			}
 		}		
 	}
 	
-	reflex move_T when: (my_current_objective != nil) and (mobilityMode = "T") {
+	reflex move_T when: (my_current_objective != nil) and (mobilityMode = "T") { //same logic as the bus
 
 		if (T_status = 0){
 			do goto target: closest_T_stop.location on: graph_per_mobility_road["walking"];
@@ -980,7 +1009,7 @@ species people skills: [moving]{
 				ItIsEntryPoint <- true;
 			}
 		}
-		if(ItIsEntryPoint = false){
+		if(ItIsEntryPoint = false){ //people in entry points (abstraction of housing options outside the area of interest) are not represneted until they start to commute
 			if (mobilityMode = "bike"){
 			draw squircle(20,20) at_location {location.x,location.y} color:color ;
 			}
@@ -1015,11 +1044,11 @@ experiment visual type:gui{
 			species T aspect: default;
 			species T_line aspect: default;
 			//species entry_point aspect: default;
-			//species people aspect: default;
+			species people aspect: default;
 			
-			/***graphics "time" {
+			graphics "time" {
 				draw string(current_date.hour) + "h" + string(current_date.minute) +"m" color: # white font: font("Helvetica", 25, #italic) at: {world.shape.width*0.7,world.shape.height*0.55};
-			}***/
+			}
 	
 			overlay position: {5,5} size: { 260 #px,750 #px } background: rgb(50,50,50,125) transparency: 1.0 border: #black 
 		        {            	
