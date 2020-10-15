@@ -47,6 +47,11 @@ global{
 	file real_mobility_data_file <- file("../includesCalibration/Criteria/realKendallMobility.csv"); //transportation data 
 	geometry shape<-envelope(T_lines_shapefile);
 	
+	
+	
+	////////////////////////////////        VARIABLES         ///////////////////////////////////////////////////////
+	
+	
 	//list of neighbourhoods needs to be changed for each calibration scenario (Cambridge, Boston, Hamburg etc)
 	list<string> list_neighbourhoods <- ["Area 2/MIT",'The Port','Neighborhood Nine','East Cambridge','Cambridgeport','Riverside','Mid-Cambridge','Wellington-Harrington','Cambridge Highlands','Strawberry Hill','West Cambridge','North Cambridge','BOSTON','ARLINGTON','SOMERVILLE','WEYMOUTH','MARBLEHEAD','DANVERS','SALEM','BEVERLY','LYNN','NORTH ANDOVER','BOXFORD','IPSWICH','MIDDLETON','TOPSFIELD','LAWRENCE','ESSEX','WENHAM','HAMILTON','MANCHESTER','PEABODY','NORTH READING','LYNNFIELD','ANDOVER','GEORGETOWN','ROWLEY','METHUEN','HAVERHILL','NEWBURY','GROVELAND','WEST NEWBURY','MERRIMAC','NEWBURYPORT','ROCKPORT','GLOUCESTER','READING','WAKEFIELD','SAUGUS','AMESBURY','FOXBOROUGH','SHARON','QUINCY','WELLESLEY','NEEDHAM','DOVER','CANTON','WESTWOOD','NORWOOD','HULL','COHASSET','HINGHAM','SCITUATE','MEDFIELD','MILTON','SHERBORN','NATICK','FRAMINGHAM','GROTON','LITTLETON','AYER','TEWKSBURY','WILMINGTON','RANDOLPH','AVON','HOLBROOK','NORFOLK','WRENTHAM','WALPOLE','MILLIS','MEDWAY','HOLLISTON','BURLINGTON','MEDFORD','BROOKLINE','DEDHAM','BRAINTREE','BELLINGHAM','FRANKLIN','TYNGSBOROUGH','WESTFORD','CHELSEA','REVERE','EVERETT','NEWTON','WATERTOWN','MALDEN','STOUGHTON','WINTHROP','ABINGTON','ROCKLAND','CONCORD','CARLISLE','BILLERICA','BEDFORD','STONEHAM','MELROSE','LOWELL','WALTHAM','STOW','ACTON','CHELMSFORD','LINCOLN','SUDBURY','WESTON','MAYNARD','MARLBOROUGH','HUDSON','NORWELL','HANOVER','PEMBROKE','HANSON','BROCKTON','WEST BRIDGEWATER','DRACUT','BELMONT','ASHLAND','HOPKINTON','PEPPERELL','TOWNSEND','MARSHFIELD','WHITMAN','WOBURN','WINCHESTER','EAST BRIDGEWATER','MIDDLEBOROUGH','PLYMPTON','BRIDGEWATER','LAKEVILLE','KINGSTON','WAREHAM','PLYMOUTH','LEXINGTON','DUXBURY','CARVER','MARION','MATTAPOISETT','SWAMPSCOTT','SALISBURY','NAHANT','OUTSKIRTS'];
 	map<string, map<string,float>> neighbourhoods_real <- map([]); //map of all the neighbourhoods availble. Within each element there is a map that represents the percentage of people of type j that live there according to real data
@@ -81,6 +86,35 @@ global{
 	float housingErrorTotal; //idem for housing error
 	float housingErrorTotalInt;
 	matrix kendall_real_pop; //real population in the area of interest
+	map<string,int> density_map<-["S"::15,"M"::55, "L"::89];
+	list<blockGroup> kendallBlockList; //list of census block groups within the area of interest
+	list<rentApartment> kendallApartmentList; //available apartments within the area of interest (Padmapper, March 2020)
+	map<string,map<string,list<float>>> weights_map <- map([]); //imporance of each mobility mode criteria f(income profile, destination)
+	list<string> type_people;
+	map<string,float> priceImp_map; //housing price importance f(income profile)
+	map<string,float> divacc_map; // diversity acceptance f(income profile)
+	map<string,string> pattern_map; //preferred zone map f(income profile)
+	map<string,float> patternWeight_map; //weight given to this preferred zone f(income profile)
+	map<string,list<float>> charact_per_mobility;  ////characteristics of each mobility mode (fixed price, waiting time etc)
+	map<string,rgb> color_per_mobility;
+	map<string,float> speed_per_mobility;
+	map<string,float> weather_coeff_per_mobility;
+	map<string,graph> graph_per_mobility; //road / metro line topology for each mobility mode
+	map<string,rgb> color_per_type;	
+	map<string, float> proba_bike_per_type; //probability of owning a bike f(income profile)
+	map<string, float> proba_car_per_type; //idem for cars
+	map<string,string> main_activity_map;
+	map<string,float> time_importance_per_type; //importance given to commuting time f(income profile)
+	list<list<float>> weather_of_month;
+	map<road,float> congestion_map; 
+	list<string> allPossibleMobilityModes;
+	map<string,float> people_per_Mobility_now; //percentage of people using mobility mode i
+	map<string,int> people_per_Mobility_now_int; //number (int) of people using mobility mode i
+	
+	
+	
+	////////////////////////////////        PARAMETERS TO EXPLORE         ///////////////////////////////////////////////////////
+	
 	
 	float price_main_trip_30000 <- -0.95; //starting value for importance given to commuting cost for income profile <$30,000 
 	float price_main_trip_30000_44999 <- -0.9; //idem for income profile 30,000-44,999
@@ -174,30 +208,7 @@ global{
 	list<float> patternWeight_list <- [pattern_home_30000, pattern_home_30000_44999, pattern_home_45000_59999, pattern_home_60000_99999, pattern_home_100000_124999, pattern_home_125000_149999, pattern_home_150000_199999, pattern_home_200000];
 	
 	
-	map<string,int> density_map<-["S"::15,"M"::55, "L"::89];
-	list<blockGroup> kendallBlockList; //list of census block groups within the area of interest
-	list<rentApartment> kendallApartmentList; //available apartments within the area of interest (Padmapper, March 2020)
-	map<string,map<string,list<float>>> weights_map <- map([]); //imporance of each mobility mode criteria f(income profile, destination)
-	list<string> type_people;
-	map<string,float> priceImp_map; //housing price importance f(income profile)
-	map<string,float> divacc_map; // diversity acceptance f(income profile)
-	map<string,string> pattern_map; //preferred zone map f(income profile)
-	map<string,float> patternWeight_map; //weight given to this preferred zone f(income profile)
-	map<string,list<float>> charact_per_mobility;  ////characteristics of each mobility mode (fixed price, waiting time etc)
-	map<string,rgb> color_per_mobility;
-	map<string,float> speed_per_mobility;
-	map<string,float> weather_coeff_per_mobility;
-	map<string,graph> graph_per_mobility; //road / metro line topology for each mobility mode
-	map<string,rgb> color_per_type;	
-	map<string, float> proba_bike_per_type; //probability of owning a bike f(income profile)
-	map<string, float> proba_car_per_type; //idem for cars
-	map<string,string> main_activity_map;
-	map<string,float> time_importance_per_type; //importance given to commuting time f(income profile)
-	list<list<float>> weather_of_month;
-	map<road,float> congestion_map; 
-	list<string> allPossibleMobilityModes;
-	map<string,float> people_per_Mobility_now; //percentage of people using mobility mode i
-	map<string,int> people_per_Mobility_now_int; //number (int) of people using mobility mode i
+	
 
 		
 	init{
