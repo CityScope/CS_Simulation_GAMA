@@ -1,7 +1,6 @@
 import numpy as np
 from numpy import arange
 from numpy import savetxt
-from numpy import concatenate
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -14,29 +13,35 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import random
 
-nameFileIN = "KendallFancyIncentive.csv"
-nameFileOUT = "MLResultsKendallFancyIncentiveK.csv"
-nameGraph1 = "KendallFancyIncentive1K.png"
-nameGraph2 = "KendallFancyIncentive2K.png"
-nameGraph3 = "KendallFancyIncentive3K.png"
-nameStatFile = "KendallFancyIncentiveStatsK.csv"
-max_seedValue = 20000
-
-log = []
-train_features = []
-train_results = []
-test_features = []
-test_results = []
-results_mas = []
-results_mas_final = []
-R2_final = 0
-test_predicted_final = []
-test_simulated_final = []
-T = []
+#prediction input: built area and % of marketPrice (1-subsidy)
+#prediction output: percentage of people working and living within the area of interest in general and f(income profile), each mobility mode usage, mean commuting time and distance, Volpe occupancy
 
 
+nameFileIN = "KendallFancyIncentive.csv" #GAMA batch results (calibrated or when a certain placeholder behavioural incentive)
+nameFileOUT = "MLResultsKendallFancyIncentiveK.csv" #ML improved granularity
 
-estimators = [ #different ML estimators can be used and tested
+#difference btw simulated and predicted values in graphs
+nameGraph1 = "KendallFancyIncentive1K.png" #proportion of people living and working in area of interest, car, bus and T usage
+nameGraph2 = "KendallFancyIncentive2K.png" #proportion of people biking walking, mean commuting time and distance
+nameGraph3 = "KendallFancyIncentive3K.png" #Volpe occupancy
+nameStatFile = "KendallFancyIncentiveStatsK.csv" #statistics. RMSE for people living in area of interest in general and f(income profile), each mobility mode usage, mean commuting time, distance, Volpe occupancy and general R2 metric
+max_seedValue = 20000 #maximum amount of different randomness seed values (max_seedValue number of iterations will be held to get the shuffled data that lead to max R2)
+
+
+train_features = [] #algorithm training features (80%). Residential area built, % of marketPrice (1-subsidy)
+train_results = [] #algorithm training results. Proportion of people living and working in the area of interest in general and f(income profile), each mobility mode usage and commuting time and distance
+test_features = [] #algorithm testing features (20%)
+test_results = [] #algorithm testing results
+results_mas = [] #results (out of the training/testing area set) of trained algorithm. Improved granularity in each iteration
+results_mas_final = [] #idem as results_mas but for the case where the R2 is maximized (this depends on the randomness seed, as input data is shuffled
+R2_final = 0 #R2 for the best case
+test_predicted_final = [] #predicted results for the case with best R2
+test_simulated_final = [] #best R2 case. Results for the testing set (just for visualization purposes)
+
+
+
+
+estimators = [ #different ML estimators can be used and tested. For the given results KNeighborsRegressor with 4 neighbors has been used (has led to best results)
     # ('linear', LinearRegression()),
     #('decision_tree', tree.DecisionTreeRegressor(criterion = 'mse', max_depth = 5)),
     #('decision_tree', tree.DecisionTreeRegressor()),
@@ -48,10 +53,11 @@ estimators = [ #different ML estimators can be used and tested
 importedDataRaw = np.loadtxt(open(nameFileIN, "rb"), delimiter=",")  # Should include the first case of current situation (no built area)
 
 def R_squared(predictedVals,expectedVals):
-    R2_value_calc = r2_score(expectedVals, predictedVals)
+    R2_value_calc = r2_score(expectedVals, predictedVals) #R2 calculation as a measuremenet of how good the prediction is
     return R2_value_calc
 
 def R_squaredText(predictedVals, expectedVals):
+    #RMSE calculation for each output
     errorPropSelectedCity = sqrt(mean_squared_error(expectedVals[:,0], predictedVals[:,0], sample_weight=None, multioutput='uniform_average', squared='True'))
     errorPropProf1 = sqrt(mean_squared_error(expectedVals[:,1], predictedVals[:,1], sample_weight=None, multioutput='uniform_average', squared='True'))
     errorPropProf2 = sqrt(mean_squared_error(expectedVals[:, 2], predictedVals[:, 2], sample_weight=None, multioutput='uniform_average', squared='True'))
@@ -69,6 +75,7 @@ def R_squaredText(predictedVals, expectedVals):
     errorTime = sqrt(mean_squared_error(expectedVals[:, 14], predictedVals[:, 14], sample_weight=None, multioutput='uniform_average',squared='True'))
     errorDist = sqrt(mean_squared_error(expectedVals[:, 15], predictedVals[:, 15], sample_weight=None, multioutput='uniform_average',squared='True'))
     errorVolpeOccupancy = sqrt(mean_squared_error(expectedVals[:, 16], predictedVals[:, 16], sample_weight=None, multioutput='uniform_average',squared='True'))
+    #print outputs
     print("Error prop Kendall " + str(errorPropSelectedCity))
     print("Error prop Prof1 " + str(errorPropProf1))
     print("Error prop Prof2 " + str(errorPropProf2))
@@ -87,6 +94,7 @@ def R_squaredText(predictedVals, expectedVals):
     print("Error comm time " + str(errorTime))
     print("Error comm distance " + str(errorDist))
     print("Volpe Occupancy Error " + str(errorVolpeOccupancy))
+    #R2 measurement for each predicted output and general R2
     print("R2 score " + str(r2_score(expectedVals,predictedVals)))
     print("R2 score Kendall " + str(r2_score(expectedVals[:,0], predictedVals[:,0])))
     print("R2 score Prof1 " + str(r2_score(expectedVals[:, 1], predictedVals[:, 1])))
@@ -111,13 +119,13 @@ def R_squaredText(predictedVals, expectedVals):
 
 def predictions(X_train,Y_train,X_test,Y_test,mat):
     for name, estimator in estimators:
-            estimator.fit(X_train, Y_train)
-            Y_predicted = estimator.predict(X_test)
-            R2value_indiv = R_squared(Y_predicted, Y_test)
-            Y_extra = estimator.predict(mat)
+            estimator.fit(X_train, Y_train) #algorithm training
+            Y_predicted = estimator.predict(X_test) #prediction
+            R2value_indiv = R_squared(Y_predicted, Y_test) #R2 measurement for the tested values
+            Y_extra = estimator.predict(mat) #granularity improvement
     return R2value_indiv, Y_extra,Y_predicted
 
-def showGraphs(R2,Y_simulated,Y_predicted):
+def showGraphs(R2,Y_simulated,Y_predicted): #visualization of differences btw GAMA results and predictions
 
     fig = plt.figure()
     manager = plt.get_current_fig_manager()
@@ -210,12 +218,12 @@ for rndseedValue in range(0,max_seedValue):
     minValue = min(list)
 
     for i in range(0,100):
-        importedData[i,0] = (importedData[i,0]-minValue)/(maxValue-minValue)
-    index = int(round(importedData.shape[0]*0.8))
+        importedData[i,0] = (importedData[i,0]-minValue)/(maxValue-minValue) #normalization of built area before applying KNeighborsRegressor (builtArea and %subsidy are in different magnitudes)
+    index = int(round(importedData.shape[0]*0.8)) #80% for training, 20% for testing
 
 
-    train_features0 = importedData[0:index,0:2]
-    train_results0 = importedData[0:index,2:19]
+    train_features0 = importedData[0:index,0:2] #first two columns in input file: builtArea and % market price (1-subsidy)
+    train_results0 = importedData[0:index,2:19] #rest of columns, what should be predicted
     test_features0 = importedData[index:importedData.shape[0],0:2]
     test_results0 = importedData[index:importedData.shape[0],2:19]
 
@@ -224,26 +232,26 @@ for rndseedValue in range(0,max_seedValue):
     # mat[0,:] = importedDataRaw[0,0:1] #first case (current non-built situation)
     for price in arange(0, 1.05, 0.05):
         for area in range(10000, 2710000, 10000):
-            mat[cont, 0] = (area - minValue) / (maxValue - minValue)
-            mat[cont, 1] = price
+            mat[cont, 0] = (area - minValue) / (maxValue - minValue) #normalization of built area
+            mat[cont, 1] = price #market price is already normalised [0,1]
             #mat[cont, 2] = area
             cont = cont + 1
 
-    R2_value, results_mas, test_predicted = predictions(train_features0, train_results0, test_features0, test_results0, mat)
+    R2_value, results_mas, test_predicted = predictions(train_features0, train_results0, test_features0, test_results0, mat) #predict
 
-    if R2_value > R2_final:
+    if R2_value > R2_final: #selection of data shuffle (f(randomness seed) that leads to best R2
         R2_final = R2_value
         results_mas_final = results_mas
         test_simulated_final = test_results0
         test_predicted_final = test_predicted
 
-errors = showGraphs(R2_final,test_simulated_final,test_predicted_final)
+errors = showGraphs(R2_final,test_simulated_final,test_predicted_final) #visualize
 
 for i in range(0,5670):
-    mat[i,0] = mat[i,0]*(maxValue - minValue) + minValue
+    mat[i,0] = mat[i,0]*(maxValue - minValue) + minValue #get built Area in m2 back (from normalized values)
 
-results_allcolumns = np.concatenate((mat,results_mas_final),axis=1)
-firstlineRaw = importedDataRaw[0,:]
+results_allcolumns = np.concatenate((mat,results_mas_final),axis=1) #concatenate input, output in a sole matrix
+firstlineRaw = importedDataRaw[0,:] #results for buitlArea = 0 (applying % market price does not make any sense)
 
 results_allrows = np.zeros((5671,19))
 
@@ -253,7 +261,7 @@ for i in range(0,5671):
     else:
         results_allrows[i,:] = results_allcolumns[i-1,:]
 
-savetxt(nameFileOUT, results_allrows, delimiter=",")
-savetxt(nameStatFile, errors, delimiter=",")
+savetxt(nameFileOUT, results_allrows, delimiter=",") #save results as a txt file
+savetxt(nameStatFile, errors, delimiter=",") #save error measures as a txt file
 
 
