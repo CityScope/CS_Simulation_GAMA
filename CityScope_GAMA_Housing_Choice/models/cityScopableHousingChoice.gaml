@@ -29,24 +29,24 @@ global{
 	// result files where granularity has been improved through ML techniques (can be used as an alternative to the results obtained directly through GAMA batch experiments in each case)
 	// each file corresponding to the results obtained when people's behavioural criteria change (calibrated criteria with real data or when some behavioural placeholder incentives are applied)
 	
-	/***file calibratedCase <- file("../results/incentivizedScenarios/MLResultsCalibratedData.csv");
+	file calibratedCase <- file("../results/incentivizedScenarios/MLResultsCalibratedData.csv");
 	file diversityIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityIncentive.csv");
 	file kendallFancyIncentive <- file("../results/incentivizedScenarios/MLResultsKendallFancyIncentive.csv");
 	file envFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyIncentive.csv");
 	file diversityKendallFancyIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityKendallFancyIncentive.csv");
 	file diversityEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsDiversityEnvFriendlyIncentive.csv");
 	file kendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyKendallFancyIncentive.csv");
-	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyKendallFancyDiversityIncentive.csv");***/
+	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/MLResultsEnvFriendlyKendallFancyDiversityIncentive.csv");
 	
 	//results for GAMA batch experiments. Granularity is lower than in the ML results, but this can be used as a first iteration applying simple ot double interpolations
-	file calibratedCase <- file("../results/incentivizedScenarios/CalibratedData.csv");
+	/***file calibratedCase <- file("../results/incentivizedScenarios/CalibratedData.csv");
 	file diversityIncentive <- file("../results/incentivizedScenarios/DiversityIncentive.csv");
 	file kendallFancyIncentive <- file("../results/incentivizedScenarios/KendallFancyIncentive.csv");
 	file envFriendlyIncentive <- file("../results/incentivizedScenarios/EnvFriendlyIncentive.csv");
 	file diversityKendallFancyIncentive <- file("../results/incentivizedScenarios/DiversityKendallFancyIncentive.csv");
 	file diversityEnvFriendlyIncentive <- file("../results/incentivizedScenarios/DiversityEnvFriendlyIncentive.csv");
 	file kendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/EnvFriendlyKendallFancyIncentive.csv");
-	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/EnvFriendlyKendallFancyDiversityIncentive.csv");
+	file diversityKendallFancyEnvFriendlyIncentive <- file("../results/incentivizedScenarios/EnvFriendlyKendallFancyDiversityIncentive.csv");***/
 	
 	
 	file activity_file <- file("../includesCalibration/Criteria/ActivityPerProfile.csv");

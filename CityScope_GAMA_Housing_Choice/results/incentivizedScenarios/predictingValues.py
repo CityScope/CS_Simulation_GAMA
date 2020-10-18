@@ -17,14 +17,14 @@ import random
 #prediction output: percentage of people working and living within the area of interest in general and f(income profile), each mobility mode usage, mean commuting time and distance, Volpe occupancy
 
 
-nameFileIN = "KendallFancyIncentive.csv" #GAMA batch results (calibrated or when a certain placeholder behavioural incentive is applied)
-nameFileOUT = "MLResultsKendallFancyIncentive.csv" #ML improved granularity
+nameFileIN = "calibratedData.csv" #GAMA batch results (calibrated or when a certain placeholder behavioural incentive is applied)
+nameFileOUT = "MLResultsCalibratedData.csv" #ML improved granularity
 
 #difference btw simulated and predicted values in graphs
-nameGraph1 = "KendallFancyIncentive1.png" #proportion of people living and working in area of interest, car, bus and T usage
-nameGraph2 = "KendallFancyIncentive2.png" #proportion of people biking walking, mean commuting time and distance
-nameGraph3 = "KendallFancyIncentive3.png" #Volpe occupancy
-nameStatFile = "KendallFancyIncentiveStats.csv" #statistics. RMSE for people living in area of interest in general and f(income profile), each mobility mode usage, mean commuting time, distance, Volpe occupancy and general R2 metric
+nameGraph1 = "calibratedData1.png" #proportion of people living and working in area of interest, car, bus and T usage
+nameGraph2 = "calibratedData2.png" #proportion of people biking walking, mean commuting time and distance
+nameGraph3 = "calibratedData3.png" #Volpe occupancy
+nameStatFile = "calibratedDataStats.csv" #statistics. RMSE for people living in area of interest in general and f(income profile), each mobility mode usage, mean commuting time, distance, Volpe occupancy and general R2 metric
 max_seedValue = 20000 #maximum amount of different randomness seed values (max_seedValue number of iterations will be held to get the shuffled data that lead to max R2)
 
 
