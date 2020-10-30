@@ -19,7 +19,7 @@ species block{
 	}
 }
 
-experiment Dev type: gui autorun:false{
+experiment CityScope type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black draw_env:false{	
 
