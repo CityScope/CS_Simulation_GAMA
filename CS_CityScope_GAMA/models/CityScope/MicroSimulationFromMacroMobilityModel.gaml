@@ -7,7 +7,7 @@ global {
 	string city_io_table<-table_name_per_city[city];
 
 	file od_file <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/od");	
-	file meta_grid_file <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/meta_grid","EPSG:4326");	
+	file meta_grid_file <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");	
 	file table_area_file <- geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/table_area.geojson");
 	file walking_net_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/walking_net.geojson");
 	file cycling_net_file<-geojson_file("https://raw.githubusercontent.com/CityScope/CS_Mobility_Service/master/scripts/cities/"+city+"/clean/cycling_net.geojson");
