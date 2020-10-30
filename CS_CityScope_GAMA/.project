@@ -72,6 +72,11 @@
 			<locationURI>CACHE_LOC/raw.githubusercontent.com+_++_+CityScope+_+CS_Mobility_Service+_+master+_+scripts+_+cities+_+Hamburg+_+clean+_+driving_net.geojson</locationURI>
 		</link>
 		<link>
+			<name>external/dungeonmaster</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+dungeonmaster</locationURI>
+		</link>
+		<link>
 			<name>external/meta_grid</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+corktown+_+meta_grid</locationURI>
