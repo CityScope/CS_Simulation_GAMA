@@ -17,6 +17,16 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>external/GEOGRID</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+dungeonmaster+_+GEOGRID</locationURI>
+		</link>
+		<link>
+			<name>external/GEOGRIDDATA</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+dungeonmaster+_+GEOGRIDDATA</locationURI>
+		</link>
+		<link>
 			<name>external/citymatrix_volpe</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+citymatrix_volpe</locationURI>
