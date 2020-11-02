@@ -20,6 +20,21 @@ global {
 			}
 		}
 	}
+		
+	string computeIndicator (string viz_type){
+		string indicator <- "{name: Gama Indicator,value:" + length(block)+",viz_type:"+viz_type+"}";
+		return indicator;
+	}
+	
+	action sendIndicator(string indicator){
+		// What is the URL to POST here knowing that we have the string ready
+	}
+	
+	
+	reflex update{
+		do udpateGrid;
+		do sendIndicator(computeIndicator("bar"));
+	}
 }
 
 species block{
@@ -32,7 +47,7 @@ species block{
 
 experiment CityScope type: gui autorun:false{
 	output {
-		display map_mode type:opengl background:#black draw_env:false{	
+		display map_mode type:opengl background:#black{	
 
 			species block aspect:base;
 
