@@ -92,6 +92,11 @@
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+dungeonmaster</locationURI>
 		</link>
 		<link>
+			<name>external/hashes</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+dungeonmaster+_+meta+_+hashes</locationURI>
+		</link>
+		<link>
 			<name>external/meta_grid</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+corktown+_+meta_grid</locationURI>

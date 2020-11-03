@@ -37,9 +37,22 @@ global {
 		return indicator;
 	}
 	
-	action sendIndicator(string indicator){
-		// What is the URL to POST here knowing that we have the string ready
+	action sendIndicator(string type){
+		string myIndicator;
+		myIndicator<-"[{\"indicator_type\":\"" + type+"\",\"name\":\"Gama Indicator\",\"value\":"+length(block)+",\"viz_type\":\"bar\"}]";
+		save myIndicator to: "indicator.json" rewrite: true;
+		file JsonFileResults <- json_file("./indicator.json");
+        map<string, unknown> c <- JsonFileResults.contents;
+        try{			
+		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c));		
+		}catch{
+		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+		}
+		write #now +" Indicator Sucessfully sent to cityIO at iteration:" + cycle ;
+		  	
 	}
+	//HeatMap
+	//https://cityio.media.mit.edu/api/table/corktown/access
 	
 	
 	reflex update{
@@ -47,7 +60,7 @@ global {
 		if new_grid_hash_id != grid_hash_id {
 			grid_hash_id <- new_grid_hash_id; 
 			do udpateGrid;
-			do sendIndicator(computeIndicator("bar"));
+			do sendIndicator("numeric");
 		}
 	}
 }
