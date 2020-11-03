@@ -36,48 +36,43 @@ global {
 		}
 	}
 	
-	
-	string computeIndicator (string viz_type){
-		string indicator <- "{name: Gama Indicator,value:" + length(block)+",viz_type:"+viz_type+"}";
-		return indicator;
-	}
-	
-	action sendIndicator(string type){
-		string myIndicator;
-		myIndicator<-"[{\"indicator_type\":\"" + type+"\",\"name\":\"Gama Indicator\",\"value\":"+length(block)+",\"viz_type\":\"bar\"}]";
-		save myIndicator to: "indicator.json" rewrite: true;
-		file JsonFileResults <- json_file("./indicator.json");
-        map<string, unknown> c <- JsonFileResults.contents;
-        try{			
-		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c));		
-		}catch{
-		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
-		}
-		write #now +" Indicator Sucessfully sent to cityIO at iteration:" + cycle ;
-		  	
-	}
 	//HeatMap
 	//https://cityio.media.mit.edu/api/table/corktown/access
 	
 	action updateIndicators {
-		list<unknown> update_package;
+		string update_package <- "[";
 		ask cityio_indicator {
-			write "Updating indicator: " + indicator_name;
-			do return_indicator;
-			file JsonFileResults <- json_file("./"+indicator_name+".json");
-	        map<string, unknown> c <- first(JsonFileResults.contents at "contents");
-	        update_package <- update_package+[c];
+			if indicator_type="numeric" {
+				string myIndicator;
+				float indicator_value <- return_indicator();
+				myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+indicator_value+",\"viz_type\":\""+viz_type+"\"}";
+				if length(update_package)=1 {
+					update_package <- update_package + myIndicator;
+				}else{
+					update_package <- update_package + "," + myIndicator;					
+				}
+				
+			}else{
+				error "only numeric indicators supported at the moment";
+			}
 		}
-		write update_package;
-		write json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", update_package);
-//		save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", update_package));
+
+		update_package <- update_package +"]";
+		save update_package to: "numeric_indicators.json" rewrite: true;
+		file JsonFileResults <- json_file("./numeric_indicators.json");
+	    map<string, unknown> c <- JsonFileResults.contents;
+	    write "C:";
+	    write c;
+//		save(file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c));
+		
+		
+
 //		try{			
 //		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", update_package));
 //		}catch{
 //		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 //		}
 //		write #now +" Indicator Sucessfully sent to cityIO at iteration:" + cycle ;
-		
 	}
 	
 	reflex update when: (cycle mod 10 = update_frequency) {
@@ -86,19 +81,17 @@ global {
 			grid_hash_id <- new_grid_hash_id; 
 			do udpateGrid;
 			do updateIndicators;
-//			do sendIndicator("numeric");
 		}
 	}
 }
 
 species cityio_indicator {
 	string indicator_name;
-	string indicator_type;
+	string indicator_type<-"numeric";
+	string viz_type<-"bar";
 	
-	action return_indicator (string viz_type){
-		string myIndicator;
-		myIndicator<-"[{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+length(block)+",\"viz_type\":\"bar\"}]";
-		save myIndicator to: indicator_name+".json" rewrite: true;
+	float return_indicator {
+		return length(block);
 	}
 }
 
