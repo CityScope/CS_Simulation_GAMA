@@ -6,6 +6,7 @@ global {
 	file geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
 	string grid_hash_id;
 	int update_frequency<-10;
+	bool forceUpdate<-true;
 	
 	geometry shape <- envelope(geogrid);
 	init {
@@ -56,12 +57,13 @@ global {
 	//https://cityio.media.mit.edu/api/table/corktown/access
 	
 	
-	reflex update when: (cycle mod 10 = update_frequency) {
+	reflex update when: (cycle mod update_frequency = 0) {
 		string new_grid_hash_id <- get_grid_hash();
-		if new_grid_hash_id != grid_hash_id {
+		if ((new_grid_hash_id != grid_hash_id) or forceUpdate)  {
 			grid_hash_id <- new_grid_hash_id; 
 			do udpateGrid;
 			do sendIndicator("numeric");
+			//do sendIndicator("bar");
 		}
 	}
 }
