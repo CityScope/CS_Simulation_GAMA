@@ -8,6 +8,7 @@ global {
 	int update_frequency<-1;
 	
 	geometry shape <- envelope(geogrid);
+	
 	init {
 		create block from:geogrid with:[type::read("land_use")];
 		do udpateGrid;
@@ -59,20 +60,14 @@ global {
 
 		update_package <- update_package +"]";
 		save update_package to: "numeric_indicators.json" rewrite: true;
-		file JsonFileResults <- json_file("./indicator.json");
-	    map<string, unknown> c <- first(JsonFileResults.contents at "contents");
-	    write "C:";
-	    write c;
-		save(file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", update_package));
-		
-		
-
-//		try{			
-//		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", update_package));
-//		}catch{
-//		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
-//		}
-//		write #now +" Indicator Sucessfully sent to cityIO at iteration:" + cycle ;
+		file JsonFileResults <- json_file("./numeric_indicators.json");
+	    map<string, unknown> c <- JsonFileResults.contents;
+		try{			
+		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c));
+		}catch{
+		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+		}
+		write #now +" Indicator Sucessfully sent to cityIO at iteration:" + cycle ;
 	}
 	
 	reflex update when: (cycle mod 10 = update_frequency) {
