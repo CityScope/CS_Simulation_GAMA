@@ -19,21 +19,18 @@ global {
 	}
 	
 	action udpateGrid {
-		string new_grid_hash_id <- get_grid_hash();
-		if new_grid_hash_id != grid_hash_id { 
-		    grid_hash_id <- new_grid_hash_id; 
-		    write "Performing local grid update";
-			file geogrid_data <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRIDDATA");
-			loop b over: geogrid_data {
-				loop l over: list(b) {
-					map m <- map(l);
-					ask block(int(m["id"])) {
-						self.color <- m["color"];
-					}
+	    write "Performing local grid update";
+		file geogrid_data <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRIDDATA");
+		loop b over: geogrid_data {
+			loop l over: list(b) {
+				map m <- map(l);
+				ask block(int(m["id"])) {
+					self.color <- m["color"];
 				}
 			}
 		}
 	}
+	
 	
 	string computeIndicator (string viz_type){
 		string indicator <- "{name: Gama Indicator,value:" + length(block)+",viz_type:"+viz_type+"}";
@@ -46,9 +43,12 @@ global {
 	
 	
 	reflex update{
-		
-		do udpateGrid;
-		do sendIndicator(computeIndicator("bar"));
+		string new_grid_hash_id <- get_grid_hash();
+		if new_grid_hash_id != grid_hash_id {
+			grid_hash_id <- new_grid_hash_id; 
+			do udpateGrid;
+			do sendIndicator(computeIndicator("bar"));
+		}
 	}
 }
 
