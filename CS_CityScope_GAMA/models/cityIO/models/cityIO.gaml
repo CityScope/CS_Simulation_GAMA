@@ -39,9 +39,9 @@ global {
 		return indicator;
 	}
 	
-	action sendIndicator(string type){
+	action sendIndicator(string type, string _name, float value){
 		string myIndicator;
-		myIndicator<-"[{\"indicator_type\":\"" + type+"\",\"name\":\"Gama Indicator\",\"value\":"+length(block)+",\"viz_type\":\"bar\"}]";
+		myIndicator<-"[{\"indicator_type\":\"" + type+"\",\"name\":\""+_name+"\",\"value\":"+value+",\"viz_type\":\"bar\"}]";
 		save myIndicator to: "indicator.json" rewrite: true;
 		file JsonFileResults <- json_file("./indicator.json");
         map<string, unknown> c <- JsonFileResults.contents;
@@ -50,8 +50,7 @@ global {
 		}catch{
 		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 		}
-		write #now +" Indicator Sucessfully sent to cityIO at iteration:" + cycle ;
-		  	
+		write #now +" Indicator (type="+ type + " name= " +_name +" value= " + value+") sucessfully sent to cityIO " + cycle;	  	
 	}
 	//HeatMap
 	//https://cityio.media.mit.edu/api/table/corktown/access
@@ -62,7 +61,7 @@ global {
 		if ((new_grid_hash_id != grid_hash_id) or forceUpdate)  {
 			grid_hash_id <- new_grid_hash_id; 
 			do udpateGrid;
-			do sendIndicator("numeric");
+			do sendIndicator("numeric","Average Height",mean(block collect each.height));
 			//do sendIndicator("bar");
 		}
 	}
@@ -70,9 +69,10 @@ global {
 
 species block{
 	string type;
+	float height update:rnd(100.0);
 	rgb color;
 	aspect base {
-		  draw shape color:color border:#black;	
+		  draw shape color:color border:color-50 depth:height;	
 	}
 }
 
