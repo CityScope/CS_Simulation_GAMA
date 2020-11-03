@@ -2,7 +2,7 @@ model citIOGAMA
 
 global {
 
-	string city_io_table<-'dungeonmaster';
+	string city_io_table<-'dungeonc';
 	file geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
 	string grid_hash_id;
 	int update_frequency<-1;
@@ -59,11 +59,11 @@ global {
 
 		update_package <- update_package +"]";
 		save update_package to: "numeric_indicators.json" rewrite: true;
-		file JsonFileResults <- json_file("./numeric_indicators.json");
-	    map<string, unknown> c <- JsonFileResults.contents;
+		file JsonFileResults <- json_file("./indicator.json");
+	    map<string, unknown> c <- first(JsonFileResults.contents at "contents");
 	    write "C:";
 	    write c;
-//		save(file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c));
+		save(file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", update_package));
 		
 		
 
