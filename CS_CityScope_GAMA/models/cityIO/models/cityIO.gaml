@@ -12,10 +12,10 @@ global {
 	init {
 		create block from:geogrid with:[type::read("land_use")];
 		do udpateGrid;
-		
-		create cityio_indicator with: (indicator_name: "hello", indicator_type: "numeric");
-		create cityio_indicator with: (indicator_name: "world", indicator_type: "numeric");
-		create mean_height_indicator with: (indicator_name: "mean_height", indicator_type: "numeric");
+		create cityio_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_type: "numeric", indicator_value: mean(block collect each.height));
+		create cityio_indicator with: (viz_type:"bar",indicator_name: "Min Height", indicator_type: "numeric", indicator_value: min(block collect each.height));
+		create cityio_indicator with: (viz_type:"bar",indicator_name: "Max Height", indicator_type: "numeric", indicator_value: max(block collect each.height));
+		create mean_height_indicator with: (viz_type:"bar",indicator_name: "mean_height", indicator_type: "numeric");
 		do sendIndicators;
 	}
 	
@@ -47,9 +47,7 @@ global {
 
 		string update_package<-"[";
 		ask numeric_indicators {
-			write "Updating: "+indicator_name;
 			string myIndicator;
-			//myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+return_indicator()+",\""+viz_type+"\":\"bar\"}";
 			myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+return_indicator()+",\"viz_type\":\"" + viz_type + "\"}";
 			if length(update_package)=1 {
 				update_package <- update_package+myIndicator;				
@@ -67,7 +65,7 @@ global {
 		}catch{
 		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 		}
-		write #now +" Indicators Sucessfully sent to cityIO at iteration:" + cycle ;
+		write #now + "  " + length(numeric_indicators) + " indicators Sucessfully sent to cityIO at iteration:" + cycle ;
 	}
 	
 	reflex update when: (cycle mod update_frequency = 0) {
@@ -82,11 +80,12 @@ global {
 
 species cityio_indicator {
 	string indicator_name;
-	string indicator_type<-"numeric";
-	string viz_type<-"bar";
+	string indicator_type;
+	float indicator_value;
+	string viz_type;
 	
 	float return_indicator {
-		return length(block);
+		return indicator_value;
 		// return mean(block collect each.height))
 	}
 }
