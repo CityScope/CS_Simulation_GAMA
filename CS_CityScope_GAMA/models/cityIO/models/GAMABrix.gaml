@@ -10,6 +10,9 @@ global {
 	float step <- 30 #sec;
 	float saveLocationInterval<-step;
 	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
+	
+	bool block_post<-false; // set to true to prevent GAMABrix from posting the indicators (useful for debugging)
+	
 	bool saveABM parameter: 'Save ABM' category: "Parameters" <-true; 
 	
 	
@@ -62,12 +65,17 @@ global {
 		save numerical_indicator_string to: "numeric_indicator.json" rewrite: true;
 		file JsonFileResults <- json_file("./numeric_indicator.json");
 	    map<string, unknown> c <- JsonFileResults.contents;
-		try{
-		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c)); 
-		}catch{
-		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
-		}
-		write #now + "  " + length(numeric_indicators) + " indicators sucessfully sent to cityIO at iteration:" + cycle ;
+	    if (!block_post){
+	    	try{
+			  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c)); 
+			}catch{
+			  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+			}
+			write #now + "  " + length(numeric_indicators) + " indicators sucessfully sent to cityIO at iteration:" + cycle ;
+	    }else{
+	    	write #now + "  " + length(numeric_indicators) + " indicators would have been sent to cityIO at iteration:" + cycle ;
+	    }
+		
 		
 		
 		//Heatmap Indicator
@@ -84,24 +92,36 @@ global {
 			}
 			heatmap_indicator_string<-heatmap_indicator_string+"]";
 			heatmap_indicator_string<-heatmap_indicator_string+"\"properties\":[\"att1\",\"att2\"],\"type\":\"FeatureCollection\"}";
-			write heatmap_indicator_string;
 			save heatmap_indicator_string to: "heatmap_indicator.json" rewrite: true;
 			file JsonFileResultsH <- json_file("./heatmap_indicator.json");
 		    map<string, unknown> h <- JsonFileResultsH.contents;
-			try{			
-			  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/access", h)); // This still updates a dictionary with 'contents' as a key
-			}catch{
-			  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
-			}
-			write #now + "  " + length(heatmap_indicators) + " heatmap sucessfully sent to cityIO at iteration:" + cycle ;
+		    if (!block_post){
+				try{			
+				  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/access", h)); // This still updates a dictionary with 'contents' as a key
+				}catch{
+				  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+				}
+				write #now + "  " + length(heatmap_indicators) + " heatmap sucessfully sent to cityIO at iteration:" + cycle ;
+		    }else{
+		    	write #now + "  " + length(heatmap_indicators) + " heatmap would have been sent to cityIO at iteration:" + cycle ;
+		    }
 		}
 		
 		//ABM Indicator
 		if (cycle>1){
-		string abm_indicator_string<-"{\"attr\": {\"trip_purpose\": {\"0\": {\"name\": \"home\", \"color\": \"#4daf4a\"}, \"1\": {\"name\": \"work\", \"color\": \"#ffff33\"}}}";
-		abm_indicator_string<-abm_indicator_string+",\"trips\": [";
+		string abm_indicator_string <- "{";
+		abm_indicator_string <- abm_indicator_string+"\"attr\": {";
+		abm_indicator_string <- abm_indicator_string+"\"mode\": {\"0\": {\"name\": \"home\", \"color\": \"#4daf4a\"}, \"1\": {\"name\": \"work\", \"color\": \"#ffff33\"}}";
+		abm_indicator_string <- abm_indicator_string+",\n\"profile\": {\"0\": {\"name\": \"home\", \"color\": \"#4daf4a\"}, \"1\": {\"name\": \"work\", \"color\": \"#ffff33\"}}";
+		abm_indicator_string <- abm_indicator_string+"},\n\"trips\": [";
+		write "abm_indicator_string (before trips):";
+		write abm_indicator_string;
 		ask people {
-			string abmIndicator <-"{\"path\": [";
+			string abmIndicator <- "{";
+			abmIndicator <- abmIndicator + "\"mode\": "+mode+",\n";
+			abmIndicator <- abmIndicator + "\"profile\": "+profile+",\n";
+			
+			abmIndicator <- abmIndicator+ "\"path\": [";
 			loop i from:0 to:length(locs)-1{
 				point loc <- CRS_transform(locs[i]).location;
 				if(i<length(locs)-1){
@@ -111,6 +131,7 @@ global {
 				}
 			}
 			abmIndicator<-abmIndicator+"]";
+			
 			abmIndicator <- abmIndicator+",\n\"timestamps\": [";
 			loop i from:0 to:length(locs)-1{
 				point loc <- CRS_transform(locs[i]).location;
@@ -120,25 +141,34 @@ global {
 				abmIndicator <- abmIndicator +  loc.z + "\n";	
 				}
 			}
-			abmIndicator <- abmIndicator + "]";
-			abmIndicator<-  abmIndicator+ "\n}";
+			abmIndicator <- abmIndicator + "]\n}";
 			if (length(abm_indicator_string)=124){
 			  abm_indicator_string<-abm_indicator_string+abmIndicator;
 			}else{
 			  abm_indicator_string<-abm_indicator_string+","+abmIndicator;	
 			}
+			write "ABM Indicator";
+			write abmIndicator;
         }
         abm_indicator_string<-abm_indicator_string+"]}";
+        write "-------------";
+        write abm_indicator_string;
+        write "-------------";
 		save abm_indicator_string to: "abm_indicator.json" rewrite: true;
 		file JsonFileResultsABM <- json_file("./abm_indicator.json");
 		map<string, unknown> a <- JsonFileResultsABM.contents;
-		try{			
-		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/ABM2", a)); // This still updates a dictionary with 'contents' as a key
-		}catch{
-		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+		if (!block_post){
+			try{			
+			  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/ABM2", a)); // This still updates a dictionary with 'contents' as a key
+			}catch{
+			  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+			}
+			write #now + " ABM indicator sucessfully sent to cityIO at iteration:" + cycle ;
+			}
+		}else{
+			write #now + " ABM indicator would have been sent to cityIO at iteration:" + cycle ;
 		}
-		write #now + " ABM indicator sucessfully sent to cityIO at iteration:" + cycle ;
-		}
+		
 	
 	}
 	
@@ -192,6 +222,8 @@ species people skills:[moving]{ // This is here only because the current version
 	int att1;
 	int att2;
 	list<point> locs;
+	int profile<-0;
+	int mode<-0;
 	
 	reflex move{
 		do wander;
