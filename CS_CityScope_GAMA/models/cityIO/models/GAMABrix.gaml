@@ -94,12 +94,13 @@ global {
 			  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 			}
 			write #now + "  " + length(heatmap_indicators) + " heatmap sucessfully sent to cityIO at iteration:" + cycle ;
-			}
+		}
+		
 		//ABM Indicator
 		if (cycle>1){
 		string abm_indicator_string<-"{\"attr\": {\"trip_purpose\": {\"0\": {\"name\": \"home\", \"color\": \"#4daf4a\"}, \"1\": {\"name\": \"work\", \"color\": \"#ffff33\"}}}";
 		abm_indicator_string<-abm_indicator_string+",\"trips\": [";
-		ask people{
+		ask people {
 			string abmIndicator <-"{\"path\": [";
 			loop i from:0 to:length(locs)-1{
 				point loc <- CRS_transform(locs[i]).location;
