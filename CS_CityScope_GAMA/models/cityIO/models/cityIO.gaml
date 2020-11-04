@@ -5,17 +5,18 @@ global {
 	string city_io_table<-'dungeonc';
 	file geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
 	string grid_hash_id;
-	int update_frequency<-1;
+	int update_frequency<-10;
+	bool forceUpdate<-true;
 	
 	geometry shape <- envelope(geogrid);
-	
 	init {
 		create block from:geogrid with:[type::read("land_use")];
 		do udpateGrid;
 		
 		create cityio_indicator with: (indicator_name: "hello", indicator_type: "numeric");
 		create cityio_indicator with: (indicator_name: "world", indicator_type: "numeric");
-		do updateIndicators;
+		create mean_height_indicator with: (indicator_name: "mean_height", indicator_type: "numeric");
+		do sendIndicators;
 	}
 	
 	string get_grid_hash {
@@ -37,45 +38,43 @@ global {
 		}
 	}
 	
+
 	//HeatMap
 	//https://cityio.media.mit.edu/api/table/corktown/access
 	
-	action updateIndicators {
-		string update_package <- "[";
-		ask cityio_indicator {
-			if indicator_type="numeric" {
-				string myIndicator;
-				float indicator_value <- return_indicator();
-				myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+indicator_value+",\"viz_type\":\""+viz_type+"\"}";
-				if length(update_package)=1 {
-					update_package <- update_package + myIndicator;
-				}else{
-					update_package <- update_package + "," + myIndicator;					
-				}
-				
+	action sendIndicators {
+		list<cityio_indicator> numeric_indicators <- (cityio_indicator where (each.indicator_type="numeric")); // This should also select indicator agents that are subspecies of the cityio_indicator species
+
+		string update_package<-"[";
+		ask numeric_indicators {
+			write "Updating: "+indicator_name;
+			string myIndicator;
+			myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+return_indicator()+",\""+viz_type+"\":\"bar\"}";
+			if length(update_package)=1 {
+				update_package <- update_package+myIndicator;				
 			}else{
-				error "only numeric indicators supported at the moment";
+				update_package <- update_package+","+myIndicator;
 			}
 		}
-
-		update_package <- update_package +"]";
-		save update_package to: "numeric_indicators.json" rewrite: true;
-		file JsonFileResults <- json_file("./numeric_indicators.json");
+		update_package <- update_package+"]";
+		write update_package;
+		save update_package to: "indicator.json" rewrite: true;
+		file JsonFileResults <- json_file("./indicator.json");
 	    map<string, unknown> c <- JsonFileResults.contents;
 		try{			
-		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c));
+		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c)); // This still updates a dictionary with 'contents' as a key
 		}catch{
 		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 		}
-		write #now +" Indicator Sucessfully sent to cityIO at iteration:" + cycle ;
+		write #now +" Indicator Sucessfully sent to cityIO at iteration:" + cycle ;		
 	}
 	
-	reflex update when: (cycle mod 10 = update_frequency) {
+	reflex update when: (cycle mod update_frequency = 0) {
 		string new_grid_hash_id <- get_grid_hash();
-		if new_grid_hash_id != grid_hash_id {
+		if ((new_grid_hash_id != grid_hash_id) or forceUpdate)  {
 			grid_hash_id <- new_grid_hash_id; 
 			do udpateGrid;
-			do updateIndicators;
+			do sendIndicators;
 		}
 	}
 }
@@ -87,22 +86,22 @@ species cityio_indicator {
 	
 	float return_indicator {
 		return length(block);
+		// return mean(block collect each.height))
 	}
 }
 
-//species my_indicator parent: cityio_indicator {
-//	action return_indicator (string viz_type){
-//		string myIndicator;
-//		myIndicator<-"[{\"indicator_type\":\"" + indicator_type+"\",\"name\":\"Gama Indicator\",\"value\":"+length(block)+",\"viz_type\":\"bar\"}]";
-//		save myIndicator to: indicator_name+".json" rewrite: true;
-//	}
-//}
+species mean_height_indicator parent: cityio_indicator {
+	float return_indicator {
+		 return mean(block collect each.height);
+	}
+}
 
 species block{
 	string type;
+	float height update:rnd(100.0);
 	rgb color;
 	aspect base {
-		  draw shape color:color border:#black;	
+		  draw shape color:color border:color-50 depth:height;	
 	}
 }
 
