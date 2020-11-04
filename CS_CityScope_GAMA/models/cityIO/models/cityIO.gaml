@@ -70,7 +70,7 @@ global {
 		string heatmap_indicator_string<-"{\"features\":[";
 		ask cityio_heatmap_indicator{
 			loop i from:0 to:length(listOfPoint)-1{
-				string hIndicator<-"{\"geometry\":{\"coordinates\":["+CRS_transform(listOfPoint[i].location).location.y+","+CRS_transform(listOfPoint[i].location).location.x+"],\"type\":\"Point\"},\"properties\":["+listOfPoint[i].att1+","+listOfPoint[i].att2+"],\"type\":\"Feature\"}";
+				string hIndicator<-"{\"geometry\":{\"coordinates\":["+CRS_transform(listOfPoint[i].location).location.x+","+CRS_transform(listOfPoint[i].location).location.y+"],\"type\":\"Point\"},\"properties\":["+listOfPoint[i].att1+","+listOfPoint[i].att2+"],\"type\":\"Feature\"}";
 				if length(heatmap_indicator_string)=0 {
 				  heatmap_indicator_string<-heatmap_indicator_string+hIndicator;
 			    }else{
