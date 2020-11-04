@@ -49,7 +49,8 @@ global {
 		ask numeric_indicators {
 			write "Updating: "+indicator_name;
 			string myIndicator;
-			myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+return_indicator()+",\""+viz_type+"\":\"bar\"}";
+			//myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+return_indicator()+",\""+viz_type+"\":\"bar\"}";
+			myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+return_indicator()+",\"viz_type\":\"" + viz_type + "\"}";
 			if length(update_package)=1 {
 				update_package <- update_package+myIndicator;				
 			}else{
