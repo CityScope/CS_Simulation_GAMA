@@ -114,8 +114,6 @@ global {
 		abm_indicator_string <- abm_indicator_string+"\"mode\": {\"0\": {\"name\": \"home\", \"color\": \"#4daf4a\"}, \"1\": {\"name\": \"work\", \"color\": \"#ffff33\"}}";
 		abm_indicator_string <- abm_indicator_string+",\n\"profile\": {\"0\": {\"name\": \"home\", \"color\": \"#4daf4a\"}, \"1\": {\"name\": \"work\", \"color\": \"#ffff33\"}}";
 		abm_indicator_string <- abm_indicator_string+"},\n\"trips\": [";
-		write "abm_indicator_string (before trips):";
-		write abm_indicator_string;
 		ask people {
 			string abmIndicator <- "{";
 			abmIndicator <- abmIndicator + "\"mode\": "+mode+",\n";
@@ -147,13 +145,8 @@ global {
 			}else{
 			  abm_indicator_string<-abm_indicator_string+","+abmIndicator;	
 			}
-			write "ABM Indicator";
-			write abmIndicator;
         }
         abm_indicator_string<-abm_indicator_string+"]}";
-        write "-------------";
-        write abm_indicator_string;
-        write "-------------";
 		save abm_indicator_string to: "abm_indicator.json" rewrite: true;
 		file JsonFileResultsABM <- json_file("./abm_indicator.json");
 		map<string, unknown> a <- JsonFileResultsABM.contents;
