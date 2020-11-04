@@ -12,9 +12,9 @@ global {
 	init {
 		create block from:geogrid with:[type::read("land_use")];
 		do udpateGrid;
-		create cityio_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_type: "numeric", indicator_value: mean(block collect each.height));
-		create cityio_indicator with: (viz_type:"bar",indicator_name: "Min Height", indicator_type: "numeric", indicator_value: min(block collect each.height));
-		create cityio_indicator with: (viz_type:"bar",indicator_name: "Max Height", indicator_type: "numeric", indicator_value: max(block collect each.height));
+		create cityio_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_type: "numeric", indicator_value: "mean(block collect each.height)");
+		create cityio_indicator with: (viz_type:"bar",indicator_name: "Min Height", indicator_type: "numeric", indicator_value: "min(block collect each.height)");
+		create cityio_indicator with: (viz_type:"bar",indicator_name: "Max Height", indicator_type: "numeric", indicator_value: "max(block collect each.height)");
 		do sendIndicators;
 	}
 	
@@ -80,12 +80,11 @@ global {
 species cityio_indicator {
 	string indicator_name;
 	string indicator_type;
-	float indicator_value;
+	string indicator_value;
 	string viz_type;
 	
 	float return_indicator {
-		return indicator_value;
-		// return mean(block collect each.height))
+		return float(eval_gaml(indicator_value));
 	}
 }
 
