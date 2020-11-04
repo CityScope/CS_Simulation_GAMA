@@ -12,9 +12,11 @@ global {
 	init {
 		create block from:geogrid with:[type::read("land_use")];
 		do udpateGrid;
+		create people with:(att1:rnd(10),att2:rnd(10)) number:10;
 		create cityio_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_type: "numeric", indicator_value: "mean(block collect each.height)");
 		create cityio_indicator with: (viz_type:"bar",indicator_name: "Min Height", indicator_type: "numeric", indicator_value: "min(block collect each.height)");
 		create cityio_indicator with: (viz_type:"bar",indicator_name: "Max Height", indicator_type: "numeric", indicator_value: "max(block collect each.height)");
+		create cityio_heatmap_indicator with: (listOfPoint:list<people>(people));
 		do sendIndicators;
 	}
 	
@@ -37,34 +39,58 @@ global {
 		}
 	}
 	
-
 	//HeatMap
 	//https://cityio.media.mit.edu/api/table/corktown/access
 	
 	action sendIndicators {
+		//Numeric Indicator
 		list<cityio_indicator> numeric_indicators <- (cityio_indicator where (each.indicator_type="numeric")); // This should also select indicator agents that are subspecies of the cityio_indicator species
-
-		string update_package<-"[";
+		string numerical_indicator_string<-"[";
 		ask numeric_indicators {
 			string myIndicator;
-			myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+return_indicator()+",\"viz_type\":\"" + viz_type + "\"}";
-			if length(update_package)=1 {
-				update_package <- update_package+myIndicator;				
+			myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+return_numeric_indicator()+",\"viz_type\":\"" + viz_type + "\"}";
+			if length(numerical_indicator_string)=1 {
+				numerical_indicator_string <- numerical_indicator_string+myIndicator;				
 			}else{
-				update_package <- update_package+","+myIndicator;
+				numerical_indicator_string <- numerical_indicator_string+","+myIndicator;
 			}
 		}
-		update_package <- update_package+"]";
-		write update_package;
-		save update_package to: "indicator.json" rewrite: true;
-		file JsonFileResults <- json_file("./indicator.json");
+		numerical_indicator_string <- numerical_indicator_string+"]";
+		write numerical_indicator_string;
+		save numerical_indicator_string to: "numeric_indicator.json" rewrite: true;
+		file JsonFileResults <- json_file("./numeric_indicator.json");
 	    map<string, unknown> c <- JsonFileResults.contents;
 		try{			
 		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c)); // This still updates a dictionary with 'contents' as a key
 		}catch{
 		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 		}
-		write #now + "  " + length(numeric_indicators) + " indicators Sucessfully sent to cityIO at iteration:" + cycle ;
+		write #now + "  " + length(numeric_indicators) + " indicators sucessfully sent to cityIO at iteration:" + cycle ;
+		//Heatmap Indicator
+		string heatmap_indicator_string<-"{\"features\":[";
+		ask cityio_heatmap_indicator{
+			ask listOfPoint{
+				if length(heatmap_indicator_string)=0 {
+				  heatmap_indicator_string<-heatmap_indicator_string+"{\"geometry\":{\"coordinates\":[-83.11795226751326,42.3447114591701],\"type\":\"Point\"},\"properties\":[0.0,0.0],\"type\":\"Feature\"}";
+			    }else{
+			      heatmap_indicator_string<-heatmap_indicator_string+","+"{\"geometry\":{\"coordinates\":[-83.11795226751326,42.3447114591701],\"type\":\"Point\"},\"properties\":[0.0,0.0],\"type\":\"Feature\"}";	
+			    }
+			}
+			heatmap_indicator_string<-heatmap_indicator_string+"]";
+			heatmap_indicator_string<-heatmap_indicator_string+"\"properties\":[\"att1\",\"att2\"],\"type\":\"FeatureCollection\"}";
+			write heatmap_indicator_string;
+			save heatmap_indicator_string to: "heatmap_indicator.json" rewrite: true;
+			file JsonFileResultsH <- json_file("./heatmap_indicator.json");
+		    map<string, unknown> h <- JsonFileResultsH.contents;
+			try{			
+			  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/access", h)); // This still updates a dictionary with 'contents' as a key
+			}catch{
+			  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+			}
+			write #now + "  " + length(cityio_heatmap_indicator) + " heatmap sucessfully sent to cityIO at iteration:" + cycle ;
+			}
+		
+		
 	}
 	
 	reflex update when: (cycle mod update_frequency = 0) {
@@ -82,10 +108,13 @@ species cityio_indicator {
 	string indicator_type;
 	string indicator_value;
 	string viz_type;
-	
-	float return_indicator {
+	float return_numeric_indicator {
 		return float(eval_gaml(indicator_value));
 	}
+}
+
+species cityio_heatmap_indicator{
+	list<people> listOfPoint;
 }
 
 species block{
@@ -97,11 +126,21 @@ species block{
 	}
 }
 
+species people skills:[moving]{
+	string type;
+	int att1;
+	int att2;
+	aspect base{
+		draw circle(10) color:#blue;
+	}
+}
+
 experiment CityScope type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black{	
 
 			species block aspect:base;
+			species people aspect:base position:{0,0,0.1};
 
 		}
 	}
