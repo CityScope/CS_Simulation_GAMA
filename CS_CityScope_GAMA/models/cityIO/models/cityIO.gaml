@@ -14,10 +14,10 @@ global {
 
 	init {
 		create people with:(att1:rnd(10),att2:rnd(10)) number:10; // For now, people are imported from GAMABrix, because the current version of cityio_heatmap_indicator needs the people species. 
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_type: "numeric", indicator_value: "mean(block collect each.height)");
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_type: "numeric", indicator_value: "min(block collect each.height)");
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_type: "numeric", indicator_value: "max(block collect each.height)");
-		create my_cool_indicator        with: (viz_type:"bar",indicator_name: "Number of blocks",  indicator_type: "numeric");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(block collect each.height)");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(block collect each.height)");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(block collect each.height)");
+		create my_cool_indicator        with: (viz_type:"bar",indicator_name: "Number of blocks");
 		create cityio_heatmap_indicator with: (listOfPoint:list<people>(people));
 	}
 }

@@ -112,13 +112,15 @@ species cityio_indicator { // This is the master indicator species. We will use 
 species cityio_numeric_indicator parent: cityio_indicator {
 	string indicator_value;
 	string viz_type <- "bar";
+	string indicator_type<-"numeric";
 	float return_indicator {
 		return float(eval_gaml(indicator_value));
 	}
 }
 
 species cityio_heatmap_indicator parent: cityio_indicator {
-	// The generic heatmap indicator should not reely on people species. 
+	// The generic heatmap indicator should not reely on people species.
+	string indicator_type<-"heatmap"; 
 	list<people> listOfPoint;
 	list<people> return_indicator {
 		return listOfPoint; // Not sure about this yet, but we might want this return function just to help users organize their code. 
