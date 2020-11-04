@@ -69,11 +69,12 @@ global {
 		//Heatmap Indicator
 		string heatmap_indicator_string<-"{\"features\":[";
 		ask cityio_heatmap_indicator{
-			ask listOfPoint{
+			loop i from:0 to:length(listOfPoint)-1{
+				string hIndicator<-"{\"geometry\":{\"coordinates\":["+CRS_transform(listOfPoint[i].location).location.y+","+CRS_transform(listOfPoint[i].location).location.x+"],\"type\":\"Point\"},\"properties\":["+listOfPoint[i].att1+","+listOfPoint[i].att2+"],\"type\":\"Feature\"}";
 				if length(heatmap_indicator_string)=0 {
-				  heatmap_indicator_string<-heatmap_indicator_string+"{\"geometry\":{\"coordinates\":[-83.11795226751326,42.3447114591701],\"type\":\"Point\"},\"properties\":[0.0,0.0],\"type\":\"Feature\"}";
+				  heatmap_indicator_string<-heatmap_indicator_string+hIndicator;
 			    }else{
-			      heatmap_indicator_string<-heatmap_indicator_string+","+"{\"geometry\":{\"coordinates\":[-83.11795226751326,42.3447114591701],\"type\":\"Point\"},\"properties\":[0.0,0.0],\"type\":\"Feature\"}";	
+			      heatmap_indicator_string<-heatmap_indicator_string+","+hIndicator;	
 			    }
 			}
 			heatmap_indicator_string<-heatmap_indicator_string+"]";
