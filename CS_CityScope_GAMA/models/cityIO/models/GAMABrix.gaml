@@ -7,6 +7,10 @@ global {
 	int update_frequency<-10;
 	bool forceUpdate<-true;
 	file geogrid;
+	float step <- 30 #sec;
+	float saveLocationInterval<-step;
+	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
+	bool saveABM parameter: 'Save ABM' category: "Parameters" <-true; 
 	
 	
 	init {
@@ -91,6 +95,50 @@ global {
 			}
 			write #now + "  " + length(heatmap_indicators) + " heatmap sucessfully sent to cityIO at iteration:" + cycle ;
 			}
+		//ABM Indicator
+		if (cycle>1){
+		string abm_indicator_string<-"{\"attr\": {\"trip_purpose\": {\"0\": {\"name\": \"home\", \"color\": \"#4daf4a\"}, \"1\": {\"name\": \"work\", \"color\": \"#ffff33\"}}}";
+		abm_indicator_string<-abm_indicator_string+",\"trips\": [";
+		ask people{
+			string abmIndicator <-"{\"path\": [";
+			loop i from:0 to:length(locs)-1{
+				point loc <- CRS_transform(locs[i]).location;
+				if(i<length(locs)-1){
+				abmIndicator <- abmIndicator + "[" + loc.x + ", " + loc.y + "],\n";	
+				}else{
+				abmIndicator <- abmIndicator + "[" + loc.x + ", " + loc.y + "]\n";	
+				}
+			}
+			abmIndicator<-abmIndicator+"]";
+			abmIndicator <- abmIndicator+",\n\"timestamps\": [";
+			loop i from:0 to:length(locs)-1{
+				point loc <- CRS_transform(locs[i]).location;
+				if(i<length(locs)-1){
+				abmIndicator <- abmIndicator + loc.z + ",\n";	
+				}else{
+				abmIndicator <- abmIndicator +  loc.z + "\n";	
+				}
+			}
+			abmIndicator <- abmIndicator + "]";
+			abmIndicator<-  abmIndicator+ "\n}";
+			if (length(abm_indicator_string)=124){
+			  abm_indicator_string<-abm_indicator_string+abmIndicator;
+			}else{
+			  abm_indicator_string<-abm_indicator_string+","+abmIndicator;	
+			}
+        }
+        abm_indicator_string<-abm_indicator_string+"]}";
+		save abm_indicator_string to: "abm_indicator.json" rewrite: true;
+		file JsonFileResultsABM <- json_file("./abm_indicator.json");
+		map<string, unknown> a <- JsonFileResultsABM.contents;
+		try{			
+		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/ABM2", a)); // This still updates a dictionary with 'contents' as a key
+		}catch{
+		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+		}
+		write #now + " ABM indicator sucessfully sent to cityIO at iteration:" + cycle ;
+		}
+	
 	}
 	
 	reflex update when: (cycle mod update_frequency = 0) {
@@ -142,6 +190,17 @@ species people skills:[moving]{ // This is here only because the current version
 	string type;
 	int att1;
 	int att2;
+	list<point> locs;
+	
+	reflex move{
+		do wander;
+		locs << {location.x,location.y,time mod totalTimeInSec};
+		if(saveABM){
+			if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1){
+		 		
+			}		
+		}
+	}
 	aspect base{
 		draw circle(10) color:#blue;
 	}
