@@ -2,7 +2,7 @@ model citIOGAMA
 
 global {
 
-	string city_io_table<-'dungeonc';
+	string city_io_table<-'dungeonmaster';
 	file geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
 	string grid_hash_id;
 	int update_frequency<-10;
