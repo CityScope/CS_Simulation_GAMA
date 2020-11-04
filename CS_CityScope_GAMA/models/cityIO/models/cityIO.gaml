@@ -12,6 +12,11 @@ global {
 	init {
 		create block from:geogrid with:[type::read("land_use")];
 		do udpateGrid;
+		
+		create cityio_indicator with: (indicator_name: "hello", indicator_type: "numeric");
+		create cityio_indicator with: (indicator_name: "world", indicator_type: "numeric");
+		create mean_height_indicator with: (indicator_name: "mean_height", indicator_type: "numeric");
+		do sendIndicators;
 	}
 	
 	string get_grid_hash {
@@ -33,37 +38,61 @@ global {
 		}
 	}
 	
-	
-	string computeIndicator (string viz_type){
-		string indicator <- "{name: Gama Indicator,value:" + length(block)+",viz_type:"+viz_type+"}";
-		return indicator;
-	}
-	
-	action sendIndicator(string type, string _name, float value){
-		string myIndicator;
-		myIndicator<-"[{\"indicator_type\":\"" + type+"\",\"name\":\""+_name+"\",\"value\":"+value+",\"viz_type\":\"bar\"}]";
-		save myIndicator to: "indicator.json" rewrite: true;
-		file JsonFileResults <- json_file("./indicator.json");
-        map<string, unknown> c <- JsonFileResults.contents;
-        try{			
-		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c));		
-		}catch{
-		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
-		}
-		write #now +" Indicator (type="+ type + " name= " +_name +" value= " + value+") sucessfully sent to cityIO " + cycle;	  	
-	}
+
 	//HeatMap
 	//https://cityio.media.mit.edu/api/table/corktown/access
 	
+	action sendIndicators {
+		list<cityio_indicator> numeric_indicators <- (cityio_indicator where (each.indicator_type="numeric")); // This should also select indicator agents that are subspecies of the cityio_indicator species
+
+		string update_package<-"[";
+		ask numeric_indicators {
+			write "Updating: "+indicator_name;
+			string myIndicator;
+			myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+return_indicator()+",\""+viz_type+"\":\"bar\"}";
+			if length(update_package)=1 {
+				update_package <- update_package+myIndicator;				
+			}else{
+				update_package <- update_package+","+myIndicator;
+			}
+		}
+		update_package <- update_package+"]";
+		write update_package;
+		save update_package to: "indicator.json" rewrite: true;
+		file JsonFileResults <- json_file("./indicator.json");
+	    map<string, unknown> c <- JsonFileResults.contents;
+		try{			
+		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c)); // This still updates a dictionary with 'contents' as a key
+		}catch{
+		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+		}
+		write #now +" Indicators Sucessfully sent to cityIO at iteration:" + cycle ;
+	}
 	
 	reflex update when: (cycle mod update_frequency = 0) {
 		string new_grid_hash_id <- get_grid_hash();
 		if ((new_grid_hash_id != grid_hash_id) or forceUpdate)  {
 			grid_hash_id <- new_grid_hash_id; 
 			do udpateGrid;
-			do sendIndicator("numeric","Average Height",mean(block collect each.height));
-			//do sendIndicator("bar");
+			do sendIndicators;
 		}
+	}
+}
+
+species cityio_indicator {
+	string indicator_name;
+	string indicator_type<-"numeric";
+	string viz_type<-"bar";
+	
+	float return_indicator {
+		return length(block);
+		// return mean(block collect each.height))
+	}
+}
+
+species mean_height_indicator parent: cityio_indicator {
+	float return_indicator {
+		 return mean(block collect each.height);
 	}
 }
 
