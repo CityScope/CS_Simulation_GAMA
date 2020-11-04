@@ -60,12 +60,13 @@ global {
 		save numerical_indicator_string to: "numeric_indicator.json" rewrite: true;
 		file JsonFileResults <- json_file("./numeric_indicator.json");
 	    map<string, unknown> c <- JsonFileResults.contents;
-		try{			
-		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c)); // This still updates a dictionary with 'contents' as a key
+		try{
+		  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c)); 
 		}catch{
 		  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 		}
 		write #now + "  " + length(numeric_indicators) + " indicators sucessfully sent to cityIO at iteration:" + cycle ;
+		
 		//Heatmap Indicator
 		string heatmap_indicator_string<-"{\"features\":[";
 		ask cityio_heatmap_indicator{
@@ -90,8 +91,6 @@ global {
 			}
 			write #now + "  " + length(cityio_heatmap_indicator) + " heatmap sucessfully sent to cityIO at iteration:" + cycle ;
 			}
-		
-		
 	}
 	
 	reflex update when: (cycle mod update_frequency = 0) {
