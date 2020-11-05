@@ -219,7 +219,7 @@ species block{
 }
 
 
-species cityio_agent parent: cityio_indicator { // This is here only because the current version of cityio_heatmap_indicator needs it. This should live in the model file.
+species cityio_agent parent: cityio_indicator {
 	list<point> locs;
 	
 	int att1;
