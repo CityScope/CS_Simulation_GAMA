@@ -51,11 +51,11 @@ global {
 		    map<string, unknown> m <- JsonFileResults.contents;
 		    if (!block_post){
 				try{			
-				  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/access", m)); // This still updates a dictionary with 'contents' as a key
+				  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/"+type, m)); // This still updates a dictionary with 'contents' as a key
 				}catch{
 				  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 				}
-				write #now + " " + type + " indicator(s) sucessfully sent to cityIO at iteration:" + cycle ;
+				write #now + " " + type + " sucessfully sent to cityIO at iteration:" + cycle ;
 		    }else{
 		    	write #now + " " + type + " would have been sent to cityIO at iteration:" + cycle ;
 		    }
@@ -76,7 +76,7 @@ global {
 			}
 		}
 		numerical_indicator_string <- numerical_indicator_string+"]";
-		do sendStringToCityIo(numerical_indicator_string,"numerical");
+		do sendStringToCityIo(numerical_indicator_string,"indicators");
 		//Heatmap Indicator
 		list<agent> heatmap_indicators <- get_all_instances(cityio_heatmap_indicator);
 		string heatmap_indicator_string<-"{\"features\":[";
@@ -92,7 +92,7 @@ global {
 			heatmap_indicator_string<-heatmap_indicator_string+"]";
 			heatmap_indicator_string<-heatmap_indicator_string+"\"properties\":[\"att1\",\"att2\"],\"type\":\"FeatureCollection\"}";
 		}
-		do sendStringToCityIo(heatmap_indicator_string,"heatmap");
+		do sendStringToCityIo(heatmap_indicator_string,"access");
 		//ABM Indicator
 		if (cycle>1){
 		string abm_indicator_string <- "{";
@@ -133,7 +133,7 @@ global {
 			}
         }
         abm_indicator_string<-abm_indicator_string+"]}";
-		do sendStringToCityIo(abm_indicator_string,"ABM");
+		do sendStringToCityIo(abm_indicator_string,"ABM2");
 		}
 		else{
 			write #now + " ABM indicator would have been sent to cityIO at iteration:" + cycle ;
@@ -197,10 +197,9 @@ species people skills:[moving]{ // This is here only because the current version
 	
 	reflex move{
 		do wander;
-		locs << {location.x,location.y,time mod totalTimeInSec};
 		if(saveABM){
 			if((time mod saveLocationInterval = 0) and (time mod totalTimeInSec)>1){
-		 		
+					locs << {location.x,location.y,time mod totalTimeInSec};
 			}		
 		}
 	}
