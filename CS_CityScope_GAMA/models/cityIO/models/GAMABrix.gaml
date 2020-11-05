@@ -45,8 +45,22 @@ global {
 		}
 	}
 	
-	//HeatMap
-	//https://cityio.media.mit.edu/api/table/corktown/access
+	action sendStringToCityIo(string cityIOString, string type){
+			save cityIOString to: "./../results/"+type+".json" rewrite: true;
+			file JsonFileResults <- json_file("./../results/"+type+".json");
+		    map<string, unknown> m <- JsonFileResults.contents;
+		    if (!block_post){
+				try{			
+				  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/access", m)); // This still updates a dictionary with 'contents' as a key
+				}catch{
+				  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
+				}
+				write #now + " " + type + " indicator(s) sucessfully sent to cityIO at iteration:" + cycle ;
+		    }else{
+		    	write #now + " " + type + " would have been sent to cityIO at iteration:" + cycle ;
+		    }
+		
+	}
 	
 	action sendIndicators {
 		//Numeric Indicator
@@ -62,22 +76,7 @@ global {
 			}
 		}
 		numerical_indicator_string <- numerical_indicator_string+"]";
-		save numerical_indicator_string to: "numeric_indicator.json" rewrite: true;
-		file JsonFileResults <- json_file("./numeric_indicator.json");
-	    map<string, unknown> c <- JsonFileResults.contents;
-	    if (!block_post){
-	    	try{
-			  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/indicators", c)); 
-			}catch{
-			  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
-			}
-			write #now + "  " + length(numeric_indicators) + " indicators sucessfully sent to cityIO at iteration:" + cycle ;
-	    }else{
-	    	write #now + "  " + length(numeric_indicators) + " indicators would have been sent to cityIO at iteration:" + cycle ;
-	    }
-		
-		
-		
+		do sendStringToCityIo(numerical_indicator_string,"numerical");
 		//Heatmap Indicator
 		list<agent> heatmap_indicators <- get_all_instances(cityio_heatmap_indicator);
 		string heatmap_indicator_string<-"{\"features\":[";
@@ -92,21 +91,8 @@ global {
 			}
 			heatmap_indicator_string<-heatmap_indicator_string+"]";
 			heatmap_indicator_string<-heatmap_indicator_string+"\"properties\":[\"att1\",\"att2\"],\"type\":\"FeatureCollection\"}";
-			save heatmap_indicator_string to: "heatmap_indicator.json" rewrite: true;
-			file JsonFileResultsH <- json_file("./heatmap_indicator.json");
-		    map<string, unknown> h <- JsonFileResultsH.contents;
-		    if (!block_post){
-				try{			
-				  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/access", h)); // This still updates a dictionary with 'contents' as a key
-				}catch{
-				  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
-				}
-				write #now + "  " + length(heatmap_indicators) + " heatmap sucessfully sent to cityIO at iteration:" + cycle ;
-		    }else{
-		    	write #now + "  " + length(heatmap_indicators) + " heatmap would have been sent to cityIO at iteration:" + cycle ;
-		    }
 		}
-		
+		do sendStringToCityIo(heatmap_indicator_string,"heatmap");
 		//ABM Indicator
 		if (cycle>1){
 		string abm_indicator_string <- "{";
@@ -147,18 +133,9 @@ global {
 			}
         }
         abm_indicator_string<-abm_indicator_string+"]}";
-		save abm_indicator_string to: "abm_indicator.json" rewrite: true;
-		file JsonFileResultsABM <- json_file("./abm_indicator.json");
-		map<string, unknown> a <- JsonFileResultsABM.contents;
-		if (!block_post){
-			try{			
-			  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/ABM2", a)); // This still updates a dictionary with 'contents' as a key
-			}catch{
-			  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
-			}
-			write #now + " ABM indicator sucessfully sent to cityIO at iteration:" + cycle ;
-			}
-		}else{
+		do sendStringToCityIo(abm_indicator_string,"ABM");
+		}
+		else{
 			write #now + " ABM indicator would have been sent to cityIO at iteration:" + cycle ;
 		}
 		
