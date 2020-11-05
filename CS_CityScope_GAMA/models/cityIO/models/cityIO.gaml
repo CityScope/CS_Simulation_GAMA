@@ -32,6 +32,22 @@ species my_cool_indicator parent: cityio_numeric_indicator {
 }
 
 
+species people parent: cityio_agent skills:[moving]{ 
+	int att1;
+	int att2;
+	
+	int profile<-0;
+	int mode<-0;
+	
+	reflex move{
+		do wander;
+	}
+	
+	aspect base{
+		draw circle(10) color:#blue;
+	}
+}
+
 experiment CityScope type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black{	
