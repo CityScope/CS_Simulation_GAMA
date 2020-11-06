@@ -1,7 +1,7 @@
 Agent-Based Model developped in the [CityScience](https://www.media.mit.edu/groups/city-science/overview/) group using [Gama Platform](https://gama-platform.github.io/) and integrated in [CityScope](https://www.media.mit.edu/projects/cityscope/overview/)
 
 
-#Tutorial
+#  Tutorial
 If you don’t have a specific table, you can create one [here](https://cityscope.media.mit.edu/CS_cityscopeJS/).For this tutorial, we crated one called `dungeonmaster`.
 In this tutorial we will see how to load a table in GAMA, instantiate a Grid, run an hello world simulation and send results back. 
 
@@ -46,3 +46,23 @@ If the species is not created as a sub-species of `cityio_numeric_indicator`, th
 
 
 
+# Running GAMA on a server with ssh access
+
+We highly recommend using a docker container to run GAMA on a headless server. This will take care of compatibility issues between platforms. 
+
+First, pull the image from dockerhub. This step only needs to be performed once per server. We will be using [this image](https://hub.docker.com/r/gamaplatform/gama).
+```
+> docker pull gamaplatform/gama
+```
+
+Second, we will build the `xml` file with the model meta parameters. You will only need to do this once for each model. From your repo (the folder that contains models, results, etc), run:
+```
+> docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama -xml CityScopeHeadless my_model/models/cityIO.gaml my_model/headless/myHeadlessModel.xml
+```
+
+This creates a file called `myHeadlessModel.xml` in your `headless` folder. If you know how to edit this file, feel free to modify it now.
+
+Finally, we will run this model inside a container. This final step is what you will repeat everytime you modify your model. Run the following command, again from your model director:
+```
+> docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama my_model/headless/myHeadlessModel.xml my_model/results/
+```

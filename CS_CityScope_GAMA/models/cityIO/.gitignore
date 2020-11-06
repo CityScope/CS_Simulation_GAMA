@@ -1,0 +1,5 @@
+models/*.json
+results/*.json
+results/*.txt
+results/*.xml
+headless/*.xml
