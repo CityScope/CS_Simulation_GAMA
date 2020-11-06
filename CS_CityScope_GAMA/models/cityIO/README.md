@@ -60,7 +60,7 @@ Second, we will build the `xml` file with the model meta parameters. You will on
 > docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama -xml CityScopeHeadless my_model/models/cityIO.gaml my_model/headless/myHeadlessModel.xml
 ```
 
-This creates a file called `myHeadlessModel.xml` in your `headless` folder. If you know how to edit this file, feel free to modify it now.
+This creates a file called `myHeadlessModel.xml` in your `headless` folder. If you know how to edit this file, feel free to modify it now. For more information about this file, check the [documentation](https://gama-platform.github.io/wiki/Headless).
 
 Finally, we will run this model inside a container. This final step is what you will repeat everytime you modify your model. Run the following command, again from your model director:
 ```
