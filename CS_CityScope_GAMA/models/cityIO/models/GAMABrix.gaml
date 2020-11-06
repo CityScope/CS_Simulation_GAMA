@@ -25,7 +25,7 @@ global {
 	
 	
 	init {
-		create block from:geogrid with:[type::read("land_use")];
+		create block from:geogrid;
 		do udpateGrid;
 		do sendIndicators;
 	}
@@ -48,6 +48,7 @@ global {
 				map m <- map(l);
 				ask block(int(m["id"])) {
 					self.color <- m["color"];
+					self.type <- m["name"];
 				}
 			}
 		}
@@ -201,6 +202,10 @@ species cityio_heatmap_indicator parent: cityio_indicator {
 	list<cityio_agent> return_indicator {
 		return listOfPoint; // Not sure about this yet, but we might want this return function just to help users organize their code. 
 	}
+}
+
+species cityio_abm_indicator parent: cityio_indicator{
+	
 }
 
 

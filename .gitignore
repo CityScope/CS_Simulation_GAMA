@@ -9,3 +9,6 @@ CS_CityScope_GAMA/includes/images/.DS_Store
 .DS_Store
 
 CS_CityScope_GAMA/.project
+CS_CityScope_GAMA/models/cityIO/results/ABM2.json
+CS_CityScope_GAMA/models/cityIO/results/access.json
+CS_CityScope_GAMA/models/cityIO/results/indicators.json
