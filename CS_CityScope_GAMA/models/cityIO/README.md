@@ -25,14 +25,17 @@ To connect your world to a table you need to declare the table name inside your 
 string city_io_table<-"dungeonmaster";
 ```
 
-While you are building your model, we recommend turning `GAMABrix` off by defining:
+While you are building your model, we recommend turning `GAMABrix` off speed up the process (the default). By setting `post_on<-false`, the model will only update your local grid without posting any of the indicators to cityio. This will reduce your bandwidth usage and allow you to debug your model faster. 
+
+Once you are done and want to deploy, change:
 ```
-bool brix_on<-true;
+bool post_on<-true;
 ```
 
 
 
 ## Input
+
 What is geogrid_data? Every time we create a CityScope table, we define a regularly spaced grid which is overlaid on the city district we’re modelling. These grid cells are the basic unit of analysis for the CityScope modules. Every grid cell has properties such as the `Type` which represents the land use and `Height` which represents the number of floors. These data are dynamic and are updated each time a user interacts with the CityScope table, experimenting with the spatial organisation of land uses and infrastructure. These dynamic data are stored the variable `geogrid_data`. This is a list of ojects: one for each grid cell in the CityScope table. 
 
 In GAMA, the user does not need to be aware of `geogrid_data`. The `udpateGrid` action should make sure that the state of the simulated world matches the state of the table, and then the user just interacts with the simulated world. All the indicators are then a funcion of the local GAMA world, and not a direct function of `geogrid_data`. 
@@ -41,7 +44,6 @@ The user will eventually interact with the `block` species.
 
 ## Output
 
-# Examples
 
 ## Basic numeric indicator
 
@@ -93,3 +95,9 @@ Finally, we will run this model inside a container. This final step is what you 
 ```
 > docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama my_model/headless/myHeadlessModel.xml my_model/results/
 ```
+
+# Examples
+
+Agents that randomly move on road network.
+1) Pull road network from OSM
+2) Place agents in network and make them move randomly.

@@ -6,7 +6,7 @@ global {
 	string city_io_table;
 	string grid_hash_id;
 	
-	bool brix_on parameter: 'Brix on' category: "Parameters" <-true; // Parameter to control whether brix is on or off. Keep off for model building, and turn on for deployment.
+	bool post_on <- false;
 	int update_frequency<-10; // In simulation ticks
 	
 	bool forceUpdate<-true;
@@ -23,7 +23,7 @@ global {
 	bool block_post<-false; // set to true to prevent GAMABrix from posting the indicators (useful for debugging)
 	bool saveABM parameter: 'Save ABM' category: "Parameters" <-true; 
 	
-	bool idle_mode<-true;
+	bool idle_mode<-false;
 	
 //	action setup_cityio_world {
 //		geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
@@ -172,7 +172,7 @@ global {
 		}
 	}
 	
-	reflex update when: ((cycle mod update_frequency = 0) and brix_on) {
+	reflex update when: ((cycle mod update_frequency = 0)) {
 		string new_grid_hash_id <- get_grid_hash();
 		if ((new_grid_hash_id != grid_hash_id))  {
 			grid_hash_id <- new_grid_hash_id;
@@ -180,11 +180,14 @@ global {
 			do udpateGrid;
 		}
 		if (time_of_day()>0) {
-			do sendIndicators;
+			if (post_on) {
+				do sendIndicators;				
+			}
 		}
 		
 		if (time_of_day()=-1){
 			write "ENTERING IDLE MODE";
+			idle_mode<-true;
 			do pause;
 			loop while: (idle_mode) {
 				string new_grid_hash_id <- get_grid_hash();
