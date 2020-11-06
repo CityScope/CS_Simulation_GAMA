@@ -269,4 +269,4 @@ species cityio_agent parent: cityio_indicator {
 	}
 }
 
-experiment CityScopeHeadless autorun:true { }
+experiment CityScopeHeadless autorun:true until: false { }
