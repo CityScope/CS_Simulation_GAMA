@@ -7,6 +7,7 @@ global {
 	string city_io_table<-"dungeonmaster";
 	file geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
 	geometry shape <- envelope(geogrid);
+	bool brix_on<-true;
 	
 	int update_frequency<-10;
 	bool forceUpdate<-true;

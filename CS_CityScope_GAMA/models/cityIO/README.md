@@ -2,8 +2,35 @@ Agent-Based Model developped in the [CityScience](https://www.media.mit.edu/grou
 
 
 #  Tutorial
-If you don’t have a specific table, you can create one [here](https://cityscope.media.mit.edu/CS_cityscopeJS/).For this tutorial, we crated one called `dungeonmaster`.
-In this tutorial we will see how to load a table in GAMA, instantiate a Grid, run an hello world simulation and send results back. 
+
+If you don’t have a specific table, you can create one [here](https://cityscope.media.mit.edu/CS_cityscopeJS/). For this tutorial, we crated one called `dungeonmaster`. In this tutorial we will see how to load a table in GAMA, instantiate a Grid, run an hello world simulation and send results back. 
+
+The first step is to add the import from the `GAMABrix.gaml` file. Right after declaring your model, import the necessary species and functions by running:
+
+```
+import "GAMABrix.gaml"
+```
+
+This will add to `global` the necessary functions to communicate with `CityIO` and three very important species that you will use to give your agents the properties they need to also live in CityIO: `cityio_numeric_indicator`, `cityio_heatmap_indicator`, and `cityio_agent`.
+
+
+Think of `cityio_numeric_indicator` and `cityio_heatmap_indicator` as two observers in your model that will report information back to CityIO. Later, we'll talk about how to create sub-species of these two species and how to create agents. `cityio_agent` is used as the parent class of any species that you want to visualize in CityIO. There are some specific parameters your sub-species needs to define, and we'll talk about them later.
+
+
+## The CityIO global
+
+To connect your world to a table you need to declare the table name inside your `global`. For example, we named our table `dungeonmaster`:
+
+```
+string city_io_table<-"dungeonmaster";
+```
+
+While you are building your model, we recommend turning `GAMABrix` off by defining:
+```
+bool brix_on<-true;
+```
+
+
 
 ## Input
 What is geogrid_data? Every time we create a CityScope table, we define a regularly spaced grid which is overlaid on the city district we’re modelling. These grid cells are the basic unit of analysis for the CityScope modules. Every grid cell has properties such as the `Type` which represents the land use and `Height` which represents the number of floors. These data are dynamic and are updated each time a user interacts with the CityScope table, experimenting with the spatial organisation of land uses and infrastructure. These dynamic data are stored the variable `geogrid_data`. This is a list of ojects: one for each grid cell in the CityScope table. 
