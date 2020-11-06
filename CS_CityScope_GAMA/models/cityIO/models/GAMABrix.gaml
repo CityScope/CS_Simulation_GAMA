@@ -1,6 +1,7 @@
 model GAMABrix
 // Set of tools to connect to cityio
 
+
 global {
 	string city_io_table;
 	string grid_hash_id;
@@ -20,11 +21,17 @@ global {
 	float end_day_time  <- start_day_time+totalTimeInSec;
 	
 	bool block_post<-false; // set to true to prevent GAMABrix from posting the indicators (useful for debugging)
-	
 	bool saveABM parameter: 'Save ABM' category: "Parameters" <-true; 
 	
+	bool idle_mode<-true;
 	
+//	action setup_cityio_world {
+//		geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
+//		geometry shape <- envelope(geogrid);
+//	}
+		
 	init {
+		write "brix init";
 		create block from:geogrid with:[type::read("land_use")];
 		do udpateGrid;
 		do sendIndicators;
@@ -166,7 +173,7 @@ global {
 		if (time<=end_day_time) {
 			return time-start_day_time;
 		}else{
-			return 0;
+			return -1;
 		}
 	}
 	
@@ -180,7 +187,20 @@ global {
 		if (time_of_day()>0) {
 			do sendIndicators;
 		}
+		
+		if (time_of_day()=-1){
+			write "ENTERING IDLE MODE";
+			do pause;
+			loop while: (idle_mode) {
+				string new_grid_hash_id <- get_grid_hash();
+				if ((new_grid_hash_id != grid_hash_id))  {
+					idle_mode<-false;
+				}
+			}
+			do resume;
+		}	
 		write "TIME OF DAY:"+time_of_day();
+		
 	}
 }
 
@@ -248,3 +268,5 @@ species cityio_agent parent: cityio_indicator {
 		draw circle(10) color:#blue;
 	}
 }
+
+experiment CityScopeHeadless autorun:true { }
