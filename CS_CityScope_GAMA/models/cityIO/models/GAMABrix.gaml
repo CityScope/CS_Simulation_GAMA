@@ -106,7 +106,6 @@ global {
 		do sendStringToCityIo(heatmap_indicator_string,"access");
 		//ABM Indicator
 		list<agent> agent_indicators <- get_all_instances(cityio_agent);
-		if (cycle>1){ // Not sure why this is here.
 		string abm_indicator_string <- "{";
 		abm_indicator_string <- abm_indicator_string+"\"attr\": {";
 		abm_indicator_string <- abm_indicator_string+"\"mode\": {\"0\": {\"name\": \"home\", \"color\": \"#4daf4a\"}, \"1\": {\"name\": \"work\", \"color\": \"#ffff33\"}}";
@@ -148,10 +147,6 @@ global {
         }
         abm_indicator_string<-abm_indicator_string+"]}";
 		do sendStringToCityIo(abm_indicator_string,"ABM2");
-		}
-		else{
-			write #now + " ABM indicator would have been sent to cityIO at iteration:" + cycle ;
-		}
 	}
 	
 	action restart_day {
