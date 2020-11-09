@@ -53,6 +53,7 @@ global {
 			loop l over: list(b) {
 				map m <- map(l);
 				ask block(int(m["id"])) {
+					self.type<-m["type"];
 					self.color <- m["color"];
 					self.type <- m["name"];
 				}
