@@ -4,26 +4,32 @@ model GAMABrix
 
 global {
 	string city_io_table;
-	string grid_hash_id;
-	
+
 	bool post_on <- false;
-	int update_frequency<-10; // In simulation ticks
+	int update_frequency<-10; // Frequency (in cycles) by which to update local grid by checking for changes in gridhash
 	
-	bool forceUpdate<-true;
-	file geogrid;
+	int cycle_first_batch<-100; // Cycle in which to send the first batch of data
+	bool send_first_batch<-true;
+	
 	float step <- 60 #sec;
-	float saveLocationInterval<-10*step;
+	float saveLocationInterval<-10*step; // In seconds
 	
 	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
 //	int totalTimeInSec<-10800; //3hx60minx60sec 1step is 10#sec
+
 	
-	float start_day_time<- 0.0;
-	float end_day_time  <- start_day_time+totalTimeInSec;
-	
+	// Variables used for debugging
 	bool block_post<-false; // set to true to prevent GAMABrix from posting the indicators (useful for debugging)
-	bool saveABM parameter: 'Save ABM' category: "Parameters" <-true; 
 	
+	// Internal variables (non editable)
 	bool idle_mode<-false;
+	float start_day_time<-0.0;
+	int start_day_cycle<-0;
+	float end_day_time  <- start_day_time+totalTimeInSec;
+	bool first_batch_sent<-false;
+	file geogrid;
+	string grid_hash_id;
+	string hash_id<-"GEOGRIDDATA"; // Some models might want to listen to changes in other hashes (e.g, indicators)
 	
 	geometry setup_cityio_world {
 		geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
@@ -54,7 +60,7 @@ global {
 	
 	string get_grid_hash {
 		file grid_hashes <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/meta/hashes");
-		string grid_hash <- first(grid_hashes at "GEOGRIDDATA");
+		string grid_hash <- first(grid_hashes at hash_id);
 		return grid_hash;
 	
 	}
@@ -172,6 +178,8 @@ global {
 	action restart_day {
 		start_day_time<-time;
 		end_day_time  <-start_day_time+totalTimeInSec;
+		start_day_cycle<-cycle;
+		first_batch_sent<-false;
 		
 		
 		list<agent> agent_indicators <- get_all_instances(cityio_agent);
@@ -188,6 +196,11 @@ global {
 		}
 	}
 	
+	float cycle_of_day {
+		return cycle-start_day_cycle;
+	}
+	
+	
 	reflex update when: ((cycle mod update_frequency = 0)) {
 		string new_grid_hash_id <- get_grid_hash();
 		if ((new_grid_hash_id != grid_hash_id))  {
@@ -195,8 +208,9 @@ global {
 			do restart_day;
 			do udpateGrid;
 		}
-		if (time_of_day()>0) {
-			if (post_on) {
+		if ((cycle_of_day()>cycle_first_batch) and !first_batch_sent) {
+			first_batch_sent<-true;
+			if (post_on and send_first_batch) {
 				do sendIndicators;				
 			}
 		}
@@ -204,6 +218,9 @@ global {
 		if (time_of_day()=-1){
 			write "ENTERING IDLE MODE";
 			idle_mode<-true;
+			if (post_on) {
+				do sendIndicators;
+			}
 			do pause;
 			loop while: (idle_mode) {
 				string new_grid_hash_id <- get_grid_hash();
