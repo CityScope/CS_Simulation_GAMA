@@ -5,8 +5,8 @@ import "GAMABrix.gaml"
 
 global {
 	string city_io_table<-"dungeonmaster";
-//	file geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
-//	geometry shape <- envelope(geogrid);
+    file geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
+    geometry shape <- envelope(geogrid);
 	bool post_on<-true;
 	
 	int update_frequency<-10;
