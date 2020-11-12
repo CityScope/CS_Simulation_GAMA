@@ -127,6 +127,11 @@
 			<locationURI>CACHE_LOC/raw.githubusercontent.com+_++_+CityScope+_+CS_Mobility_Service+_+master+_+scripts+_+cities+_+Detroit+_+clean+_+table_area.geojson</locationURI>
 		</link>
 		<link>
+			<name>external/types</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+dungeonmaster+_+GEOGRID+_+properties+_+types</locationURI>
+		</link>
+		<link>
 			<name>external/walking_net.geojson</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/raw.githubusercontent.com+_++_+CityScope+_+CS_Mobility_Service+_+master+_+scripts+_+cities+_+Hamburg+_+clean+_+walking_net.geojson</locationURI>

@@ -29,7 +29,18 @@ global {
 		geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
 		geometry shape <- envelope(geogrid);
 	}
-		
+	
+	action setup_static_type{
+		file type_map <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID/properties/types");
+    	map<string,unknown> static_type;
+		map<string, unknown> types<- type_map.contents;
+		  loop t over: types {
+		  	map<string,unknown> tmp <-t;
+		    static_type <+ tmp["name"]::tmp;
+		}
+		write "static_type" + static_type;
+	}
+			
 	init {
 		create block from:geogrid;
 		do udpateGrid;
