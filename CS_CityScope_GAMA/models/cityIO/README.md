@@ -84,7 +84,7 @@ First, pull the image from dockerhub. This step only needs to be performed once 
 > docker pull gamaplatform/gama
 ```
 
-Second, we will build the `xml` file with the model meta parameters. You will only need to do this once for each model. From your repo (the folder that contains models, results, etc), run:
+Second, we will build the `xml` file with the model meta parameters. You will only need to do this once for each model. Ensure you model directory (the folder that contains models, results, etc) contains a `headless` folder, and then run:
 ```
 > docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama -xml CityScopeHeadless my_model/models/cityIO.gaml my_model/headless/myHeadlessModel.xml
 ```
