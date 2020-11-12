@@ -32,6 +32,15 @@ Once you are done and want to deploy, change:
 bool post_on<-true;
 ```
 
+Below are some variable definitions that you might be interested in:
+* `city_io_table`: String, name of the table to connect to.
+* `post_on`: Boolean, used to turn the posting feature on or off. Keep it off while building the model and turn it on to post to the table.
+* `update_frequency`: Intenger, frequency, in number of simulation ticks, by which to update local grid by checking for changes in gridhash. This is not the posting frequency. Optional, and defaults to `10`.
+* `send_first_batch`: Boolean, if `false` it will only send the results of the simulation once the full day has run. Optional and defaults to `true`.
+* `cycle_first_batch`: Integer, simulation tick in which to send the first batch of data to the server. Optional and defaults to `100`.
+* `step`: Float, time between two simulation ticks. Defaults to `60 #sec`.
+* `saveLocationInterval`: Float, frequency in second by which to save locally the location of agents. This is not the post frequency. Optional and defaults to `10` steps.	
+* `totalTimeInSec`: Integer, total time in seconds that the simulation will run for. Defaults to a whole day. Please note that `CityIO` will not render more than 1 day of simulation.
 
 
 ## Input
