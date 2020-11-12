@@ -25,10 +25,11 @@ global {
 	
 	bool idle_mode<-false;
 	
-	action setup_cityio_world {
+	geometry setup_cityio_world {
 		geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
-		geometry shape <- envelope(geogrid);
+		return envelope(geogrid);
 	}
+	
 	
 	action setup_static_type{
 		file type_map <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID/properties/types");
