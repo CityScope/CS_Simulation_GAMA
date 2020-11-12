@@ -14,8 +14,8 @@ global {
 	float step <- 60 #sec;
 	float saveLocationInterval<-10*step;
 	
-//	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
-	int totalTimeInSec<-43200; //12hx60minx60sec 1step is 10#sec
+	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
+//	int totalTimeInSec<-10800; //3hx60minx60sec 1step is 10#sec
 	
 	float start_day_time<- 0.0;
 	float end_day_time  <- start_day_time+totalTimeInSec;
@@ -39,11 +39,11 @@ global {
 		  	map<string,unknown> tmp <-t;
 		    static_type <+ tmp["name"]::tmp;
 		}
-		write "static_type" + static_type;
 	}
 			
 	init {
 		create block from:geogrid;
+		do setup_static_type;
 		do udpateGrid;
 		do sendIndicators;
 	}
@@ -67,7 +67,7 @@ global {
 				ask block(int(m["id"])) {
 					self.type<-m["type"];
 					self.color <- m["color"];
-					self.type <- m["name"];
+					self.name <- m["name"];
 				}
 			}
 		}
@@ -172,7 +172,10 @@ global {
 	action restart_day {
 		start_day_time<-time;
 		end_day_time  <-start_day_time+totalTimeInSec;
-		ask cityio_agent {
+		
+		
+		list<agent> agent_indicators <- get_all_instances(cityio_agent);
+		ask agent_indicators as: cityio_agent {
 			do reset_location;
 		}
 	}
@@ -239,15 +242,14 @@ species cityio_heatmap_indicator parent: cityio_indicator {
 	}
 }
 
-species cityio_abm_indicator parent: cityio_indicator{
-	
-}
-
-
 species block{
 	string type;
+	string name;
 	float height update:rnd(100.0);
 	rgb color;
+	map<unknown, unknown> block_type_properties;
+	
+	
 	aspect base {
 		  draw shape color:color border:color-50 depth:height;	
 	}
