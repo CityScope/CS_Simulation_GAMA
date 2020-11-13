@@ -32,6 +32,8 @@ global {
 	string grid_hash_id;
 	string hash_id<-"GEOGRIDDATA"; // Some models might want to listen to changes in other hashes (e.g, indicators)
 	map<string,unknown> static_type;
+	map<string,map<string, float>> lbcs_type;
+	map<string,map<string, float>> naics_type;
 		
 		
 	geometry setup_cityio_world {
@@ -42,6 +44,33 @@ global {
 	
 	action setup_static_type{
 		static_type <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID/properties/types").contents;
+		map<string,list> temp_map;
+		loop k over: static_type.keys {
+			temp_map <- static_type[k];			
+			map<string, float> parsed_lbcs_entry;
+			loop mm over: temp_map["LBCS"]  {
+				map<string, unknown> entry <- mm;
+				float proportion <- float(entry["proportion"]);
+				map<string, float> entry_use <- entry["use"]; 
+				loop lbcs_code over: entry_use.keys {
+					parsed_lbcs_entry[lbcs_code] <- parsed_lbcs_entry[lbcs_code] + entry_use[lbcs_code]*proportion;
+				}
+			}
+			lbcs_type <+ k::parsed_lbcs_entry;
+			
+			map<string, float> parsed_naics_entry;
+			loop mm over: temp_map["NAICS"]  {
+				map<string, unknown> entry <- mm;
+				float proportion <- float(entry["proportion"]);
+				map<string, float> entry_use <- entry["use"]; 
+				loop naics_code over: entry_use.keys {
+					parsed_naics_entry[naics_code] <- parsed_naics_entry[naics_code] + entry_use[naics_code]*proportion;
+				}
+			}
+			naics_type <+ k::parsed_naics_entry;
+		}
+		write lbcs_type;
+		write naics_type;
     }
 			
 	init {
@@ -72,8 +101,8 @@ global {
 				ask block(int(m["id"])) {
 					self.type<-m["name"];
 					self.color <- m["color"];
-				//	self.name <- m["name"];
-					block_type_properties <- static_type[type];
+					self.block_lbcs <- lbcs_type[type];
+					self.block_naics <- naics_type[type];
 				}
 			}
 		}
@@ -266,11 +295,10 @@ species cityio_heatmap_indicator parent: cityio_indicator {
 
 species block{
 	string type;
-	string name;
 	float height update:rnd(100.0);
 	rgb color;
-	map<unknown, unknown> block_type_properties;
-	
+	map<unknown, unknown> block_lbcs;
+	map<unknown, unknown> block_naics;
 	
 	aspect base {
 		  draw shape color:color border:color-50 depth:height;	
