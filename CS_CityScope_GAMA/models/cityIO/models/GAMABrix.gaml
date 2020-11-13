@@ -6,8 +6,8 @@ global {
 	string city_io_table;
 
 	bool post_on <- false;
-	int update_frequency<-10; // Frequency (in cycles) by which to update local grid by checking for changes in gridhash
-	float idle_update_frequency<-10; // Time in seconds (real seconds) between two grid updated when idle
+	int update_frequency<-30; // Frequency (in cycles) by which to update local grid by checking for changes in gridhash
+	float idle_update_frequency<-10.0; // Time in seconds (real seconds) between two grid updated when idle
 	
 	int cycle_first_batch<-100; // Cycle in which to send the first batch of data
 	bool send_first_batch<-true;
