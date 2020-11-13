@@ -31,7 +31,9 @@ global {
 	file geogrid;
 	string grid_hash_id;
 	string hash_id<-"GEOGRIDDATA"; // Some models might want to listen to changes in other hashes (e.g, indicators)
-	
+	map<string,unknown> static_type;
+		
+		
 	geometry setup_cityio_world {
 		geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
 		return envelope(geogrid);
@@ -39,14 +41,8 @@ global {
 	
 	
 	action setup_static_type{
-		file type_map <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID/properties/types");
-    	map<string,unknown> static_type;
-		map<string, unknown> types<- type_map.contents;
-		  loop t over: types {
-		  	map<string,unknown> tmp <-t;
-		    static_type <+ tmp["name"]::tmp;
-		}
-	}
+		static_type <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID/properties/types").contents;
+    }
 			
 	init {
 		create block from:geogrid;
@@ -71,10 +67,12 @@ global {
 		loop b over: geogrid_data {
 			loop l over: list(b) {
 				map m <- map(l);
+				
 				ask block(int(m["id"])) {
-					self.type<-m["type"];
+					self.type<-m["name"];
 					self.color <- m["color"];
-					self.name <- m["name"];
+				//	self.name <- m["name"];
+					block_type_properties <- static_type[type];
 				}
 			}
 		}
