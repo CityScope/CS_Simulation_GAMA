@@ -327,7 +327,7 @@ species cityio_agent parent: cityio_indicator {
 			tod<-time_of_day();
 		}
 		if((tod>0) and (tod mod saveLocationInterval = 0)){
-			locs << {location.x,location.y,tod mod totalTimeInSec};
+			locs << {location.x,location.y,tod};
 		}
 	}
 	
