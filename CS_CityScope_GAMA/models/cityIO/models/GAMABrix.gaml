@@ -7,6 +7,7 @@ global {
 
 	bool post_on <- false;
 	int update_frequency<-10; // Frequency (in cycles) by which to update local grid by checking for changes in gridhash
+	float idle_update_frequency<-10; // Time in seconds (real seconds) between two grid updated when idle
 	
 	int cycle_first_batch<-100; // Cycle in which to send the first batch of data
 	bool send_first_batch<-true;
@@ -203,6 +204,7 @@ global {
 	
 	reflex update when: ((cycle mod update_frequency = 0)) {
 		string new_grid_hash_id <- get_grid_hash();
+		float idle_step_start;
 		if ((new_grid_hash_id != grid_hash_id))  {
 			grid_hash_id <- new_grid_hash_id;
 			do restart_day;
@@ -222,10 +224,14 @@ global {
 				do sendIndicators;
 			}
 			do pause;
+			idle_step_start<-machine_time/1000;
 			loop while: (idle_mode) {
-				string new_grid_hash_id <- get_grid_hash();
-				if ((new_grid_hash_id != grid_hash_id))  {
-					idle_mode<-false;
+				if (machine_time/1000>=idle_step_start+idle_update_frequency) {
+					string new_grid_hash_id <- get_grid_hash();
+					if ((new_grid_hash_id != grid_hash_id))  {
+						idle_mode<-false;
+					}
+					idle_step_start<-machine_time/1000;
 				}
 			}
 			do resume;
