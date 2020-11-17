@@ -141,23 +141,50 @@ global {
 		numerical_indicator_string <- numerical_indicator_string+"]";
 		do sendStringToCityIo(numerical_indicator_string,"indicators");
 		//Heatmap Indicator
-		list<agent> heatmap_indicators <- get_all_instances(cityio_heatmap_indicator);
-		string heatmap_indicator_string<-"{\"features\":[";
-		ask heatmap_indicators as: cityio_heatmap_indicator{
-			if length(listOfPoint)>0 {
-				loop i from:0 to:length(listOfPoint)-1{
-					string hIndicator<-"{\"geometry\":{\"coordinates\":["+CRS_transform(listOfPoint[i].location).location.x+","+CRS_transform(listOfPoint[i].location).location.y+"],\"type\":\"Point\"},\"properties\":["+listOfPoint[i].att1+","+listOfPoint[i].att2+"],\"type\":\"Feature\"}";
-					if length(heatmap_indicator_string)=0 {
-					  heatmap_indicator_string<-heatmap_indicator_string+hIndicator;
-				    }else{
-				      heatmap_indicator_string<-heatmap_indicator_string+","+hIndicator;	
-				    }
+		list<agent> heatmap_indicators <- get_all_instances(cityio_agent);
+		list<string> all_keys<-[];
+		ask heatmap_indicators as: cityio_agent{
+			if is_heatmap {
+				loop k over: heatmap_values.keys {
+					all_keys<-remove_duplicates(all_keys+[k]);
 				}
-								
 			}
 		}
+		string heatmap_indicator_string<-"{\"features\":[";
+		ask heatmap_indicators as: cityio_agent{
+			if is_heatmap {
+				string hIndicator<-"{\"geometry\":{\"coordinates\":["+CRS_transform(self).location.x+","+CRS_transform(self).location.y+"],\"type\":\"Point\"},"; // Do we need CRS_transform here?
+				hIndicator<-hIndicator+"\"properties\":[";
+				bool first_key<-true;
+				loop k over: all_keys {
+					if first_key {
+						hIndicator<-hIndicator+heatmap_values[k];
+						first_key<-false;						
+					}else{
+						hIndicator<-hIndicator+","+heatmap_values[k];
+					}
+				}
+				hIndicator<-hIndicator+"],\"type\":\"Feature\"}";
+				if length(heatmap_indicator_string)=length("{\"features\":[") {
+					heatmap_indicator_string<-heatmap_indicator_string+hIndicator;
+			    }else{
+					heatmap_indicator_string<-heatmap_indicator_string+","+hIndicator;	
+			    }
+			}
+			
+		}
 		heatmap_indicator_string<-heatmap_indicator_string+"]";
-		heatmap_indicator_string<-heatmap_indicator_string+"\"properties\":[\"att1\",\"att2\"],\"type\":\"FeatureCollection\"}";
+		heatmap_indicator_string<-heatmap_indicator_string+"\"properties\":[";
+		bool first_key<-true;
+		loop k over: all_keys {
+			if first_key {
+				heatmap_indicator_string<-heatmap_indicator_string+"\""+k+"\"";
+				first_key<-false;						
+			}else{
+				heatmap_indicator_string<-heatmap_indicator_string+","+"\""+k+"\"";
+			}
+		}
+		heatmap_indicator_string<-heatmap_indicator_string+"],\"type\":\"FeatureCollection\"}";
 		do sendStringToCityIo(heatmap_indicator_string,"access");
 		//ABM Indicator
 		list<agent> agent_indicators <- get_all_instances(cityio_agent);
@@ -284,15 +311,6 @@ species cityio_numeric_indicator parent: cityio_indicator {
 	}
 }
 
-species cityio_heatmap_indicator parent: cityio_indicator {
-	// The generic heatmap indicator should not reely on people species.
-	string indicator_type<-"heatmap"; 
-	list<cityio_agent> listOfPoint;
-	list<cityio_agent> return_indicator {
-		return listOfPoint; // Not sure about this yet, but we might want this return function just to help users organize their code. 
-	}
-}
-
 species block{
 	string type;
 	float height update:rnd(100.0);
@@ -309,8 +327,10 @@ species block{
 species cityio_agent parent: cityio_indicator {
 	list<point> locs;
 	
-	int att1;
-	int att2;
+	map<string,float> heatmap_values;
+	
+	bool is_heatmap<-false;
+	bool is_visible<-false;
 	
 	int profile<-0;
 	int mode<-0;
@@ -331,7 +351,11 @@ species cityio_agent parent: cityio_indicator {
 		}
 	}
 	
-	aspect base{
+	reflex update_heatmap {
+		
+	}
+	
+	aspect base {
 		draw circle(10) color:#blue;
 	}
 }

@@ -16,12 +16,12 @@ global {
 
 		//do setup_cityio_world; // see issue #151 This is our attempt to setup the world after defining city_io_table, while keeping world definition in GAMABrix
 		//do setup_static_type;
-		create people with:(att1:rnd(10),att2:rnd(10)) number:10; // For now, people are imported from GAMABrix, because the current version of cityio_heatmap_indicator needs the people species. 
+		create people with:(att1:rnd(10),att2:rnd(10)) number:10; 
+		create thermometer with:(att1:rnd(10),att2:rnd(10)) number:100;
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(block collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(block collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(block collect each.height)");
 		create my_cool_indicator        with: (viz_type:"bar",indicator_name: "Number of blocks");
-		create cityio_heatmap_indicator with: (listOfPoint:list<people>(people));
 	}
 	
 	
@@ -35,10 +35,22 @@ species my_cool_indicator parent: cityio_numeric_indicator {
 	}
 }
 
+species thermometer parent: cityio_agent {
+	int att1;
+	int att2;
+	bool is_heatmap<-true;
+	
+	reflex update_heatmap {
+		heatmap_values<-[];
+		heatmap_values<+ "heat"::att1;
+		heatmap_values<+ "map"::att2;
+	}	
+}
 
 species people parent: cityio_agent skills:[moving]{ 
 	int att1;
 	int att2;
+	bool is_visible<-true;
 	
 	int profile<-0;
 	int mode<-0;
