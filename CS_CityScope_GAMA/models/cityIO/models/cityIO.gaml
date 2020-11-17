@@ -21,14 +21,14 @@ global {
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(block collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(block collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(block collect each.height)");
-		create my_cool_indicator        with: (viz_type:"bar",indicator_name: "Number of blocks");
+		create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks");
 	}
 	
 	
 }
 
 // Example of how a user would define their own numeric indicator
-species my_cool_indicator parent: cityio_agent {
+species my_numeric_indicator parent: cityio_agent {
 	// Users might want more complex indicators that cannot be constructed by passing indicator to the constructor for cityio_numeric_indicator
 	string viz_type <- "bar";
 	bool is_numeric<-true;
@@ -41,6 +41,7 @@ species my_cool_indicator parent: cityio_agent {
 
 species thermometer parent: cityio_agent {
 	bool is_heatmap<-true;
+	string indicator_name<-"thermometer";
 	
 	reflex update_heatmap {
 		heatmap_values<-[];
@@ -51,9 +52,6 @@ species thermometer parent: cityio_agent {
 
 species people parent: cityio_agent skills:[moving]{ 
 	bool is_visible<-true;
-	
-	int profile<-0;
-	int mode<-0;
 	
 	reflex move{
 		do wander;
