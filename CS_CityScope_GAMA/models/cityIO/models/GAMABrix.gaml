@@ -69,8 +69,6 @@ global {
 			}
 			naics_type <+ k::parsed_naics_entry;
 		}
-		write lbcs_type;
-		write naics_type;
     }
 			
 	init {
@@ -132,8 +130,6 @@ global {
 		ask numeric_indicators as: cityio_agent {
 			if is_numeric {
 				string myIndicator;
-				write indicator_name;
-				write "NUMERIC VALUES";
 				loop k over: numeric_values.keys {
 					myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+k+"\",\"value\":"+numeric_values[k]+",\"viz_type\":\"" + viz_type + "\"}";
 				}
