@@ -13,9 +13,6 @@ global {
 	bool forceUpdate<-true;
 	
 	init {
-
-		//do setup_cityio_world; // see issue #151 This is our attempt to setup the world after defining city_io_table, while keeping world definition in GAMABrix
-		//do setup_static_type;
 		create people number:10; 
 		create thermometer number:100;
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(block collect each.height)");
