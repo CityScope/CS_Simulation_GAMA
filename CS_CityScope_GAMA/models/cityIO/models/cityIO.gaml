@@ -28,10 +28,14 @@ global {
 }
 
 // Example of how a user would define their own numeric indicator
-species my_cool_indicator parent: cityio_numeric_indicator {
-	// Users might want more complex indicators that cannot be constructed by passing indicator to the constructor for cityio_numeric_indicator 
-	float return_indicator {
-		return length(block);
+species my_cool_indicator parent: cityio_agent {
+	// Users might want more complex indicators that cannot be constructed by passing indicator to the constructor for cityio_numeric_indicator
+	string viz_type <- "bar";
+	bool is_numeric<-true;
+	
+	reflex update_numeric {
+		numeric_values<-[];
+		numeric_values<+indicator_name::length(block);
 	}
 }
 

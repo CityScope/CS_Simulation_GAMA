@@ -127,15 +127,21 @@ global {
 	
 	action sendIndicators {
 		//Numeric Indicator
-		list<agent> numeric_indicators <- get_all_instances(cityio_numeric_indicator);
+		list<agent> numeric_indicators <- get_all_instances(cityio_agent);
 		string numerical_indicator_string<-"[";
-		ask numeric_indicators as: cityio_numeric_indicator {
-			string myIndicator;
-			myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+indicator_name+"\",\"value\":"+return_indicator()+",\"viz_type\":\"" + viz_type + "\"}";
-			if length(numerical_indicator_string)=1 {
-				numerical_indicator_string <- numerical_indicator_string+myIndicator;				
-			}else{
-				numerical_indicator_string <- numerical_indicator_string+","+myIndicator;
+		ask numeric_indicators as: cityio_agent {
+			if is_numeric {
+				string myIndicator;
+				write indicator_name;
+				write "NUMERIC VALUES";
+				loop k over: numeric_values.keys {
+					myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+k+"\",\"value\":"+numeric_values[k]+",\"viz_type\":\"" + viz_type + "\"}";
+				}
+				if length(numerical_indicator_string)=1 {
+					numerical_indicator_string <- numerical_indicator_string+myIndicator;				
+				}else{
+					numerical_indicator_string <- numerical_indicator_string+","+myIndicator;
+				}
 			}
 		}
 		numerical_indicator_string <- numerical_indicator_string+"]";
@@ -194,36 +200,38 @@ global {
 		abm_indicator_string <- abm_indicator_string+",\n\"profile\": {\"0\": {\"name\": \"home\", \"color\": \"#4daf4a\"}, \"1\": {\"name\": \"work\", \"color\": \"#ffff33\"}}";
 		abm_indicator_string <- abm_indicator_string+"},\n\"trips\": [";
 		ask agent_indicators as: cityio_agent {
-			if length(locs)>0 {
-				string abmIndicator <- "{";
-				abmIndicator <- abmIndicator + "\"mode\": "+mode+",\n";
-				abmIndicator <- abmIndicator + "\"profile\": "+profile+",\n";
-				
-				abmIndicator <- abmIndicator+ "\"path\": [";
-				loop i from:0 to:length(locs)-1{
-					point loc <- CRS_transform(locs[i]).location;
-					if(i<length(locs)-1){
-					abmIndicator <- abmIndicator + "[" + loc.x + ", " + loc.y + "],\n";	
-					}else{
-					abmIndicator <- abmIndicator + "[" + loc.x + ", " + loc.y + "]\n";	
+			if (is_visible) {
+				if length(locs)>0 {
+					string abmIndicator <- "{";
+					abmIndicator <- abmIndicator + "\"mode\": "+mode+",\n";
+					abmIndicator <- abmIndicator + "\"profile\": "+profile+",\n";
+					
+					abmIndicator <- abmIndicator+ "\"path\": [";
+					loop i from:0 to:length(locs)-1{
+						point loc <- CRS_transform(locs[i]).location;
+						if(i<length(locs)-1){
+						abmIndicator <- abmIndicator + "[" + loc.x + ", " + loc.y + "],\n";	
+						}else{
+						abmIndicator <- abmIndicator + "[" + loc.x + ", " + loc.y + "]\n";	
+						}
 					}
-				}
-				abmIndicator<-abmIndicator+"]";
-				
-				abmIndicator <- abmIndicator+",\n\"timestamps\": [";
-				loop i from:0 to:length(locs)-1{
-					point loc <- CRS_transform(locs[i]).location;
-					if(i<length(locs)-1){
-					abmIndicator <- abmIndicator + loc.z + ",\n";	
-					}else{
-					abmIndicator <- abmIndicator +  loc.z + "\n";	
+					abmIndicator<-abmIndicator+"]";
+					
+					abmIndicator <- abmIndicator+",\n\"timestamps\": [";
+					loop i from:0 to:length(locs)-1{
+						point loc <- CRS_transform(locs[i]).location;
+						if(i<length(locs)-1){
+						abmIndicator <- abmIndicator + loc.z + ",\n";	
+						}else{
+						abmIndicator <- abmIndicator +  loc.z + "\n";	
+						}
 					}
-				}
-				abmIndicator <- abmIndicator + "]\n}";
-				if (length(abm_indicator_string)=124){
-				  abm_indicator_string<-abm_indicator_string+abmIndicator;
-				}else{
-				  abm_indicator_string<-abm_indicator_string+","+abmIndicator;	
+					abmIndicator <- abmIndicator + "]\n}";
+					if (length(abm_indicator_string)=124){
+					  abm_indicator_string<-abm_indicator_string+abmIndicator;
+					}else{
+					  abm_indicator_string<-abm_indicator_string+","+abmIndicator;	
+					}
 				}
 			}
         }
@@ -302,21 +310,12 @@ species cityio_indicator { // This is the master indicator species. We will use 
 }
 
 
-species cityio_numeric_indicator parent: cityio_indicator {
-	string indicator_value;
-	string viz_type <- "bar";
-	string indicator_type<-"numeric";
-	float return_indicator {
-		return float(eval_gaml(indicator_value));
-	}
-}
-
 species block{
 	string type;
 	float height update:rnd(100.0);
 	rgb color;
-	map<unknown, unknown> block_lbcs;
-	map<unknown, unknown> block_naics;
+	map<string, float> block_lbcs;
+	map<string, float> block_naics;
 	
 	aspect base {
 		  draw shape color:color border:color-50 depth:height;	
@@ -328,9 +327,12 @@ species cityio_agent parent: cityio_indicator {
 	list<point> locs;
 	
 	map<string,float> heatmap_values;
+	map<string,float> numeric_values;
+	string viz_type <- "bar";
 	
 	bool is_heatmap<-false;
 	bool is_visible<-false;
+	bool is_numeric<-false;
 	
 	int profile<-0;
 	int mode<-0;
@@ -355,9 +357,28 @@ species cityio_agent parent: cityio_indicator {
 		
 	}
 	
+	reflex update_numeric {
+		
+	}
+	
 	aspect base {
 		draw circle(10) color:#blue;
 	}
 }
+
+species cityio_numeric_indicator parent: cityio_agent {
+	string indicator_value;
+	string viz_type <- "bar";	
+	string indicator_type<-"numeric";
+	bool is_numeric<-true;
+	bool is_heatmap<-false;
+	bool is_visible<-false;
+	
+	reflex update_numeric {
+		numeric_values<-[];
+		numeric_values<+indicator_name::float(eval_gaml(indicator_value));
+	}
+}
+
 
 experiment CityScopeHeadless autorun:true until: false { }
