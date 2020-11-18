@@ -15,9 +15,9 @@ global {
 	init {
 		create people number:10; 
 		create thermometer number:100;
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(block collect each.height)");
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(block collect each.height)");
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(block collect each.height)");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(brix collect each.height)");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(brix collect each.height)");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(brix collect each.height)");
 		create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks");
 	}
 	
@@ -32,7 +32,7 @@ species my_numeric_indicator parent: cityio_agent {
 	
 	reflex update_numeric {
 		numeric_values<-[];
-		numeric_values<+indicator_name::length(block);
+		numeric_values<+indicator_name::length(brix);
 	}
 }
 
@@ -62,7 +62,7 @@ species people parent: cityio_agent skills:[moving]{
 experiment CityScope type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black{	
-			species block aspect:base;
+			species brix aspect:base;
 			species people aspect:base position:{0,0,0.1};
 		}
 	}
