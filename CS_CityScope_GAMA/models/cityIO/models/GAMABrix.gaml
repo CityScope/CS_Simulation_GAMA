@@ -97,10 +97,10 @@ global {
 				map m <- map(l);
 				
 				ask brix(int(m["id"])) {
-					self.type<-m["name"];
+					self.cs_type<-m["name"];
 					self.color <- m["color"];
-					self.block_lbcs <- lbcs_type[type];
-					self.block_naics <- naics_type[type];
+					self.block_lbcs <- lbcs_type[cs_type];
+					self.block_naics <- naics_type[cs_type];
 				}
 			}
 		}
@@ -307,7 +307,7 @@ species cityio_indicator { // This is the master indicator species. We will use 
 
 
 species brix{
-	string type;
+	string cs_type;
 	float height update:rnd(100.0);
 	rgb color;
 	map<string, float> block_lbcs;

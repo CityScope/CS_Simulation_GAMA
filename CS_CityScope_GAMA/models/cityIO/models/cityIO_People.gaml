@@ -12,7 +12,10 @@ global {
 	int update_frequency<-10;
 	bool forceUpdate<-true;
 	
+	graph road_network;
+	
 	init {
+		road_network <- as_edge_graph(brix where (each.cs_type="road"));
 		create people number:10; 
 		create thermometer number:100;
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(brix collect each.height)");
@@ -51,7 +54,7 @@ species people parent: cityio_agent skills:[moving]{
 	bool is_visible<-true;
 	
 	reflex move{
-		do wander;
+		do wander on:road_network;
 	}
 	
 	aspect base{

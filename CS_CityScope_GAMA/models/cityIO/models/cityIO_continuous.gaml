@@ -21,7 +21,7 @@ global {
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(block collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(block collect each.height)");
 		create my_cool_indicator        with: (viz_type:"bar",indicator_name: "Number of blocks");
-		create cityio_heatmap_indicator with: (listOfPoint:list<people>(people));
+		//create cityio_heatmap_indicator with: (listOfPoint:list<people>(people));
 	}
 	
 	
@@ -31,7 +31,7 @@ global {
 species my_cool_indicator parent: cityio_numeric_indicator {
 	// Users might want more complex indicators that cannot be constructed by passing indicator to the constructor for cityio_numeric_indicator 
 	float return_indicator {
-		return length(block);
+		return length(brix);
 	}
 }
 
@@ -55,7 +55,7 @@ species people parent: cityio_agent skills:[moving]{
 experiment CityScope type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black{	
-			species block aspect:base;
+			species brix aspect:base;
 			species people aspect:base position:{0,0,0.1};
 		}
 	}

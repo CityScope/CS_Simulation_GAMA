@@ -37,6 +37,16 @@
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+corktown+_+GEOGRID</locationURI>
 		</link>
 		<link>
+			<name>external/copy of GEOGRIDDATA</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+team-1+_+GEOGRIDDATA</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of GEOGRID</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+team-1+_+GEOGRID</locationURI>
+		</link>
+		<link>
 			<name>external/copy of copy of meta_grid</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+grasbrook+_+meta_grid</locationURI>
@@ -62,6 +72,11 @@
 			<locationURI>CACHE_LOC/raw.githubusercontent.com+_++_+CityScope+_+CS_Mobility_Service+_+master+_+scripts+_+cities+_+Detroit+_+clean+_+driving_net.geojson</locationURI>
 		</link>
 		<link>
+			<name>external/copy of hashes</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+team-1+_+meta+_+hashes</locationURI>
+		</link>
+		<link>
 			<name>external/copy of od</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+corktown+_+od</locationURI>
@@ -70,6 +85,11 @@
 			<name>external/copy of pt_net.geojson</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/raw.githubusercontent.com+_++_+CityScope+_+CS_Mobility_Service+_+master+_+scripts+_+cities+_+Detroit+_+clean+_+pt_net.geojson</locationURI>
+		</link>
+		<link>
+			<name>external/copy of types</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+team-1+_+GEOGRID+_+properties+_+types</locationURI>
 		</link>
 		<link>
 			<name>external/copy of walking_net.geojson</name>
@@ -95,6 +115,11 @@
 			<name>external/hashes</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+dungeonmaster+_+meta+_+hashes</locationURI>
+		</link>
+		<link>
+			<name>external/header</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+team-1+_+GEOGRID+_+properties+_+header</locationURI>
 		</link>
 		<link>
 			<name>external/meta_grid</name>
