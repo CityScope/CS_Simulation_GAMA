@@ -15,13 +15,18 @@ global {
 	graph road_network;
 	
 	init {
-		road_network <- as_edge_graph(brix where (each.type="road"));
-		create people number:10; 
+		create people number:10{
+			target<-any_location_in(world.shape);
+		} 
 		create thermometer number:100;
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(brix collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(brix collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(brix collect each.height)");
 		create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks");
+	}
+	
+	reflex updateGraph{
+		road_network <- as_edge_graph(brix where (each.type="Road"));
 	}
 	
 	
@@ -52,9 +57,10 @@ species thermometer parent: cityio_agent {
 
 species people parent: cityio_agent skills:[moving]{ 
 	bool is_visible<-true;
+	point target;
 	
 	reflex move{
-		do wander on:road_network;
+		do wander  on:road_network;
 	}
 	
 	aspect base{
