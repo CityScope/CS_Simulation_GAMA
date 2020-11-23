@@ -72,7 +72,7 @@ global {
     }
 			
 	init {
-		create brix from:geogrid;
+		create brix from:geogrid with: (name:nil);
 		do setup_static_type;
 		do udpateGrid;
 		do sendIndicators;
@@ -95,7 +95,6 @@ global {
 		loop b over: geogrid_data {
 			loop l over: list(b) {
 				map m <- map(l);
-				
 				ask brix(int(m["id"])) {
 					self.type<-m["name"];
 					self.color <- m["color"];
