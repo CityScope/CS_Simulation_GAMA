@@ -13,20 +13,34 @@ global {
 	bool forceUpdate<-true;
 	
 	graph road_network;
+	list<string> road_types <- ["Road", "LRT street"];
+	bool consider8neighbors<-true parameter: true;
+
+	
+	bool display_road_network <- true parameter: "road network visualization";
 	
 	init {
-		create people number:10{
-			target<-any_location_in(world.shape);
-		} 
+		create people number:10; 
 		create thermometer number:100;
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(brix collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(brix collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(brix collect each.height)");
 		create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks");
+		
 	}
 	
-	reflex updateGraph{
-		road_network <- as_edge_graph(brix where (each.type="Road"));
+	reflex updateGraph when:cycle=1{
+		list<brix> roads <- brix where (each.type in road_types);
+		road_network <- as_intersection_graph(roads, first(brix).shape.width/ 100.0);
+		if not(consider8neighbors) {
+			list<point> pts <- first(brix).shape.points;
+			float dist_diag <- 0.99 * sqrt((pts[0] distance_to pts[1]) ^2 + (pts[1] distance_to pts[2]) ^2);
+			loop e over: copy(road_network.edges) {
+				if (geometry(e).perimeter > dist_diag) {
+					remove edge(e) from: road_network;
+				}
+			}
+		}
 	}
 	
 	
@@ -57,12 +71,15 @@ species thermometer parent: cityio_agent {
 
 species people parent: cityio_agent skills:[moving]{ 
 	bool is_visible<-true;
-	point target;
 	
 	reflex move{
-		do wander  on:road_network;
-	}
-	
+		if (road_network != nil) {
+			do wander on: road_network;
+		} else {
+			do wander;
+		}
+		
+	}	
 	aspect base{
 		draw circle(10) color:#blue;
 	}
@@ -72,6 +89,13 @@ experiment CityScope type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black{	
 			species brix aspect:base;
+			graphics "road network" position:{0,0,0.01}{
+				if road_network != nil and display_road_network {
+					loop e over: road_network {
+						draw geometry(e) color: #red;
+					}
+				}
+			}
 			species people aspect:base position:{0,0,0.1};
 		}
 	}

@@ -34,9 +34,7 @@ global {
 	map<string,unknown> static_type;
 	map<string,map<string, float>> lbcs_type;
 	map<string,map<string, float>> naics_type;
-	graph road_network;
-	list<string> road_types <- ["Road", "LRT street"];
-	bool consider8neighbors<-false parameter: true;
+
 	
 		
 	geometry setup_cityio_world {
@@ -79,18 +77,6 @@ global {
 		do setup_static_type;
 		do udpateGrid;
 		do sendIndicators;
-		list<brix> roads <- brix where (each.type in road_types);
-		
-		road_network <- as_intersection_graph(roads, first(brix).shape.width/ 100.0);
-		if not(consider8neighbors) {
-			list<point> pts <- first(brix).shape.points;
-			float dist_diag <- 0.99 * sqrt((pts[0] distance_to pts[1]) ^2 + (pts[1] distance_to pts[2]) ^2);
-			loop e over: copy(road_network.edges) {
-				if (geometry(e).perimeter > dist_diag) {
-					remove edge(e) from: road_network;
-				}
-			}
-		}
 	}
 	
 	list<agent> get_all_instances(species<agent> spec) {
@@ -322,7 +308,7 @@ species cityio_indicator { // This is the master indicator species. We will use 
 
 species brix{
 	string type;
-	float height update:rnd(100.0);
+	float height init:rnd(100.0);
 	rgb color;
 	map<string, float> block_lbcs;
 	map<string, float> block_naics;

@@ -8,11 +8,8 @@ global {
   
     geometry shape <- envelope(setup_cityio_world());
 	bool post_on<-true;
-	
 	int update_frequency<-10;
 	bool forceUpdate<-true;
-	
-	bool display_road_network <- true parameter: "road network visualization";
 	
 	init {
 		create people number:10; 
@@ -22,8 +19,6 @@ global {
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(brix collect each.height)");
 		create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks");
 	}
-	
-	
 }
 
 // Example of how a user would define their own numeric indicator
@@ -53,12 +48,7 @@ species people parent: cityio_agent skills:[moving]{
 	bool is_visible<-true;
 	
 	reflex move{
-		if (road_network != nil) {
-			do wander on: road_network;
-		} else {
-			do wander;
-		}
-		
+	do wander;
 	}
 	
 	aspect base{
@@ -70,13 +60,6 @@ experiment CityScope type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black{	
 			species brix aspect:base;
-			graphics "road network" position:{0,0,0.1}{
-				if road_network != nil and display_road_network {
-					loop e over: road_network {
-						draw geometry(e) color: #red;
-					}
-				}
-			}
 			species people aspect:base position:{0,0,0.1};
 		}
 	}
