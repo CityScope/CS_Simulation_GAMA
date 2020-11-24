@@ -4,12 +4,9 @@ model citIOGAMA
 import "GAMABrix.gaml"
 
 global {
-	string city_io_table<-"team-1";
-  
+	string city_io_table<-"team-1";  
     geometry shape <- envelope(setup_cityio_world());
 	bool post_on<-true;
-	int update_frequency<-10;
-	bool forceUpdate<-true;
 	
 	init {
 		create people number:10; 
