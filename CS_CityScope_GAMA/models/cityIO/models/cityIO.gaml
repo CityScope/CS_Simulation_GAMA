@@ -6,6 +6,7 @@ import "GAMABrix.gaml"
 global {
 	string city_io_table<-"team-1";  
     geometry shape <- envelope(setup_cityio_world());
+
 	bool post_on<-true;
 	
 	init {
@@ -53,9 +54,15 @@ species people parent: cityio_agent skills:[moving]{
 	}
 }
 
+
+
+
+
+
 experiment CityScope type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black{	
+			species gamaGrid aspect:base;
 			species brix aspect:base;
 			species people aspect:base position:{0,0,0.1};
 		}

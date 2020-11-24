@@ -13,10 +13,7 @@ global {
 	bool forceUpdate<-true;
 	
 	graph road_network;
-	list<string> road_types <- ["Road", "LRT street"];
-	bool consider8neighbors<-true parameter: true;
-
-	
+	list<string> road_types <- ["Road", "LRT street"];	
 	bool display_road_network <- true parameter: "road network visualization";
 	
 	init {
@@ -29,17 +26,13 @@ global {
 		
 	}
 	
-	reflex updateGraph when:cycle=1{
+	reflex initGraphAndTarget when:cycle=1{
 		list<brix> roads <- brix where (each.type in road_types);
 		road_network <- as_intersection_graph(roads, first(brix).shape.width/ 100.0);
-		if not(consider8neighbors) {
-			list<point> pts <- first(brix).shape.points;
-			float dist_diag <- 0.99 * sqrt((pts[0] distance_to pts[1]) ^2 + (pts[1] distance_to pts[2]) ^2);
-			loop e over: copy(road_network.edges) {
-				if (geometry(e).perimeter > dist_diag) {
-					remove edge(e) from: road_network;
-				}
-			}
+		ask people{
+			my_residence<-one_of(brix where (each.type="Residential tower"));
+			my_office<-one_of(brix where (each.type="offices"));
+			location<-my_residence.location;
 		}
 	}
 	
@@ -71,6 +64,8 @@ species thermometer parent: cityio_agent {
 
 species people parent: cityio_agent skills:[moving]{ 
 	bool is_visible<-true;
+	brix my_office;
+	brix my_residence;
 	
 	reflex move{
 		if (road_network != nil) {
@@ -78,7 +73,7 @@ species people parent: cityio_agent skills:[moving]{
 		} else {
 			do wander;
 		}
-		
+		//do goto target:my_office speed:0.1;	
 	}	
 	aspect base{
 		draw circle(10) color:#blue;

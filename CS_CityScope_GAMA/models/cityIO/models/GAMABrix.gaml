@@ -4,6 +4,7 @@ model GAMABrix
 
 global {
 	string city_io_table;
+	map<string, unknown> cityScopeGrid;
 
 	bool post_on <- false;
 	int update_frequency<-100; // Frequency (in cycles) by which to update local grid by checking for changes in gridhash
@@ -41,6 +42,7 @@ global {
 		
 	geometry setup_cityio_world {
 		geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
+		cityScopeGrid<-json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID/properties/header").contents;
 		return envelope(geogrid);
 	}
 	
@@ -383,6 +385,15 @@ species cityio_numeric_indicator parent: cityio_agent {
 	reflex update_numeric {
 		numeric_values<-[];
 		numeric_values<+indicator_name::float(eval_gaml(indicator_value));
+	}
+}
+
+grid gamaGrid width:int(cityScopeGrid["ncols"]) height:int(cityScopeGrid["nrows"]){
+	int size;
+	int type;
+	int depth;
+    aspect base{
+	  draw shape color:#white border:#black;	
 	}
 }
 
