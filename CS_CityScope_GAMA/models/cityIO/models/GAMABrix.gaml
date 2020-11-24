@@ -15,7 +15,7 @@ global {
 	float step <- 60 #sec;
 	float saveLocationInterval<-10*step; // In seconds
 	
-	bool pull_only<-false;
+	bool pull_only<-false; // If true, the model will only pull the grid and not handle any of the posting or time of day controlling
 	
 	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
 //	int totalTimeInSec<-10800; //3hx60minx60sec 1step is 10#sec
