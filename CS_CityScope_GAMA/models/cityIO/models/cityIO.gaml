@@ -45,7 +45,7 @@ species people parent: cityio_agent skills:[moving]{
 	bool is_visible<-true;
 	
 	reflex move{
-	do wander;
+		do wander;
 	}
 	
 	aspect base{

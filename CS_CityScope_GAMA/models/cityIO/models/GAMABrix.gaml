@@ -15,6 +15,8 @@ global {
 	float step <- 60 #sec;
 	float saveLocationInterval<-10*step; // In seconds
 	
+	bool pull_only<-false;
+	
 	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
 //	int totalTimeInSec<-10800; //3hx60minx60sec 1step is 10#sec
 
@@ -260,8 +262,12 @@ global {
 		return cycle-start_day_cycle;
 	}
 	
+	reflex pull_grid when: ((cycle mod update_frequency = 0) and (pull_only)) {
+		do udpateGrid;
+	}
 	
-	reflex update when: ((cycle mod update_frequency = 0)) {
+	
+	reflex update when: ((cycle mod update_frequency = 0) and (not pull_only)) {
 		string new_grid_hash_id <- get_grid_hash();
 		float idle_step_start;
 		if ((new_grid_hash_id != grid_hash_id))  {
