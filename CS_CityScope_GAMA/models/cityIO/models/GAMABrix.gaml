@@ -263,7 +263,11 @@ global {
 	}
 	
 	reflex pull_grid when: ((cycle mod update_frequency = 0) and (pull_only)) {
-		do udpateGrid;
+		string new_grid_hash_id <- get_grid_hash();
+		if ((new_grid_hash_id != grid_hash_id))  {
+			grid_hash_id <- new_grid_hash_id;
+			do udpateGrid;
+		}
 	}
 	
 	
