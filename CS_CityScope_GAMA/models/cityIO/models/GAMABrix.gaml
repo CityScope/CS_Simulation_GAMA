@@ -38,7 +38,7 @@ global {
 	map<string,map<string, float>> lbcs_type;
 	map<string,map<string, float>> naics_type;
 	
-	bool inverse_y <- true; //parameter for issue #157
+	bool inverse_xy <- true; //parameter for issue #157
 	
 	
 	list<string> road_types <- ["Road", "LRT street"];	
@@ -90,12 +90,12 @@ global {
 	
 	action initialize_brix {
 		create brix from:geogrid with: (name:nil);
-		if (inverse_y) {
+		if (inverse_xy) {
 			ask brix {
 				list<point> pts;
 				loop i from: 0 to: length(shape.points) - 1 {
 					point pt <- shape.points[i];
-					pts << {pt.x, world.shape.height - pt.y };
+					pts << {world.shape.width - pt.x, world.shape.height - pt.y };
 				}
 				shape <- polygon(pts);
 			}
