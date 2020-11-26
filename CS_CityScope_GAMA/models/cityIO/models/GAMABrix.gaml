@@ -39,7 +39,11 @@ global {
 	map<string,map<string, float>> naics_type;
 
 	
-		
+	
+	list<string> road_types <- ["Road", "LRT street"];	
+	bool use_neigbors4 <- true;
+	list<brix> roads;
+	
 	geometry setup_cityio_world {
 		geogrid <- geojson_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID","EPSG:4326");
 		cityScopeGrid<-json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRID/properties/header").contents;
@@ -77,10 +81,20 @@ global {
     }
 			
 	init {
-		create brix from:geogrid with: (name:nil);
+		do initialize_brix;
 		do setup_static_type;
 		do udpateGrid;
 		do sendIndicators;
+	}
+	
+	action initialize_brix {
+		create brix from:geogrid with: (name:nil);
+		float dist_tol <- first(brix).shape.width/ 100.0;
+		float perimeter_diag <- 0.99 * (first(brix).shape.points[0] distance_to  first(brix).shape.points[2]);
+		ask brix {
+			neighbors8 <- brix at_distance dist_tol; 
+			neighbors4 <- neighbors8 where ((each.location distance_to location) <= perimeter_diag);
+		}
 	}
 	
 	list<agent> get_all_instances(species<agent> spec) {
@@ -108,6 +122,8 @@ global {
 				}
 			}
 		}
+		roads <- brix where (each.type in road_types);
+		
 	}
 	
 	action sendStringToCityIo(string cityIOString, string type){
@@ -310,6 +326,57 @@ global {
 		write "TIME OF DAY:"+time_of_day();
 		
 	}
+	
+	path path_between_brix(point origin, point destination, list<brix> on, bool neigbors4) {
+		brix startAg <- on closest_to origin;
+		brix endAg <- on closest_to destination;
+		if (startAg = endAg) {
+			return path([line([origin, destination])]);
+		}
+		list<bool> open;
+		loop times: length(brix) {open << false;}
+		loop b over: on {
+			open[int(b)] <- true;
+		}
+		map<brix,brix> cameFrom;
+		map<brix, float> frontier;
+		map<brix,float> costSoFar;
+		costSoFar[startAg] <- 0.0;
+		frontier[startAg] <- 0.0;
+		loop while: not empty(frontier) {
+			brix current <- frontier.keys with_min_of (frontier[each]);
+			remove key: current from: frontier;
+			if (current = endAg) {
+				list<point> nodesPt ;
+				nodesPt << destination.location;
+				loop while: (current != startAg) {
+					current <- cameFrom[current];
+					if (current != startAg) {
+						nodesPt << current.location;
+					}
+				}
+				nodesPt << origin.location;
+				nodesPt <- reverse(nodesPt);
+				return path(nodesPt);
+			}
+			float cost <- costSoFar[current];
+			loop next over: neigbors4 ? current.neighbors4 : current.neighbors8{
+				if (open[int(next)]) {
+					float dist <- current.location distance_to next.location;
+					float nextCost <- cost +  dist;
+					frontier[next] <-nextCost;
+					open[int(next)] <- false;
+					if (not (next in costSoFar.keys)) or (nextCost < costSoFar[next]) {
+						costSoFar[next] <- nextCost;
+						cameFrom[next] <- current;
+					}
+				}
+			}
+		}
+		return nil;
+	}
+	
+	
 }
 
 species cityio_indicator { // This is the master indicator species. We will use this to force indicators to define certain features.
@@ -320,6 +387,8 @@ species cityio_indicator { // This is the master indicator species. We will use 
 
 species brix{
 	string type;
+	list<brix> neighbors4;
+	list<brix> neighbors8;
 	float height init:rnd(100.0);
 	rgb color;
 	map<string, float> block_lbcs;
@@ -328,6 +397,7 @@ species brix{
 	aspect base {
 		  draw shape color:color border:color-50 depth:height;	
 	}
+	
 }
 
 
@@ -374,6 +444,31 @@ species cityio_agent parent: cityio_indicator {
 	}
 }
 
+species moving_agent parent: cityio_agent skills: [moving] {
+	path my_path;
+	point random_target;
+	
+	action goto_on_roads (point a_target){
+		if (a_target != nil) and (location != a_target){
+			if (my_path = nil or my_path.target != a_target) {
+				my_path <- world.path_between_brix(location, a_target,roads, use_neigbors4 );
+			}
+			do follow path: my_path;
+		}
+	}
+	
+	action wander_on_roads {
+		if (random_target = nil){
+			random_target <- any_location_in(one_of(roads));
+			my_path <- world.path_between_brix(location, random_target,roads, use_neigbors4 );
+		}
+		do follow path: my_path;
+		if (location = random_target) {
+			random_target <- nil;
+		}
+		
+	}	
+}
 species cityio_numeric_indicator parent: cityio_agent {
 	string indicator_value;
 	string viz_type <- "bar";	
@@ -388,14 +483,14 @@ species cityio_numeric_indicator parent: cityio_agent {
 	}
 }
 
-grid gamaGrid width:int(cityScopeGrid["ncols"]) height:int(cityScopeGrid["nrows"]){
+/*grid gamaGrid width:int(cityScopeGrid["ncols"]) height:int(cityScopeGrid["nrows"]){
 	int size;
 	int type;
 	int depth;
     aspect base{
 	  draw shape color:#white border:#black;	
 	}
-}
+}*/
 
 
 experiment CityScopeHeadless autorun:true until: false { }

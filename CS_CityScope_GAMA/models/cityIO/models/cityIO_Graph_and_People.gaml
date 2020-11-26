@@ -27,7 +27,6 @@ global {
 	}
 	
 	reflex initGraphAndTarget when:cycle=1{
-		list<brix> roads <- brix where (each.type in road_types);
 		road_network <- as_intersection_graph(roads, first(brix).shape.width/ 100.0);
 		ask people{
 			my_residence<-one_of(brix where (each.type="Residential tower"));

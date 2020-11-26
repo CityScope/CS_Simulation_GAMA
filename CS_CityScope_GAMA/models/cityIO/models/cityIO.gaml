@@ -42,11 +42,11 @@ species thermometer parent: cityio_agent {
 	}	
 }
 
-species people parent: cityio_agent skills:[moving]{ 
+species people parent: moving_agent{ 
 	bool is_visible<-true;
 	
 	reflex move{
-		do wander;
+		do wander_on_roads;
 	}
 	
 	aspect base{
@@ -54,15 +54,10 @@ species people parent: cityio_agent skills:[moving]{
 	}
 }
 
-
-
-
-
-
 experiment CityScope type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black{	
-			species gamaGrid aspect:base;
+			//species gamaGrid aspect:base;
 			species brix aspect:base;
 			species people aspect:base position:{0,0,0.1};
 		}
