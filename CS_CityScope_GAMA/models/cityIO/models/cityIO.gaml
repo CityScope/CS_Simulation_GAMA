@@ -1,4 +1,4 @@
-model citIOGAMA
+model cityIOGAMA
 // Example of a model that uses GAMABrix to connect to cityio. 
 
 import "GAMABrix.gaml"
