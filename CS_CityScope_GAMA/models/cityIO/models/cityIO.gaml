@@ -8,6 +8,7 @@ global {
     geometry shape <- envelope(setup_cityio_world());
 
 	bool post_on<-true;
+	bool pull_only<-false;
 	
 	init {
 		create people number:10; 
