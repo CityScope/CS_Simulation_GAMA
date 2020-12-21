@@ -37,6 +37,7 @@ global {
 	map<string,unknown> static_type;
 	map<string,map<string, float>> lbcs_type;
 	map<string,map<string, float>> naics_type;
+	bool brix_init_tracker<-false; // Tracks if GAMAbrix init has already been run
 	
 	bool inverse_xy <- true; //parameter for issue #157
 	
@@ -82,6 +83,13 @@ global {
     }
 			
 	init {
+		if (not brix_init_tracker){
+			do brix_init;
+		}
+	}
+	
+	action brix_init {
+		brix_init_tracker <- true;
 		do initialize_brix;
 		do setup_static_type;
 		do udpateGrid;
