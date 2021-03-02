@@ -54,7 +54,7 @@ global{
 	graph<people, people> social_distance_graph <- graph<people, people>([]);
 	
 	init{
-		filePathName <-"../results/output"+date("now")+".csv";
+		filePathName <-"../results/output"+date("now")+"_sim"+int(self)+".csv";
 	}
 	
 	reflex initCovid when:reinitCovid{
@@ -128,8 +128,7 @@ global{
 		}
 	}
 	reflex save_model_output when: every(#hours) and savetoCSV{
-		// save the values of the variables name, speed and size to the csv file; the rewrite facet is set to false to continue to write in the same file
-		write "save to csv";
+		write "save to csv at time:" + time;
 		save [time,cycle,date("now"),length(ViralPeople),length(building),
 		length(building where (each.type="residential")),length(building where (each.type="shopping")),length(building where (each.type="business")),
 		length(people where (each.macroTrip=false)),length(people where (each.macroTrip=true)),

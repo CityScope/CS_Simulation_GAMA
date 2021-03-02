@@ -22,7 +22,7 @@ global{
 	float macroTransparency<-0.5;
 	int nbBuildingPerDistrict<-10;
 	int nbPeople<-100;
-	float step<-1#sec;
+	float step<-10#sec;
 	bool accelerationEffect<-false;
 	float speedFactor<-1.0;
 	bool transitionPhase<-false;
@@ -614,6 +614,10 @@ experiment City parent:Coronaizer autorun:true{
 		}
 		
 	}
+}
+
+
+experiment 'Run N simulations' type: batch repeat: 10 keep_seed: true until: ( time > 24#hour ) {
 }
 
 /*experiment CityWithChart parent:City autorun:true{
