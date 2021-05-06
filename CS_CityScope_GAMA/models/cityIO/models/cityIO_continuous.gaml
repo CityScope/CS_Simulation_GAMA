@@ -4,7 +4,7 @@ model citIOGAMA
 import "GAMABrix.gaml"
 
 global {
-	string city_io_table<-"dungeonmodule";
+	string city_io_table<-"dungeonmaster";
   
     geometry shape <- envelope(setup_cityio_world());
 	bool post_on<-true;
@@ -44,7 +44,7 @@ species people parent: cityio_agent skills:[moving]{
 	int mode<-0;
 	
 	reflex move{
-		do wander;
+		do wander speed:0.1;
 	}
 	
 	aspect base{

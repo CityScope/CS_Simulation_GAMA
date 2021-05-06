@@ -77,6 +77,11 @@
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+team-1+_+meta+_+hashes</locationURI>
 		</link>
 		<link>
+			<name>external/copy of header</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+dungeonmaster+_+GEOGRID+_+properties+_+header</locationURI>
+		</link>
+		<link>
 			<name>external/copy of od</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+corktown+_+od</locationURI>

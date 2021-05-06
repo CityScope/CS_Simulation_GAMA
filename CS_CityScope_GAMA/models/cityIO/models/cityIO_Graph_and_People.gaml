@@ -4,7 +4,7 @@ model citIOGAMA
 import "GAMABrix.gaml"
 
 global {
-	string city_io_table<-"team-1";
+	string city_io_table<-"dungeonmaster";
   
     geometry shape <- envelope(setup_cityio_world());
 	bool post_on<-true;
@@ -68,9 +68,9 @@ species people parent: cityio_agent skills:[moving]{
 	
 	reflex move{
 		if (road_network != nil) {
-			do wander on: road_network;
+			do wander on: road_network speed:0.1;
 		} else {
-			do wander;
+			do wander speed:0.1;
 		}
 		//do goto target:my_office speed:0.1;	
 	}	
@@ -90,7 +90,7 @@ experiment CityScope type: gui autorun:false{
 					}
 				}
 			}
-			species people aspect:base position:{0,0,0.1};
+			species people aspect:base position:{0,0,0};
 		}
 	}
 }

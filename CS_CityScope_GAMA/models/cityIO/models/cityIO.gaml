@@ -4,7 +4,7 @@ model cityIOGAMA
 import "GAMABrix.gaml"
 
 global {
-	string city_io_table<-"team-1";  
+	string city_io_table<-"dungeonmaster";  
     geometry shape <- envelope(setup_cityio_world());
 
 	bool post_on<-true;
