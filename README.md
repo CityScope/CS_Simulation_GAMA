@@ -3,7 +3,7 @@ Agent-Based Model developped in the [CityScience](https://www.media.mit.edu/grou
 # Installation
   - Clone or download this repository
   - Download GAMA (compatible with GAMA 1.8.1) [here](https://gama-platform.github.io/download)
-  - Run GAMA, 
+  - Install & Run GAMA (Gama.app or Gama.exe) 
   - Choose a new Workspace (this is a temporay folder used for computation)
   - right click on User Models->Import->GAMA Project..
   - Select CS_CityScope_GAMA in the CS_Simulation_GAMA folder that you have clone
