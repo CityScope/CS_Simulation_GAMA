@@ -1,1 +1,1 @@
-[null,null,null,null]
+[{"indicator_type":"numeric","name":"Mean Height (sent from GAMA)","value":5.87,"viz_type":"bar"},{"indicator_type":"numeric","name":"Min Height (sent from GAMA)","value":0.0,"viz_type":"bar"},{"indicator_type":"numeric","name":"Max Height (sent from GAMA)","value":20.0,"viz_type":"bar"},{"indicator_type":"null","name":"Number of blocks (sent from GAMA)","value":400.0,"viz_type":"bar"}]

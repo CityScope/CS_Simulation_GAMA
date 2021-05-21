@@ -151,7 +151,7 @@ global {
 	    map<string, unknown> m <- JsonFileResults.contents;
 	    if (!block_post){
 			try{			
-			  save(json_file("https://cityio.media.mit.edu/api/table/update/"+city_io_table+"/"+type, m)); // This still updates a dictionary with 'contents' as a key
+			  save(json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/"+type, m)) header:true; // This still updates a dictionary with 'contents' as a key
 			}catch{
 			  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 			}

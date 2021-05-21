@@ -13,10 +13,10 @@ global {
 	init {
 		create people number:10; 
 		create thermometer number:100;
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(brix collect each.height)");
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(brix collect each.height)");
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(brix collect each.height)");
-		create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height (sent from GAMA)", indicator_value: "mean(brix collect each.height)");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height (sent from GAMA)",  indicator_value: "min(brix collect each.height)");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height (sent from GAMA)",  indicator_value: "max(brix collect each.height)");
+		create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks (sent from GAMA)");
 	}
 }
 

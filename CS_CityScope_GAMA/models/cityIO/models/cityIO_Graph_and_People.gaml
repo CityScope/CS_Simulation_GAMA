@@ -90,7 +90,7 @@ experiment CityScope type: gui autorun:false{
 					}
 				}
 			}
-			species people aspect:base position:{0,0,0};
+			species people aspect:base position:{0,0,0.1};
 		}
 	}
 }
