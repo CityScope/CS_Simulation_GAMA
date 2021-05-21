@@ -238,8 +238,8 @@ global {
 			if (is_visible) {
 				if length(locs)>0 {
 					string abmIndicator <- "{";
-					abmIndicator <- abmIndicator + "\"mode\": "+mode+",\n";
-					abmIndicator <- abmIndicator + "\"profile\": "+profile+",\n";
+					abmIndicator <- abmIndicator + "\"mode\":\""+ mode +"\",\n";
+					abmIndicator <- abmIndicator + "\"profile\":\""+profile+"\",\n";
 					
 					abmIndicator <- abmIndicator+ "\"path\": [";
 					loop i from:0 to:length(locs)-1{
@@ -431,8 +431,8 @@ species cityio_agent parent: cityio_indicator {
 	bool is_visible<-false;
 	bool is_numeric<-false;
 	
-	int profile<-0;
-	int mode<-0;
+	string profile<-"0";
+	string mode<-"0";
 	
 	string type;
 	
