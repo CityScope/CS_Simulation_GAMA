@@ -4,7 +4,7 @@ model citIOGAMA
 import "GAMABrix.gaml"
 
 global {
-	string city_io_table<-"dungeonmaster";
+	string city_io_table<-"cityscopejs_gama";
   
     geometry shape <- envelope(setup_cityio_world());
 	bool post_on<-true;

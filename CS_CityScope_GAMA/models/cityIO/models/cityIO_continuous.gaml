@@ -4,7 +4,7 @@ model citIOGAMA
 import "GAMABrix.gaml"
 
 global {
-	string city_io_table<-"dungeonmaster";
+	string city_io_table<-"cityscopejs_gama";
   
     geometry shape <- envelope(setup_cityio_world());
 	bool post_on<-true;
@@ -17,9 +17,9 @@ global {
 		//do setup_cityio_world; // see issue #151 This is our attempt to setup the world after defining city_io_table, while keeping world definition in GAMABrix
 		//do setup_static_type;
 		create people with:(att1:rnd(10),att2:rnd(10)) number:10; // For now, people are imported from GAMABrix, because the current version of cityio_heatmap_indicator needs the people species. 
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(block collect each.height)");
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(block collect each.height)");
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(block collect each.height)");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(brix collect each.height)");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(brix collect each.height)");
+		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(brix collect each.height)");
 		create my_cool_indicator        with: (viz_type:"bar",indicator_name: "Number of blocks");
 		//create cityio_heatmap_indicator with: (listOfPoint:list<people>(people));
 	}

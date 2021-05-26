@@ -4,7 +4,7 @@ model cityIOGAMA
 import "GAMABrix.gaml"
 
 global {
-	string city_io_table<-"dungeonmaster";  
+	string city_io_table<-"cityscopejs_gama";  
     geometry shape <- envelope(setup_cityio_world());
 
 	bool post_on<-true;
@@ -16,7 +16,7 @@ global {
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height (sent from GAMA)", indicator_value: "mean(brix collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height (sent from GAMA)",  indicator_value: "min(brix collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height (sent from GAMA)",  indicator_value: "max(brix collect each.height)");
-		create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks (sent from GAMA)");
+		//FIXME: This one doesn't work create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks (sent from GAMA)");
 	}
 }
 
@@ -47,7 +47,7 @@ species people parent: moving_agent{
 	bool is_visible<-true;
 	
 	reflex move{
-		do wander_on_roads;
+		do wander;
 	}
 	
 	aspect base{

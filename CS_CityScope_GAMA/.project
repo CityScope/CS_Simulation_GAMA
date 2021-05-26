@@ -47,6 +47,46 @@
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+team-1+_+GEOGRID</locationURI>
 		</link>
 		<link>
+			<name>external/copy of copy of GEOGRIDDATA</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+ityscopejs_gama+_+GEOGRIDDATA</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of copy of GEOGRID</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+ityscopejs_gama+_+GEOGRID</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of copy of GEOGRIDDATA</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+cityscopejs_gama+_+GEOGRIDDATA</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of copy of copy of GEOGRID</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+cityscopejs_gama+_+GEOGRID</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of copy of header</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+cityscopejs_gama+_+GEOGRID+_+properties+_+header</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of copy of types</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+cityscopejs_gama+_+GEOGRID+_+properties+_+types</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of hashes</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+cityscopejs_gama+_+meta+_+hashes</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of header</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+ityscopejs_gama+_+GEOGRID+_+properties+_+header</locationURI>
+		</link>
+		<link>
 			<name>external/copy of copy of meta_grid</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+grasbrook+_+meta_grid</locationURI>
@@ -60,6 +100,11 @@
 			<name>external/copy of copy of table_area.geojson</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/raw.githubusercontent.com+_++_+CityScope+_+CS_Mobility_Service+_+master+_+scripts+_+cities+_+Hamburg+_+clean+_+table_area.geojson</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of types</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+ityscopejs_gama+_+GEOGRID+_+properties+_+types</locationURI>
 		</link>
 		<link>
 			<name>external/copy of cycling_net.geojson</name>
