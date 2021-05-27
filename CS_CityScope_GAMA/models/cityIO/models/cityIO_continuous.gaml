@@ -20,7 +20,7 @@ global {
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(brix collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height",  indicator_value: "min(brix collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height",  indicator_value: "max(brix collect each.height)");
-		create my_cool_indicator        with: (viz_type:"bar",indicator_name: "Number of blocks");
+		//create my_cool_indicator        with: (viz_type:"bar",indicator_name: "Number of blocks");
 		//create cityio_heatmap_indicator with: (listOfPoint:list<people>(people));
 	}
 	

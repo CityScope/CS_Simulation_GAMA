@@ -67,6 +67,31 @@
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+cityscopejs_gama+_+GEOGRID</locationURI>
 		</link>
 		<link>
+			<name>external/copy of copy of copy of copy of GEOGRIDDATA</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+new_dungeon+_+GEOGRIDDATA</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of copy of copy of copy of GEOGRID</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+new_dungeon+_+GEOGRID</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of copy of copy of header</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+new_dungeon+_+GEOGRID+_+properties+_+header</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of copy of copy of types</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+new_dungeon+_+GEOGRID+_+properties+_+types</locationURI>
+		</link>
+		<link>
+			<name>external/copy of copy of copy of hashes</name>
+			<type>1</type>
+			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+new_dungeon+_+meta+_+hashes</locationURI>
+		</link>
+		<link>
 			<name>external/copy of copy of copy of header</name>
 			<type>1</type>
 			<locationURI>CACHE_LOC/cityio.media.mit.edu+_++_+api+_+table+_+cityscopejs_gama+_+GEOGRID+_+properties+_+header</locationURI>

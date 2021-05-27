@@ -16,7 +16,7 @@ global {
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height (sent from GAMA)", indicator_value: "mean(brix collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Min Height (sent from GAMA)",  indicator_value: "min(brix collect each.height)");
 		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Max Height (sent from GAMA)",  indicator_value: "max(brix collect each.height)");
-		//FIXME: This one doesn't work create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks (sent from GAMA)");
+		create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of people (sent from GAMA)");
 	}
 }
 
@@ -28,7 +28,7 @@ species my_numeric_indicator parent: cityio_agent {
 	
 	reflex update_numeric {
 		numeric_values<-[];
-		numeric_values<+indicator_name::length(brix);
+		numeric_values<+indicator_name::length(people);
 	}
 }
 
@@ -58,7 +58,6 @@ species people parent: moving_agent{
 experiment CityScope type: gui autorun:false{
 	output {
 		display map_mode type:opengl background:#black{	
-			//species gamaGrid aspect:base;
 			species brix aspect:base;
 			species people aspect:base position:{0,0,0.1};
 		}
