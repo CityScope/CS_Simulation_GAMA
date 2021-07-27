@@ -80,7 +80,7 @@ global {
 	float brickSize <- 21.3;
 	// Online City IO server to query data from.
 	float cityIOVersion<-1.0;
-	string CITY_IO_URL <- "https://cityio.media.mit.edu/api/table/citymatrix_volpe";
+	string CITY_IO_URL <- "https://cityio.media.mit.edu/api/table/citymatrix_volpe/";
 	// Offline backup data to use when server data unavailable.
 	string BACKUP_DATA <- "../includes/cityIO_Kendall.json";
 
