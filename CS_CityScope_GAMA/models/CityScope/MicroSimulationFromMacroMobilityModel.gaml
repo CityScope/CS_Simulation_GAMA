@@ -349,18 +349,18 @@ species road schedules: [] {
 
 experiment Dev type: gui autorun:false{
 	output {
-		display map_mode type:opengl background:#black draw_env:false{	
+		display map_mode type:opengl background:#black axes:false{	
 			//species areas refresh:false;
 			species block aspect:white;
 			species road;
 			species people aspect:base position:{0,0,0.01};//trace:2000 fading:true ;
 			species portal aspect:base;
-			event["a"] action: {showAgent<-!showAgent;};
-			event["b"] action: {showLandUse<-!showLandUse;};
-			event["l"] action: {showLegend<-!showLegend;};
-			event["m"] action: {showMode<-!showMode;};
-			event["r"] action: {showRoad<-!showRoad;};
-			event["p"] action: {showPortal<-!showPortal;};
+			event "a" {showAgent<-!showAgent;}
+			event "b" {showLandUse<-!showLandUse;}
+			event "l" {showLegend<-!showLegend;}
+			event "m" {showMode<-!showMode;}
+			event "r" {showRoad<-!showRoad;}
+			event "p" {showPortal<-!showPortal;}
 			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
             {
             	if(showLegend){

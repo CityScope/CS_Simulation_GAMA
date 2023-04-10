@@ -548,7 +548,7 @@ species amenity parent: building schedules: [] {
 
 		} else {
 			if (toggle1 = 6) {
-				draw circle(size) empty: true border: #white color: #white;
+				draw circle(size) wireframe: true border: #white color: #white;
 				draw circle(size) color: rgb(255, 255, 255, 125);
 			}
 
@@ -559,7 +559,7 @@ species amenity parent: building schedules: [] {
 	aspect onTable {
 		if (!fromGrid) {
 			if (toggle1 = 6) {
-				draw circle(size) empty: true border: #white color: #white;
+				draw circle(size) wireframe: true border: #white color: #white;
 				draw circle(size) color: rgb(255, 255, 255, 125);
 			}
 
@@ -572,14 +572,14 @@ species amenity parent: building schedules: [] {
 species table {
 
 	aspect base {
-		draw shape empty: true border: rgb(75, 75, 75) color: rgb(75, 75, 75);
+		draw shape wireframe: true border: rgb(75, 75, 75) color: rgb(75, 75, 75);
 	}
 
 }
 
 experiment CityScopeMain type: gui virtual: true {
 	output {
-		display CityScopeVirtual type: opengl background: #black draw_env: false virtual: true {
+		display CityScopeVirtual type: opengl background: #black axes: false virtual: true {
 			species table aspect: base refresh: false;
 			species building aspect: default position: {0, 0, -0.0015};
 			species road aspect: base refresh: false;
@@ -621,7 +621,7 @@ experiment CityScopeMain type: gui virtual: true {
 
 		}
 
-		display CityScopeVirtualExperimental type: opengl background: #black draw_env: false virtual: true {
+		display CityScopeVirtualExperimental type: opengl background: #black axes: false virtual: true {
 			species table aspect: base refresh: false;
 			species road aspect: base refresh: false;
 			species people aspect: timespace trace: traceTime fading: true;

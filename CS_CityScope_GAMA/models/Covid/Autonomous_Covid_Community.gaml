@@ -593,13 +593,13 @@ experiment City parent:Coronaizer autorun:true{
 		}
 			species people aspect:dynamique;
 			species ViralPeople aspect:dynamic;
-			event["p"] action: {profile<-true;safety<-false;health<-false;};
-			event["s"] action: {profile<-false;safety<-true;health<-false;};
-			event["h"] action: {profile<-false;safety<-false;health<-true;};
-			event["c"] action: {autonomy<-false;ask world{do updateSim(autonomy);}};
-			event["a"] action: {autonomy<-true;ask world{do updateSim(autonomy);}};
-			event ["i"] action:{reinitCovid<-true;};
-			event ["o"] action:{stopCovid<-true;};
+			event "p" {profile<-true;safety<-false;health<-false;}
+			event "s" {profile<-false;safety<-true;health<-false;}
+			event "h" {profile<-false;safety<-false;health<-true;}
+			event "c" {autonomy<-false;ask world{do updateSim(autonomy);}}
+			event "a" {autonomy<-true;ask world{do updateSim(autonomy);}}
+			event "i" {reinitCovid<-true;}
+			event "o" {stopCovid<-true;}
 		}
 		
 		display CoronaChart refresh:every(#mn)  {
