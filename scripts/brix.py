@@ -56,19 +56,19 @@ class MicroBrix():
                 "data": {
                     "walking": {
                         "value": 1.0,
-                        "description": ""
+                        "description": "An example 1"
                     },
                     "bike": {
                         "value": 0.75,
-                        "description": ""
+                        "description": "An example 2"
                     },
                     "car": {
                         "value": 0.5,
-                        "description": ""
+                        "description": "An example 3"
                     },
                     "bus": {
                         "value": 0.25,
-                        "description": ""
+                        "description": "An example 4"
                     }
                 },
                 "properties": {
@@ -76,6 +76,7 @@ class MicroBrix():
                 }
             }
         ]
+        self.last_sent_data=None
         self.data_lock=Lock()
 
         if host_name is None:
@@ -180,7 +181,11 @@ class MicroBrix():
 
     def get_received_data(self):
         with self.data_lock:
-            return self.data_from_websocket
+            if self.data_from_websocket != self.last_sent_data:
+                self.last_sent_data=self.data_from_websocket.copy()
+                return self.data_from_websocket
+            else:
+                return None
 
     def listen(self):
         self.ws.run_forever(dispatcher=rel, reconnect=5)
@@ -208,7 +213,7 @@ async def handle_connection(websocket, path, connection):
         print(f"Error: {e}")
 
 async def start_server(connection):
-    server=await websockets.serve(lambda ws, path: handle_connection(ws, path, connection), "localhost", 8000)
+    server=await websockets.serve(lambda ws, path: handle_connection(ws, path, connection), "localhost", 8000, max_size=None)
     print("Additional WebSocket server started at ws://localhost:8000")
     await server.wait_closed()
 
@@ -216,8 +221,9 @@ def start_websocket_server(connection):
     asyncio.run(start_server(connection))
 
 def indicator(geogrid, geogrid_data):
-
     r=connection.get_received_data()
+    if r is None:
+        return [],[]
     # indicators
     layers=[]
     numeric=[]

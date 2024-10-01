@@ -97,8 +97,8 @@ global {
 			string buildings <- to_geojson(buildings_shapefile.contents(),"EPSG:4326",[]);
 			save buildings to: "geojson.txt" rewrite: (cycle = 0);
 
-//			buildings <- '[{"id": "geojson", "type": "geojsonbase", "data": ' + buildings + ', "properties": {"filled": false}}]';
-//			do send to: "ws://localhost:8000" contents: buildings;
+			buildings <- '[{"id": "geojson", "type": "geojsonbase", "data": ' + buildings + ', "properties": {"filled": false}}]';
+			do send to: "ws://localhost:8000" contents: buildings;
 		}
 	}
 
