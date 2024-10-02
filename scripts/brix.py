@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import websocket
 import rel
 from time import sleep
@@ -76,7 +77,7 @@ class MicroBrix():
                 }
             }
         ]
-        self.last_sent_data=None
+        self.previous_data_from_websocket=[]
         self.data_lock=Lock()
 
         if host_name is None:
@@ -177,15 +178,15 @@ class MicroBrix():
 
     def perform_update(self, table):
         layers, numeric=self.module_function(self.geogrid[table],self.geogrid_data[table])
-        self._send_indicators(layers, numeric ,table)
+
+        with self.data_lock:
+            if self.data_from_websocket != self.previous_data_from_websocket:
+                self._send_indicators(layers, numeric, table)
+                self.previous_data_from_websocket=copy.deepcopy(self.data_from_websocket)
 
     def get_received_data(self):
         with self.data_lock:
-            if self.data_from_websocket != self.last_sent_data:
-                self.last_sent_data=self.data_from_websocket.copy()
-                return self.data_from_websocket
-            else:
-                return None
+            return self.data_from_websocket
 
     def listen(self):
         self.ws.run_forever(dispatcher=rel, reconnect=5)
@@ -200,10 +201,10 @@ async def handle_connection(websocket, path, connection):
     try:
         async for message in websocket:
             data=json.loads(message)
-            # print(f"Processed data: {json.dumps(data, indent=2)}")
 
             with connection.data_lock:
-                connection.data_from_websocket=data
+                if connection.data_from_websocket != data:
+                    connection.data_from_websocket=data
 
             response={"status": "received", "data": data}
             await websocket.send(json.dumps(response))
@@ -222,9 +223,6 @@ def start_websocket_server(connection):
 
 def indicator(geogrid, geogrid_data):
     r=connection.get_received_data()
-    if r is None:
-        return [],[]
-    # indicators
     layers=[]
     numeric=[]
 
