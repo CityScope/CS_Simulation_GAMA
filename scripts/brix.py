@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import websocket
 import rel
 from time import sleep
@@ -56,19 +57,19 @@ class MicroBrix():
                 "data": {
                     "walking": {
                         "value": 1.0,
-                        "description": ""
+                        "description": "An example 1"
                     },
                     "bike": {
                         "value": 0.75,
-                        "description": ""
+                        "description": "An example 2"
                     },
                     "car": {
                         "value": 0.5,
-                        "description": ""
+                        "description": "An example 3"
                     },
                     "bus": {
                         "value": 0.25,
-                        "description": ""
+                        "description": "An example 4"
                     }
                 },
                 "properties": {
@@ -76,6 +77,7 @@ class MicroBrix():
                 }
             }
         ]
+        self.previous_data_from_websocket=[]
         self.data_lock=Lock()
 
         if host_name is None:
@@ -176,7 +178,11 @@ class MicroBrix():
 
     def perform_update(self, table):
         layers, numeric=self.module_function(self.geogrid[table],self.geogrid_data[table])
-        self._send_indicators(layers, numeric ,table)
+
+        with self.data_lock:
+            if self.data_from_websocket != self.previous_data_from_websocket:
+                self._send_indicators(layers, numeric, table)
+                self.previous_data_from_websocket=copy.deepcopy(self.data_from_websocket)
 
     def get_received_data(self):
         with self.data_lock:
@@ -195,10 +201,10 @@ async def handle_connection(websocket, path, connection):
     try:
         async for message in websocket:
             data=json.loads(message)
-            # print(f"Processed data: {json.dumps(data, indent=2)}")
 
             with connection.data_lock:
-                connection.data_from_websocket=data
+                if connection.data_from_websocket != data:
+                    connection.data_from_websocket=data
 
             response={"status": "received", "data": data}
             await websocket.send(json.dumps(response))
@@ -208,7 +214,7 @@ async def handle_connection(websocket, path, connection):
         print(f"Error: {e}")
 
 async def start_server(connection):
-    server=await websockets.serve(lambda ws, path: handle_connection(ws, path, connection), "localhost", 8000)
+    server=await websockets.serve(lambda ws, path: handle_connection(ws, path, connection), "localhost", 8000, max_size=None)
     print("Additional WebSocket server started at ws://localhost:8000")
     await server.wait_closed()
 
@@ -216,9 +222,7 @@ def start_websocket_server(connection):
     asyncio.run(start_server(connection))
 
 def indicator(geogrid, geogrid_data):
-
     r=connection.get_received_data()
-    # indicators
     layers=[]
     numeric=[]
 
