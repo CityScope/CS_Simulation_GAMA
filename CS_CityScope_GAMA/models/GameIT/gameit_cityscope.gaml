@@ -13,6 +13,7 @@ global {
 	bool updatePollution <-false parameter: "Pollution:" category: "Simulation";
 	bool updateDensity <-false parameter: "Density:" category: "Simulation";
 	bool weatherImpact <-true parameter: "Weather impact:" category: "Simulation";
+	bool CityIO <- true parameter: "CityIO connection:" category: "Simulation";
 
 	//ENVIRONMENT
 	float step <- 1 #mn;
@@ -91,14 +92,16 @@ global {
 		}
 		save "cycle,walking,bike,car,bus,average_speed,walk_distance,bike_distance,car_distance,bus_distance, bus_people_distance" to: "../results/mobility.csv";
 
-		create Networking_Client {
-			do connect to: "localhost" protocol: "websocket_client" port: 8000 with_name: "Client" raw: true;
+		if CityIO {
+			create Networking_Client {
+				do connect to: "localhost" protocol: "websocket_client" port: 8000 with_name: "Client" raw: true;
 
-			string buildings <- to_geojson(buildings_shapefile.contents(),"EPSG:4326",[]);
-			save buildings to: "geojson.txt" rewrite: (cycle = 0);
+				string buildings <- to_geojson(buildings_shapefile.contents(),"EPSG:4326",[]);
+				save buildings to: "geojson.txt" rewrite: (cycle = 0);
 
-			buildings <- '[{"id": "geojson", "type": "geojsonbase", "data": ' + buildings + ', "properties": {"filled": false}}]';
-			do send to: "ws://localhost:8000" contents: buildings;
+				buildings <- '[{"id": "geojson", "type": "geojsonbase", "data": ' + buildings + ', "properties": {"filled": false}}]';
+				do send to: "ws://localhost:8000" contents: buildings;
+			}
 		}
 	}
 
@@ -236,7 +239,7 @@ global {
 }
 
 species Networking_Client skills: [network] {
-	reflex statistics when: (cycle mod 2 = 0) {
+	reflex statistics when: CityIO and (cycle mod 2 = 0) {
 		int ind <- 0;
 
 		float total <- 10^(-9);
@@ -256,11 +259,11 @@ species Networking_Client skills: [network] {
 		layers <- layers + '{"type": "radar", "data": {';
 		loop i from: 0 to: length(transport_type_cumulative_usage.keys)-2 {
 			layers <- layers + '"' + transport_type_cumulative_usage.keys[i] + '": {"value": ' +
-			(1-transport_type_cumulative_usage.values[i]/total) + ', "description": "An example ' + (i+1) + '"}, ';
+			transport_type_cumulative_usage.values[i]/total + ', "description": "An example ' + (i+1) + '"}, ';
 			ind <- i;
 		}
 		layers <- layers + '"' + transport_type_cumulative_usage.keys[ind+1] + '": {"value": ' +
-		(1-transport_type_cumulative_usage.values[ind+1]/total) + ', "description": "An example ' + (ind+2) + '"}}, "properties":{}},';
+		transport_type_cumulative_usage.values[ind+1]/total + ', "description": "An example ' + (ind+2) + '"}}, "properties":{}},';
 
 		list people_list <- list(people);
 
