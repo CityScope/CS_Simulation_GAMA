@@ -29,52 +29,43 @@ class MicroBrix():
 
         self.data_from_websocket=[
             {
-                "type": "bar",
+                "id": "geojson",
+                "type": "geojsonbase",
                 "data": {
-                    "walking": {
-                        "value": 0.25,
-                        "description": "An example 1"
-                    },
-                    "bike": {
-                        "value": 0.5,
-                        "description": "An example 2"
-                    },
-                    "car": {
-                        "value": 0.75,
-                        "description": "An example 3"
-                    },
-                    "bus": {
-                        "value": 1.0,
-                        "description": "An example 4"
-                    }
+                    "type": "FeatureCollection",
+                    "features": [
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                # "stroke": "#555555",
+                                # "stroke-width": 2,
+                                # "stroke-opacity": 1,
+                                # "fill": "#ff0000",
+                                # "fill-opacity": 1
+                            },
+                            "geometry": {
+                                "type": "Polygon",
+                                "coordinates": [
+                                    [
+                                        [-71.08785152435301,42.36458476210186],
+                                        [-71.08394622802734,42.367073865050585],
+                                        [-71.07536315917967,42.3621114156308],
+                                        [-71.07175827026367,42.3640615623146],
+                                        [-71.07199430465698,42.36563114860502],
+                                        [-71.07624292373657,42.36989578604455],
+                                        [-71.08624219894409,42.37117987666218],
+                                        [-71.09549045562744,42.36528235504046],
+                                        [-71.08858108520508,42.36005021919292],
+                                        [-71.07965469360352,42.362460226799854],
+                                        [-71.08280897140503,42.365139666205934],
+                                        [-71.08785152435301,42.36458476210186]
+                                    ]
+                                ]
+                            }
+                        }
+                    ]
                 },
-                "properties": {
-
-                }
-            },
-            {
-                "type": "radar",
-                "data": {
-                    "walking": {
-                        "value": 1.0,
-                        "description": "An example 1"
-                    },
-                    "bike": {
-                        "value": 0.75,
-                        "description": "An example 2"
-                    },
-                    "car": {
-                        "value": 0.5,
-                        "description": "An example 3"
-                    },
-                    "bus": {
-                        "value": 0.25,
-                        "description": "An example 4"
-                    }
-                },
-                "properties": {
-
-                }
+                "properties": {"filled": False}
             }
         ]
         self.previous_data_from_websocket=[]
@@ -239,7 +230,7 @@ def indicator(geogrid, geogrid_data):
     return layers, numeric
 
 if __name__=="__main__":
-    connection=MicroBrix(table_name='volpe-habm', module_function=indicator, keep_updating=True, quietly=True)
+    connection=MicroBrix(table_name='test', module_function=indicator, keep_updating=True, quietly=True)
 
     ws_server_thread=Thread(target=start_websocket_server, args=(connection,), daemon=True)
     ws_server_thread.start()
