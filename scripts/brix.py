@@ -37,11 +37,11 @@ class MicroBrix():
                         {
                             "type": "Feature",
                             "properties": {
-                                # "stroke": "#555555",
-                                # "stroke-width": 2,
-                                # "stroke-opacity": 1,
-                                # "fill": "#ff0000",
-                                # "fill-opacity": 1
+                                "stroke": "#555555",
+                                "stroke-width": 2,
+                                "stroke-opacity": 1,
+                                "fill": "#ff0000",
+                                "fill-opacity": 1
                             },
                             "geometry": {
                                 "type": "Polygon",
