@@ -6,6 +6,8 @@ from time import sleep
 import json
 from threading import Lock, Thread
 import websockets
+from gama_client.sync_client import GamaSyncClient
+from typing import Dict
 
 class MicroBrix():
 
@@ -197,7 +199,7 @@ class MicroBrix():
         self.ws.close()
 
 async def handle_connection(websocket, path, connection):
-    print("Connected client")
+    # print("Connected client")
     try:
         async for message in websocket:
             data=json.loads(message)
@@ -215,7 +217,7 @@ async def handle_connection(websocket, path, connection):
 
 async def start_server(connection):
     server=await websockets.serve(lambda ws, path: handle_connection(ws, path, connection), "localhost", 8000, max_size=None)
-    print("Additional WebSocket server started at ws://localhost:8000")
+    # print("Additional WebSocket server started at ws://localhost:8000")
     await server.wait_closed()
 
 def start_websocket_server(connection):
