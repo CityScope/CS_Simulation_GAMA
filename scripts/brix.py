@@ -240,11 +240,35 @@ def indicator(geogrid, geogrid_data):
 
     return layers, numeric
 
+async def async_command_answer_handler(message: Dict):
+    print("Here is the answer to an async command: ", message)
+
+
+async def gama_server_message_handler(message: Dict):
+    print("Here is the message from Gama-server:", message)
+
+async def gama_client():
+    client = GamaSyncClient("localhost", 6868, async_command_answer_handler, gama_server_message_handler)
+    await client.connect(False)
+    command_answer = client.sync_load("C:/Users/carlo/CS_Simulation_GAMA/CS_CityScope_GAMA/models/GameIT/gameit_cityscope.gaml", "gameit")
+
+    if "type" in command_answer.keys() and command_answer["type"] == "CommandExecutedSuccessfully":
+        await client.play(exp_id=command_answer["content"])
+
+    while True:
+        await asyncio.sleep(1)
+
+def start_gama_client():
+    asyncio.run(gama_client())
+
 if __name__=="__main__":
     connection=MicroBrix(table_name='volpe-habm', module_function=indicator, keep_updating=True, quietly=True)
 
     ws_server_thread=Thread(target=start_websocket_server, args=(connection,), daemon=True)
     ws_server_thread.start()
+
+    ws_gama_client=Thread(target=start_gama_client, daemon=True)
+    ws_gama_client.start()
 
     connection.listen()
     connection.stop()
