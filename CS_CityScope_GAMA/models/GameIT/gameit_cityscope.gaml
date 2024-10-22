@@ -284,13 +284,13 @@ species Networking_Client skills: [network] {
 			'"properties": {"mesh": "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/humanoid_quad.obj"}}';
 		}
 
-		write "[" + layers + "]";
+//		write "[" + layers + "]";
 		do send to: "ws://localhost:8000" contents: "[" + layers + "]";
 	}
 
 	reflex fetch when: has_more_message() {
 		message mess <- fetch_message();
-		write name + " fecth this message: " + mess.contents;
+//		write name + " fecth this message: " + mess.contents;
 	}
 }
 
