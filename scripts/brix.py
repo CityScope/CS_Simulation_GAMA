@@ -35,50 +35,22 @@ class MicroBrix():
             {
                 "type": "bar",
                 "data": {
-                    "walking": {
-                        "value": 0.25,
-                        "description": "An example 1"
-                    },
-                    "bike": {
-                        "value": 0.5,
-                        "description": "An example 2"
-                    },
-                    "car": {
-                        "value": 0.75,
-                        "description": "An example 3"
-                    },
-                    "bus": {
-                        "value": 1.0,
-                        "description": "An example 4"
-                    }
+                    "walking": {"value": 0.25, "description": "An example 1"},
+                    "bike"   : {"value": 0.5 , "description": "An example 2"},
+                    "car"    : {"value": 0.75, "description": "An example 3"},
+                    "bus"    : {"value": 1.0 , "description": "An example 4"}
                 },
-                "properties": {
-
-                }
+                "properties": {}
             },
             {
                 "type": "radar",
                 "data": {
-                    "walking": {
-                        "value": 1.0,
-                        "description": "An example 1"
-                    },
-                    "bike": {
-                        "value": 0.75,
-                        "description": "An example 2"
-                    },
-                    "car": {
-                        "value": 0.5,
-                        "description": "An example 3"
-                    },
-                    "bus": {
-                        "value": 0.25,
-                        "description": "An example 4"
-                    }
+                    "walking": {"value": 1.0 , "description": "An example 1"},
+                    "bike"   : {"value": 0.75, "description": "An example 2"},
+                    "car"    : {"value": 0.5 , "description": "An example 3"},
+                    "bus"    : {"value": 0.25, "description": "An example 4"}
                 },
-                "properties": {
-
-                }
+                "properties": {}
             }
         ]
         self.previous_data_from_websocket=[]
