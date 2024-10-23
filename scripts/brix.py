@@ -211,16 +211,20 @@ def indicator(geogrid, geogrid_data):
     return layers, numeric
 
 async def async_command_answer_handler(message: Dict):
-    print("Here is the answer to an async command: ", message)
+    print("Here is the answer to an async command:\t", message)
 
 
 async def gama_server_message_handler(message: Dict):
-    print("Here is the message from Gama-server:", message)
+    print("Here is the message from Gama-server:\t", message)
 
 async def gama_client():
-    client = GamaSyncClient("localhost", 6868, async_command_answer_handler, gama_server_message_handler)
+    client = GamaSyncClient("localhost", 8000, async_command_answer_handler, gama_server_message_handler)
     await client.connect(False)
-    command_answer = client.sync_load("C:/Users/carlo/CS_Simulation_GAMA/CS_CityScope_GAMA/models/GameIT/gameit_cityscope.gaml", "gameit")
+
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    gaml_path = os.path.join(project_root, 'CS_CityScope_GAMA', 'models', 'GameIT', 'gameit_cityscope.gaml')
+
+    command_answer = client.sync_load(gaml_path, "gameit")
 
     if "type" in command_answer.keys() and command_answer["type"] == "CommandExecutedSuccessfully":
         await client.play(exp_id=command_answer["content"])
