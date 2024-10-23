@@ -1,13 +1,15 @@
 import asyncio
 import copy
-import websocket
-import rel
-from time import sleep
 import json
+import os
 from threading import Lock, Thread
+from time import sleep
+from typing import Dict
+
+import rel
+import websocket
 import websockets
 from gama_client.sync_client import GamaSyncClient
-from typing import Dict
 
 class MicroBrix():
 
