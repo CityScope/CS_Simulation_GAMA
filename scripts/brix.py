@@ -172,8 +172,7 @@ class MicroBrix():
     def stop(self):
         self.ws.close()
 
-async def handle_connection(websocket, path, connection):
-    # print("Connected client")
+async def handle_connection(websocket, connection):
     try:
         async for message in websocket:
             data=json.loads(message)
@@ -182,16 +181,13 @@ async def handle_connection(websocket, path, connection):
                 if connection.data_from_websocket != data:
                     connection.data_from_websocket=data
 
-            response={"status": "received", "data": data}
-            await websocket.send(json.dumps(response))
     except websockets.ConnectionClosed:
         print("Client disconnected")
     except Exception as e:
         print(f"Error: {e}")
 
 async def start_server(connection):
-    server=await websockets.serve(lambda ws, path: handle_connection(ws, path, connection), "localhost", 8000, max_size=None)
-    # print("Additional WebSocket server started at ws://localhost:8000")
+    server = await websockets.serve(lambda ws: handle_connection(ws, connection), "localhost", 8080, max_size=None)
     await server.wait_closed()
 
 def start_websocket_server(connection):
