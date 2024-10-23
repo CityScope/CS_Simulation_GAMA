@@ -94,13 +94,13 @@ global {
 
 		if CityIO {
 			create Networking_Client {
-				do connect to: "localhost" protocol: "websocket_client" port: 8000 with_name: "Client" raw: true;
+				do connect to: "localhost" protocol: "websocket_client" port: 8080 with_name: "Client" raw: true;
 
 				string buildings <- to_geojson(buildings_shapefile.contents(),"EPSG:4326",[]);
 				save buildings to: "geojson.txt" rewrite: (cycle = 0);
 
 				buildings <- '[{"id": "geojson", "type": "geojsonbase", "data": ' + buildings + ', "properties": {"filled": false}}]';
-				do send to: "ws://localhost:8000" contents: buildings;
+				do send to: "ws://localhost:8080" contents: buildings;
 			}
 		}
 	}
@@ -284,13 +284,7 @@ species Networking_Client skills: [network] {
 			'"properties": {"mesh": "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/humanoid_quad.obj"}}';
 		}
 
-//		write "[" + layers + "]";
-		do send to: "ws://localhost:8000" contents: "[" + layers + "]";
-	}
-
-	reflex fetch when: has_more_message() {
-		message mess <- fetch_message();
-//		write name + " fecth this message: " + mess.contents;
+		do send to: "ws://localhost:8080" contents: "[" + layers + "]";
 	}
 }
 
