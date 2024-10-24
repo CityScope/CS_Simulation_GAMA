@@ -9,7 +9,7 @@ from typing import Dict
 import rel
 import websocket
 import websockets
-from gama_client.sync_client import GamaSyncClient
+from gama_client import message_types, sync_client
 
 class MicroBrix():
 
@@ -218,7 +218,7 @@ async def gama_server_message_handler(message: Dict):
     print("Here is the message from Gama-server:\t", message)
 
 async def gama_client():
-    client = GamaSyncClient("localhost", 8000, async_command_answer_handler, gama_server_message_handler)
+    client = sync_client.GamaSyncClient("localhost", 8000, async_command_answer_handler, gama_server_message_handler)
     await client.connect(False)
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -226,7 +226,7 @@ async def gama_client():
 
     command_answer = client.sync_load(gaml_path, "gameit")
 
-    if "type" in command_answer.keys() and command_answer["type"] == "CommandExecutedSuccessfully":
+    if "type" in command_answer.keys() and command_answer["type"] == message_types.MessageTypes.CommandExecutedSuccessfully.value:
         await client.play(exp_id=command_answer["content"])
 
     while True:
