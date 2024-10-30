@@ -146,7 +146,7 @@ class Brix():
             print(f"Error: {e}")
 
     async def start_server(self):
-        ws=await server.serve(lambda ws:self.handle_connection(ws),"localhost",8080,max_size=None)
+        ws=await server.serve(self.handle_connection,"localhost",8080,max_size=None)
         await ws.wait_closed()
 
     def start_websocket_server(self):
