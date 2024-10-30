@@ -6,8 +6,11 @@ from typing import Dict
 
 import rel
 import websocket
-import websockets
-from gama_client import message_types,sync_client
+from websockets.asyncio import server
+from websockets.exceptions import ConnectionClosed
+
+from gama_client.message_types import MessageTypes
+from gama_client.sync_client import GamaSyncClient
 
 class Brix():
 
@@ -137,14 +140,14 @@ class Brix():
 
                 self._send_indicators(layers,numeric)
 
-        except websockets.ConnectionClosed:
+        except ConnectionClosed:
             print("Client disconnected")
         except Exception as e:
             print(f"Error: {e}")
 
     async def start_server(self):
-        server=await websockets.serve(lambda ws:self.handle_connection(ws),"localhost",8080,max_size=None)
-        await server.wait_closed()
+        ws=await server.serve(lambda ws:self.handle_connection(ws),"localhost",8080,max_size=None)
+        await ws.wait_closed()
 
     def start_websocket_server(self):
         asyncio.run(self.start_server())
@@ -156,7 +159,7 @@ class Brix():
         print("Here is the message from Gama-server:\t",message)
 
     async def gama_client(self):
-        client=sync_client.GamaSyncClient("localhost",8000,self.async_command_answer_handler,self.gama_server_message_handler)
+        client=GamaSyncClient("localhost",8000,self.async_command_answer_handler,self.gama_server_message_handler)
         await client.connect(False)
 
         project_root=os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
@@ -164,7 +167,7 @@ class Brix():
 
         command_answer=client.sync_load(gaml_path,"gameit")
 
-        if "type" in command_answer.keys() and command_answer["type"]==message_types.MessageTypes.CommandExecutedSuccessfully.value:
+        if "type" in command_answer.keys() and command_answer["type"]==MessageTypes.CommandExecutedSuccessfully.value:
             await client.play(exp_id=command_answer["content"])
 
         while True:

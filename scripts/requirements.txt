@@ -2,4 +2,4 @@ gama_client==1.2.0
 nest-asyncio==1.6.0
 rel==0.4.9.19
 websocket-client==1.8.0
-websockets==10.4
+websockets==13.1
