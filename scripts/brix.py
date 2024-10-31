@@ -1,3 +1,24 @@
+"""
+brix.py
+
+This module defines the Brix class, which facilitates communication with the
+CityIO and GAMA systems through WebSockets connections. It includes methods for
+starting a WebSocket server, listening for incoming messages, and handling
+data exchanges with GAMA headless server.
+
+Key functionalities:
+- Connects to the CityIO server to receive and send geospatial data.
+- Integrates with the GAMA simulation environment.
+
+Dependencies:
+- asyncio
+- json
+- os
+- websockets
+- gama_client
+
+"""
+
 import asyncio
 import json
 import os
@@ -10,6 +31,7 @@ from gama_client.message_types import MessageTypes
 from gama_client.sync_client import GamaSyncClient
 
 class Brix():
+    """Class for managing the connection to CityIO and GAMA."""
 
     remote_host='cityio.media.mit.edu/cityio'
     geogrid_data={}
@@ -31,16 +53,18 @@ class Brix():
         self.core_description=core_description
         self.core_category=core_category
         self.secure_protocol='' if host_mode=='local' else 's'
-        self.front_end_url=f'http{self.secure_protocol}://cityio-beta.media.mit.edu/?cityscope={self.table_name}'
-        self.cityIO_post_url=f'http{self.secure_protocol}://{self.host}/api/table/{table_name}/'
-        self.cityIO_list=f'http{self.secure_protocol}://{self.host}/api/table/list/'
-        self.cityIO_wss=f'ws{self.secure_protocol}://{self.host}/module'
+        self.front_end_url=(
+            f'http{self.secure_protocol}://cityio-beta.media.mit.edu/?cityscope={self.table_name}'
+        )
+        self.cityio_post_url=f'http{self.secure_protocol}://{self.host}/api/table/{table_name}/'
+        self.cityio_list=f'http{self.secure_protocol}://{self.host}/api/table/list/'
+        self.cityio_wss=f'ws{self.secure_protocol}://{self.host}/module'
 
         if core:
-            self.cityIO_wss=self.cityIO_wss+'/core'
+            self.cityio_wss=self.cityio_wss+'/core'
 
-        self.wsCityIO=None
-        self.gamaSyncClient=None
+        self.ws_cityio=None
+        self.gama_sync_client=None
 
     async def _on_message(self,message):
         dict_rec:Dict=json.loads(message)
@@ -62,17 +86,18 @@ class Brix():
     async def _on_open(self):
         print("## Opened connection")
         message_type="CORE_MODULE_REGISTRATION" if self.core else "SUBSCRIBE"
-        content=(
-            {"name":self.core_name,"description":self.core_description,"moduleType":self.core_category}
-            if self.core else {"gridId":self.table_name}
-        )
+        content=({"name":self.core_name,"description":self.core_description,
+            "moduleType":self.core_category} if self.core else {"gridId":self.table_name
+        })
         await self._send_message({"type":message_type,"content":content})
 
     async def _send_message(self,message:Dict):
-        await self.wsCityIO.send(json.dumps(message))
+        await self.ws_cityio.send(json.dumps(message))
 
     async def _send_indicators(self,layers,numeric):
-        message={"type":"MODULE","content":{"gridId":self.table_name,"save":self.save,"moduleData":{}}}
+        message={
+            "type":"MODULE","content":{"gridId":self.table_name,"save":self.save,"moduleData":{}}
+        }
 
         if layers is not None:
             message["content"]["moduleData"]["layers"]=layers
@@ -83,17 +108,18 @@ class Brix():
         await self._send_message(message)
 
     async def listen(self):
+        """Connects to the CityIO server and listens for incoming messages."""
         try:
-            async with client.connect(uri=self.cityIO_wss,max_size=None) as self.wsCityIO:
+            async with client.connect(uri=self.cityio_wss,max_size=None) as self.ws_cityio:
                 await self._on_open()
                 try:
                     while True:
-                        await self._on_message(await self.wsCityIO.recv())
+                        await self._on_message(await self.ws_cityio.recv())
 
                 except ConnectionClosed:
                     print("## Connection closed")
 
-                await self.wsCityIO.wait_closed()
+                await self.ws_cityio.wait_closed()
         except (InvalidURI,OSError,InvalidHandshake,TimeoutError) as e:
             print(f"Error:{e}")
 
@@ -110,7 +136,10 @@ class Brix():
 
                     if item_type in {"bar","radar"}:
                         for mean in item_data:
-                            numeric.append({"viz_type":item_type,"name":mean,"value":item_data[mean]["value"],"description":item_data[mean]["description"]})
+                            numeric.append({
+                                "viz_type":item_type,"name":mean,"value":item_data[mean]["value"],
+                                "description":item_data[mean]["description"]
+                            })
                     else:
                         layers.append(item)
 
@@ -118,11 +147,12 @@ class Brix():
 
         except ConnectionClosed:
             print("Client disconnected")
-        except Exception as e:
-            print(f"Error:{e}")
 
     async def start_server(self):
-        ws=await server.serve(handler=self._handle_gama_connection,host="localhost",port=8080,max_size=None)
+        """Starts a WebSocket server to handle connections from GAMA Networking_Client agent."""
+        ws=await server.serve(
+            handler=self._handle_gama_connection,host="localhost",port=8080,max_size=None
+        )
         await ws.wait_closed()
 
     async def _async_command_answer_handler(self,message:Dict):
@@ -131,17 +161,23 @@ class Brix():
     async def _gama_server_message_handler(self,message:Dict):
         print("Here is the message from Gama-server:\t",message)
 
-    async def gama_sync_client(self):
-        self.gamaSyncClient=GamaSyncClient(url="localhost",port=8000,async_command_handler=self._async_command_answer_handler,other_message_handler=self._gama_server_message_handler)
-        await self.gamaSyncClient.connect(False)
+    async def gama_sync(self):
+        """Connects to the GAMA headless server and plays a GAML model."""
+        self.gama_sync_client=GamaSyncClient(
+            url="localhost",port=8000,async_command_handler=self._async_command_answer_handler,
+            other_message_handler=self._gama_server_message_handler
+        )
+        await self.gama_sync_client.connect(False)
 
         project_root=os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
-        gaml_path=os.path.join(project_root,'CS_CityScope_GAMA','models','GameIT','gameit_cityscope.gaml')
+        gaml_path=os.path.join(
+            project_root,'CS_CityScope_GAMA','models','GameIT','gameit_cityscope.gaml'
+        )
 
-        command_answer=self.gamaSyncClient.sync_load(gaml_path,"gameit")
+        command_answer=self.gama_sync_client.sync_load(gaml_path,"gameit")
 
         if command_answer.get("type")==MessageTypes.CommandExecutedSuccessfully.value:
-            await self.gamaSyncClient.play(exp_id=command_answer["content"])
+            await self.gama_sync_client.play(exp_id=command_answer["content"])
 
         while True:
             await asyncio.sleep(1)
@@ -150,6 +186,8 @@ if __name__=="__main__":
     connection=Brix(table_name='volpe-habm')
 
     try:
-        asyncio.run(asyncio.gather(connection.start_server(),connection.listen(),connection.gama_sync_client()))
+        asyncio.run(
+            asyncio.gather(connection.start_server(),connection.listen(),connection.gama_sync())
+        )
     except KeyboardInterrupt:
         print("Bye!")
