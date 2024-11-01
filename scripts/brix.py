@@ -111,8 +111,8 @@ class Brix():
         """Connects to the CityIO server and listens for incoming messages."""
         try:
             async with client.connect(uri=self.cityio_wss,max_size=None) as self.ws_cityio:
-                await self._on_open()
                 try:
+                    await self._on_open()
                     while True:
                         await self._on_message(await self.ws_cityio.recv())
 
@@ -153,7 +153,7 @@ class Brix():
         ws=await server.serve(
             handler=self._handle_gama_connection,host="localhost",port=8080,max_size=None
         )
-        await ws.wait_closed()
+        await ws.serve_forever()
 
     async def _async_command_answer_handler(self,message:Dict):
         print("Here is the answer to an async command:\t",message)
