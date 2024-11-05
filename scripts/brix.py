@@ -52,14 +52,9 @@ class Brix():
         self.core_name=core_name
         self.core_description=core_description
         self.core_category=core_category
-        self.secure_protocol='' if host_mode=='local' else 's'
-        self.front_end_url=(
-            f'http{self.secure_protocol}://cityio-beta.media.mit.edu/?cityscope={self.table_name}'
-        )
-        self.cityio_post_url=f'http{self.secure_protocol}://{self.host}/api/table/{table_name}/'
-        self.cityio_list=f'http{self.secure_protocol}://{self.host}/api/table/list/'
-        self.cityio_wss=f'ws{self.secure_protocol}://{self.host}/module'
 
+        self.secure_protocol='' if host_mode=='local' else 's'
+        self.cityio_wss=f'ws{self.secure_protocol}://{self.host}/module'
         if core:
             self.cityio_wss=self.cityio_wss+'/core'
 
