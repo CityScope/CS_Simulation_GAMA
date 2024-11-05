@@ -65,6 +65,7 @@ class Brix():
 
         self.ws_cityio=None
         self.gama_sync_client=None
+        self.load_answer=None
 
     async def _on_message(self,message):
         dict_rec:Dict=json.loads(message)
@@ -82,6 +83,14 @@ class Brix():
         elif self.core and message_type in {'SUBSCRIPTION_REQUEST','SUBSCRIPTION_REMOVAL_REQUEST'}:
             action="SUBSCRIBE" if message_type=='SUBSCRIPTION_REQUEST' else "UNSUBSCRIBE"
             await self._send_message({"type":action,"content":{"gridId":content['table']}})
+
+        elif message_type=='CONTROL':
+            if content['command']=='Play':
+                if self.load_answer.get("type")==MessageTypes.CommandExecutedSuccessfully.value:
+                    await self.gama_sync_client.play(exp_id=self.load_answer["content"])
+
+            elif content['command']=='Pause':
+                await self.gama_sync_client.pause(exp_id=self.load_answer["content"])
 
     async def _on_open(self):
         print("## Opened connection")
@@ -174,10 +183,7 @@ class Brix():
             project_root,'CS_CityScope_GAMA','models','GameIT','gameit_cityscope.gaml'
         )
 
-        command_answer=self.gama_sync_client.sync_load(gaml_path,"gameit")
-
-        if command_answer.get("type")==MessageTypes.CommandExecutedSuccessfully.value:
-            await self.gama_sync_client.play(exp_id=command_answer["content"])
+        self.load_answer=self.gama_sync_client.sync_load(gaml_path,"gameit")
 
         while True:
             await asyncio.sleep(1)
