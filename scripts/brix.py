@@ -73,19 +73,18 @@ class Brix():
             self.geogrid[table_name]=content['snapshot']['GEOGRID']
 
         elif message_type=='GEOGRIDDATA_UPDATE':
-            self.geogrid_data[table_name]=content['geogriddata']
+            # self.geogrid_data[table_name]=content['geogriddata']
+            command=content['geogriddata'][0]
+            if command=='Play':
+                if self.load_answer.get("type")==MessageTypes.CommandExecutedSuccessfully.value:
+                    await self.gama_sync_client.play(exp_id=self.load_answer["content"])
+
+            elif command=='Pause':
+                await self.gama_sync_client.pause(exp_id=self.load_answer["content"])
 
         elif self.core and message_type in {'SUBSCRIPTION_REQUEST','SUBSCRIPTION_REMOVAL_REQUEST'}:
             action="SUBSCRIBE" if message_type=='SUBSCRIPTION_REQUEST' else "UNSUBSCRIBE"
             await self._send_message({"type":action,"content":{"gridId":content['table']}})
-
-        elif message_type=='CONTROL':
-            if content['command']=='Play':
-                if self.load_answer.get("type")==MessageTypes.CommandExecutedSuccessfully.value:
-                    await self.gama_sync_client.play(exp_id=self.load_answer["content"])
-
-            elif content['command']=='Pause':
-                await self.gama_sync_client.pause(exp_id=self.load_answer["content"])
 
     async def _on_open(self):
         print("## Opened connection")
