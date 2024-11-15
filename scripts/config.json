@@ -1,0 +1,15 @@
+{
+    "cityio": {
+        "table_name": "volpe-habm"
+    },
+    "networking_client": {
+        "host": "localhost",
+        "port": 8080
+    },
+    "gama_sync_client": {
+        "host": "localhost",
+        "port": 8000,
+        "file_path": "GameIT/gameit_cityscope.gaml",
+        "expt_name": "gameit"
+    }
+}

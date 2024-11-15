@@ -8,15 +8,15 @@
     ```
     may appear. To resolve this, you can first install `gama_client` using
     ```bash
-    pip install gama-client
+    pip install gama-client==1.2.0
     ```
     and then update `websockets` using
     ```bash
-    pip install websockets --upgrade
+    pip install websockets==13.1
     ```
     Finally, do not forget to install `nest-asyncio` using
     ```bash
-    pip install nest-asyncio
+    pip install nest-asyncio==1.6.0
     ```
 
 3. In the `/headless` folder of your GAMA installation, start GAMA in headless mode on port 8000, i.e.,

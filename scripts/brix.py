@@ -14,6 +14,7 @@ Dependencies:
 - asyncio
 - json
 - os
+- typing
 - websockets
 - gama_client
 
@@ -33,30 +34,33 @@ from gama_client.sync_client import GamaSyncClient
 class Brix():
     """Class for managing the connection to CityIO and GAMA."""
 
+    project_root=os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
     remote_host='cityio.media.mit.edu/cityio'
     geogrid_data={}
     geogrid={}
 
-    def __init__(self,table_name=None,host_mode='remote',host_name=None,core=False,
-                core_name=None,core_description=None,core_category=None,save=False):
+    def __init__(self,config_file='config.json'):
+        with open(os.path.join(self.project_root,'scripts',config_file),'r',encoding='utf-8') as f:
+            self.config:Dict=json.load(f)
 
-        if host_name is None:
-            self.host=self.remote_host
-        else:
-            self.host=host_name.strip('/')
-        self.host='127.0.0.1:8080' if host_mode=='local' else self.host
+        cityio_config:Dict=self.config.get('cityio',{})
+        self.table_name=cityio_config.get('table_name',None)
+        self.host_mode=cityio_config.get('host_mode','remote')
+        self.host_name=cityio_config.get('host_name',None)
 
-        self.save=save
-        self.table_name=table_name
-        self.core=core
-        self.core_name=core_name
-        self.core_description=core_description
-        self.core_category=core_category
+        self.core=cityio_config.get('core',False)
+        self.core_name=cityio_config.get('core_name',None)
+        self.core_description=cityio_config.get('core_description',None)
+        self.core_category=cityio_config.get('core_category',None)
 
-        self.secure_protocol='' if host_mode=='local' else 's'
-        self.cityio_wss=f'ws{self.secure_protocol}://{self.host}/module'
-        if core:
-            self.cityio_wss=self.cityio_wss+'/core'
+        self.save=cityio_config.get('save',False)
+        self.host='127.0.0.1:8080' if self.host_mode=='local' else (
+            self.host_name.strip('/') if self.host_name is not None else self.remote_host
+        )
+        self.secure_protocol='' if self.host_mode=='local' else 's'
+        self.cityio_wss=(
+            f'ws{self.secure_protocol}://{self.host}/module'+('/core' if self.core else '')
+        )
 
         self.ws_cityio=None
         self.gama_sync_client=None
@@ -76,37 +80,37 @@ class Brix():
             # self.geogrid_data[table_name]=content['geogriddata']
             command=content['geogriddata'][0]
             if command=='Play':
-                if self.load_answer.get("type")==MessageTypes.CommandExecutedSuccessfully.value:
-                    await self.gama_sync_client.play(exp_id=self.load_answer["content"])
+                if self.load_answer.get('type')==MessageTypes.CommandExecutedSuccessfully.value:
+                    await self.gama_sync_client.play(exp_id=self.load_answer['content'])
 
             elif command=='Pause':
-                await self.gama_sync_client.pause(exp_id=self.load_answer["content"])
+                await self.gama_sync_client.pause(exp_id=self.load_answer['content'])
 
         elif self.core and message_type in {'SUBSCRIPTION_REQUEST','SUBSCRIPTION_REMOVAL_REQUEST'}:
-            action="SUBSCRIBE" if message_type=='SUBSCRIPTION_REQUEST' else "UNSUBSCRIBE"
-            await self._send_message({"type":action,"content":{"gridId":content['table']}})
+            action='SUBSCRIBE' if message_type=='SUBSCRIPTION_REQUEST' else 'UNSUBSCRIBE'
+            await self._send_message({'type':action,'content':{'gridId':content['table']}})
 
     async def _on_open(self):
-        print("## Opened connection")
-        message_type="CORE_MODULE_REGISTRATION" if self.core else "SUBSCRIBE"
-        content=({"name":self.core_name,"description":self.core_description,
-            "moduleType":self.core_category} if self.core else {"gridId":self.table_name
+        print('## Opened connection')
+        message_type='CORE_MODULE_REGISTRATION' if self.core else 'SUBSCRIBE'
+        content=({'name':self.core_name,'description':self.core_description,
+            'moduleType':self.core_category} if self.core else {'gridId':self.table_name
         })
-        await self._send_message({"type":message_type,"content":content})
+        await self._send_message({'type':message_type,'content':content})
 
     async def _send_message(self,message:Dict):
         await self.ws_cityio.send(json.dumps(message))
 
     async def _send_indicators(self,layers,numeric):
         message={
-            "type":"MODULE","content":{"gridId":self.table_name,"save":self.save,"moduleData":{}}
+            'type':'MODULE','content':{'gridId':self.table_name,'save':self.save,'moduleData':{}}
         }
 
         if layers is not None:
-            message["content"]["moduleData"]["layers"]=layers
+            message['content']['moduleData']['layers']=layers
 
         if numeric is not None:
-            message["content"]["moduleData"]["numeric"]=numeric
+            message['content']['moduleData']['numeric']=numeric
 
         await self._send_message(message)
 
@@ -120,11 +124,11 @@ class Brix():
                         await self._on_message(await self.ws_cityio.recv())
 
                 except ConnectionClosed:
-                    print("## Connection closed")
+                    print('## Connection closed')
 
                 await self.ws_cityio.wait_closed()
         except (InvalidURI,OSError,InvalidHandshake,TimeoutError) as e:
-            print(f"Error:{e}")
+            print(f'Error:{e}')
 
     async def _handle_gama_connection(self,websocket):
         try:
@@ -134,14 +138,14 @@ class Brix():
                 r=json.loads(message)
 
                 for item in r:
-                    item_type=item["type"]
-                    item_data=item["data"]
+                    item_type=item['type']
+                    item_data=item['data']
 
-                    if item_type in {"bar","radar"}:
+                    if item_type in {'bar','radar'}:
                         for mean in item_data:
                             numeric.append({
-                                "viz_type":item_type,"name":mean,"value":item_data[mean]["value"],
-                                "description":item_data[mean]["description"]
+                                'viz_type':item_type,'name':mean,'value':item_data[mean]['value'],
+                                'description':item_data[mean]['description']
                             })
                     else:
                         layers.append(item)
@@ -149,45 +153,44 @@ class Brix():
                 await self._send_indicators(layers,numeric)
 
         except ConnectionClosed:
-            print("Client disconnected")
+            print('Client disconnected')
 
     async def start_server(self):
         """Starts a WebSocket server to handle connections from GAMA Networking_Client agent."""
-        ws=await server.serve(
-            handler=self._handle_gama_connection,host="localhost",port=8080,max_size=None
+        nc_config:Dict=self.config.get('networking_client',{})
+        ws=await server.serve(handler=self._handle_gama_connection,host=nc_config.get('host'),
+            port=nc_config.get('port'),max_size=None
         )
         await ws.serve_forever()
 
-    async def _async_command_answer_handler(self,message:Dict):
-        print("Here is the answer to an async command:\t",message)
+    async def _async_cmd_ans(self,message:Dict):
+        print('Here is the answer to an async command:\t',message)
 
-    async def _gama_server_message_handler(self,message:Dict):
-        print("Here is the message from Gama-server:\t",message)
+    async def _gama_svr_msg(self,message:Dict):
+        print('Here is the message from Gama-server:\t',message)
 
     async def gama_sync(self):
         """Connects to the GAMA headless server and plays a GAML model."""
-        self.gama_sync_client=GamaSyncClient(
-            url="localhost",port=8000,async_command_handler=self._async_command_answer_handler,
-            other_message_handler=self._gama_server_message_handler
+        gsc_config:Dict=self.config.get('gama_sync_client',{})
+        self.gama_sync_client=GamaSyncClient(url=gsc_config.get('host'),port=gsc_config.get('port'),
+            async_command_handler=self._async_cmd_ans,other_message_handler=self._gama_svr_msg
         )
         await self.gama_sync_client.connect(False)
 
-        project_root=os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
         gaml_path=os.path.join(
-            project_root,'CS_CityScope_GAMA','models','GameIT','gameit_cityscope.gaml'
+            self.project_root,'CS_CityScope_GAMA','models',gsc_config.get('file_path')
         )
-
-        self.load_answer=self.gama_sync_client.sync_load(gaml_path,"gameit")
+        self.load_answer=self.gama_sync_client.sync_load(gaml_path,gsc_config.get('expt_name'))
 
         while True:
             await asyncio.sleep(1)
 
-if __name__=="__main__":
-    connection=Brix(table_name='volpe-habm')
+if __name__=='__main__':
+    connection=Brix()
 
     try:
         asyncio.run(
             asyncio.gather(connection.start_server(),connection.listen(),connection.gama_sync())
         )
     except KeyboardInterrupt:
-        print("Bye!")
+        print('Bye!')
