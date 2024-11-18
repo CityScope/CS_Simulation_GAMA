@@ -1,10 +1,9 @@
 """
 brix.py
 
-This module defines the Brix class, which facilitates communication with the
-CityIO and GAMA systems through WebSockets connections. It includes methods for
-starting a WebSocket server, listening for incoming messages, and handling
-data exchanges with GAMA headless server.
+This module defines the Brix class, which facilitates communication with the CityIO and GAMA systems
+through WebSockets connections. It includes methods for starting a WebSocket server, listening for
+incoming messages, and handling data exchanges with GAMA headless server.
 
 Key functionalities:
 - Connects to the CityIO server to receive and send geospatial data.
@@ -27,7 +26,6 @@ from typing import Dict
 
 from websockets.asyncio import client,server
 from websockets.exceptions import ConnectionClosed,InvalidHandshake,InvalidURI
-
 from gama_client.message_types import MessageTypes
 from gama_client.sync_client import GamaSyncClient
 
@@ -43,24 +41,9 @@ class Brix():
         with open(os.path.join(self.project_root,'scripts',config_file),'r',encoding='utf-8') as f:
             self.config:Dict=json.load(f)
 
-        cityio_config:Dict=self.config.get('cityio',{})
-        self.table_name=cityio_config.get('table_name',None)
-        self.host_mode=cityio_config.get('host_mode','remote')
-        self.host_name=cityio_config.get('host_name',None)
-
-        self.core=cityio_config.get('core',False)
-        self.core_name=cityio_config.get('core_name',None)
-        self.core_description=cityio_config.get('core_description',None)
-        self.core_category=cityio_config.get('core_category',None)
-
-        self.save=cityio_config.get('save',False)
-        self.host='127.0.0.1:8080' if self.host_mode=='local' else (
-            self.host_name.strip('/') if self.host_name is not None else self.remote_host
-        )
-        self.secure_protocol='' if self.host_mode=='local' else 's'
-        self.cityio_wss=(
-            f'ws{self.secure_protocol}://{self.host}/module'+('/core' if self.core else '')
-        )
+        self.cityio_config:Dict=self.config.get('cityio',{})
+        self.table_name=self.cityio_config.get('table_name',None)
+        self.core=self.cityio_config.get('core',False)
 
         self.ws_cityio=None
         self.gama_sync_client=None
@@ -69,6 +52,7 @@ class Brix():
     async def _on_message(self,message):
         dict_rec:Dict=json.loads(message)
         message_type=dict_rec['type']
+
         content:Dict=dict_rec.get('content',{})
         table_name=content.get('tableName')
 
@@ -93,9 +77,13 @@ class Brix():
     async def _on_open(self):
         print('## Opened connection')
         message_type='CORE_MODULE_REGISTRATION' if self.core else 'SUBSCRIBE'
-        content=({'name':self.core_name,'description':self.core_description,
-            'moduleType':self.core_category} if self.core else {'gridId':self.table_name
-        })
+
+        content={
+            'name':self.cityio_config.get('core_name',None),
+            'description':self.cityio_config.get('core_description',None),
+            'moduleType':self.cityio_config.get('core_category',None)
+        } if self.core else {'gridId':self.table_name}
+
         await self._send_message({'type':message_type,'content':content})
 
     async def _send_message(self,message:Dict):
@@ -103,7 +91,12 @@ class Brix():
 
     async def _send_indicators(self,layers,numeric):
         message={
-            'type':'MODULE','content':{'gridId':self.table_name,'save':self.save,'moduleData':{}}
+            'type':'MODULE',
+            'content':{
+                'gridId':self.table_name,
+                'save':self.cityio_config.get('save',False),
+                'moduleData':{}
+            }
         }
 
         if layers is not None:
@@ -116,8 +109,17 @@ class Brix():
 
     async def listen(self):
         """Connects to the CityIO server and listens for incoming messages."""
+        host_mode=self.cityio_config.get('host_mode','remote')
+        host_name=self.cityio_config.get('host_name',None)
+
+        host='127.0.0.1:8080' if host_mode=='local' else (
+            host_name.strip('/') if host_name is not None else self.remote_host
+        )
+        secure_protocol='' if host_mode=='local' else 's'
+        cityio_wss=f'ws{secure_protocol}://{host}/module'+('/core' if self.core else '')
+
         try:
-            async with client.connect(uri=self.cityio_wss,max_size=None) as self.ws_cityio:
+            async with client.connect(uri=cityio_wss,max_size=None) as self.ws_cityio:
                 try:
                     await self._on_open()
                     while True:
@@ -127,6 +129,7 @@ class Brix():
                     print('## Connection closed')
 
                 await self.ws_cityio.wait_closed()
+
         except (InvalidURI,OSError,InvalidHandshake,TimeoutError) as e:
             print(f'Error:{e}')
 
@@ -144,7 +147,9 @@ class Brix():
                     if item_type in {'bar','radar'}:
                         for mean in item_data:
                             numeric.append({
-                                'viz_type':item_type,'name':mean,'value':item_data[mean]['value'],
+                                'viz_type':item_type,
+                                'name':mean,
+                                'value':item_data[mean]['value'],
                                 'description':item_data[mean]['description']
                             })
                     else:
@@ -186,11 +191,10 @@ class Brix():
             await asyncio.sleep(1)
 
 if __name__=='__main__':
-    connection=Brix()
+    connt=Brix()
 
     try:
-        asyncio.run(
-            asyncio.gather(connection.start_server(),connection.listen(),connection.gama_sync())
-        )
+        asyncio.run(asyncio.gather(connt.start_server(),connt.listen(),connt.gama_sync()))
+
     except KeyboardInterrupt:
         print('Bye!')
