@@ -61,8 +61,10 @@ class Brix():
             self.geogrid[table_name]=content['snapshot']['GEOGRID']
 
         elif message_type=='GEOGRIDDATA_UPDATE':
-            # self.geogrid_data[table_name]=content['geogriddata']
-            command=content['geogriddata'][0]
+            self.geogrid_data[table_name]=content['geogriddata']
+
+        elif message_type=='UPDATE_MODULE':
+            command=content['payload']
             if command=='Play':
                 if self.load_answer.get('type')==MessageTypes.CommandExecutedSuccessfully.value:
                     await self.gama_sync_client.play(exp_id=self.load_answer['content'])

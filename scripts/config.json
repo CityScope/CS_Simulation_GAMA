@@ -1,6 +1,7 @@
 {
     "cityio": {
-        "table_name": "volpe-habm"
+        "table_name": "volpe-habm",
+        "host_mode": "local"
     },
     "networking_client": {
         "host": "localhost",
