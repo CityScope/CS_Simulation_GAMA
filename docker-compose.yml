@@ -1,0 +1,9 @@
+services:
+  gama:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - C:/Users/carlo/CS_Simulation_GAMA:/working_dir
+    command: ["gama", "-socket", "8000"]
