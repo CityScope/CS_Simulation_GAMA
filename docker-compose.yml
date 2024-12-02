@@ -1,9 +1,16 @@
 services:
   gama:
-    build:
-      context: .
+    image: gamaplatform/gama
     ports:
       - "8000:8000"
+      - "8001:8001"
     volumes:
-      - C:/Users/carlo/CS_Simulation_GAMA:/working_dir
+      - ./CS_CityScope_GAMA:/working_dir
     command: ["gama", "-socket", "8000"]
+
+  brix:
+    build: .
+    working_dir: /app
+    volumes:
+      - ./scripts:/app/scripts
+    command: ["/app/brix/bin/python", "/app/scripts/brix.py"]
