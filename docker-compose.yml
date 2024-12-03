@@ -11,6 +11,8 @@ services:
   brix:
     build: .
     working_dir: /app
+    environment:
+      - CityIO_IMAGE=cityio
     volumes:
       - ./scripts:/app/scripts
     command: ["/app/brix/bin/python", "/app/scripts/brix.py"]
