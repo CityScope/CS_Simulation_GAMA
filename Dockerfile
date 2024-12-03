@@ -5,7 +5,7 @@ WORKDIR /app
 COPY ./scripts ./app/scripts
 
 RUN python3 -m venv /app/brix
-
+RUN /app/brix/bin/python3 -m pip install --upgrade pip
 RUN /app/brix/bin/pip install gama-client==1.2.0
 RUN /app/brix/bin/pip install websockets==13.1
 RUN /app/brix/bin/pip install nest-asyncio==1.6.0
