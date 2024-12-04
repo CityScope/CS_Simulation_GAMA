@@ -4,6 +4,12 @@ services:
     volumes:
       - ./CS_CityScope_GAMA:/CS_CityScope_GAMA
     command: ["gama", "-socket", "8000"]
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   brix:
     build: .
@@ -14,3 +20,6 @@ services:
     volumes:
       - ./scripts:/app/scripts
     command: ["/app/brix/bin/python", "/app/scripts/brix.py"]
+    depends_on:
+      gama:
+        condition: service_healthy
