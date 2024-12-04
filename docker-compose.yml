@@ -10,6 +10,7 @@ services:
     working_dir: /app
     environment:
       - CityIO_IMAGE=cityio
+      - Gama_IMAGE=gama
     volumes:
       - ./scripts:/app/scripts
     command: ["/app/brix/bin/python", "/app/scripts/brix.py"]
