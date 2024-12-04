@@ -2,7 +2,7 @@ services:
   gama:
     image: gamaplatform/gama
     volumes:
-      - ./CS_CityScope_GAMA:/working_dir
+      - ./CS_CityScope_GAMA:/CS_CityScope_GAMA
     command: ["gama", "-socket", "8000"]
 
   brix:
