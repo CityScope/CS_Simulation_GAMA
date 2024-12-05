@@ -17,9 +17,6 @@ services:
     build: .
     networks:
       - shared_network
-    environment:
-      - CityIO_IMAGE=cityio
-      - Gama_IMAGE=gama
     volumes:
       - ./scripts:/scripts
     command: ["/brix/bin/python", "/scripts/brix.py"]
