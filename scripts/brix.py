@@ -113,7 +113,7 @@ class Brix():
         host_mode=self.cityio_config.get('host_mode','remote')
         host_name=self.cityio_config.get('host_name',None)
 
-        host=f'{os.getenv('CityIO_IMAGE','localhost')}:8080' if host_mode=='local' else (
+        host='cityio:8080' if host_mode=='local' else (
             host_name.strip('/') if host_name is not None else self.remote_host
         )
         secure_protocol='' if host_mode=='local' else 's'
