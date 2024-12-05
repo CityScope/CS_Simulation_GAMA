@@ -4,8 +4,6 @@
         "host_mode": "local"
     },
     "gama_sync_client": {
-        "host": "localhost",
-        "port": 8000,
         "file_path": "GameIT/gameit_cityscope.gaml",
         "expt_name": "gameit"
     }
