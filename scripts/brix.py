@@ -32,13 +32,12 @@ from gama_client.sync_client import GamaSyncClient
 class Brix():
     """Class for managing the connection to CityIO and GAMA."""
 
-    project_root=os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
     remote_host='cityio.media.mit.edu/cityio'
     geogrid_data={}
     geogrid={}
 
     def __init__(self,config_file='config.json'):
-        with open(os.path.join(self.project_root,'scripts',config_file),'r',encoding='utf-8') as f:
+        with open(os.path.join(os.sep,'scripts',config_file),'r',encoding='utf-8') as f:
             self.config:Dict=json.load(f)
 
         self.cityio_config:Dict=self.config.get('cityio',{})
