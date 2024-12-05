@@ -175,15 +175,12 @@ class Brix():
     async def gama_sync(self):
         """Connects to the GAMA headless server and plays a GAML model."""
         gsc_config:Dict=self.config.get('gama_sync_client',{})
-        self.gama_sync_client=GamaSyncClient(
-            url=os.getenv('Gama_IMAGE',gsc_config.get('host')),port=gsc_config.get('port'),
+        self.gama_sync_client=GamaSyncClient(url='gama',port=8000,
             async_command_handler=self._async_cmd_ans,other_message_handler=self._gama_svr_msg
         )
         await self.gama_sync_client.connect(False)
 
-        gaml_path=os.path.join(self.project_root if os.getenv('Gama_IMAGE') is None else os.sep,
-            'CS_CityScope_GAMA','models',gsc_config.get('file_path')
-        )
+        gaml_path=os.path.join(os.sep,'CS_CityScope_GAMA','models',gsc_config.get('file_path'))
         self.load_answer=self.gama_sync_client.sync_load(gaml_path,gsc_config.get('expt_name'))
 
         while True:
