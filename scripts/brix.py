@@ -134,7 +134,7 @@ class Brix():
         except (InvalidURI,OSError,InvalidHandshake,TimeoutError) as e:
             print(f'Error:{e}')
 
-    async def _handle_gama_connection(self,websocket):
+    async def _gama_connt(self,websocket):
         try:
             async for message in websocket:
                 layers=[]
@@ -163,10 +163,7 @@ class Brix():
 
     async def start_server(self):
         """Starts a WebSocket server to handle connections from GAMA Networking_Client agent."""
-        nc_config:Dict=self.config.get('networking_client',{})
-        ws=await server.serve(handler=self._handle_gama_connection,host=nc_config.get('host'),
-            port=nc_config.get('port'),max_size=None
-        )
+        ws=await server.serve(handler=self._gama_connt,host='0.0.0.0',port=8001,max_size=None)
         await ws.serve_forever()
 
     async def _async_cmd_ans(self,message:Dict):
