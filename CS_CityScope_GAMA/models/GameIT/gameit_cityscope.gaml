@@ -94,13 +94,13 @@ global {
 
 		if CityIO {
 			create Networking_Client {
-				do connect to: "172.19.0.1" protocol: "websocket_client" port: 8001 with_name: "Client" raw: true;
+				do connect to: "172.20.0.7" protocol: "websocket_client" port: 8001 with_name: "Client" raw: true;
 
 //				string buildings <- to_geojson(buildings_shapefile.contents(),"EPSG:4326",[]);
 //				save buildings to: "geojson.txt" rewrite: (cycle = 0);
 //
 //				buildings <- '[{"id": "geojson", "type": "geojsonbase", "data": ' + buildings + ', "properties": {"filled": false}}]';
-//				do send to: "ws://172.19.0.1:8001" contents: buildings;
+//				do send to: "ws://172.20.0.7:8001" contents: buildings;
 			}
 		}
 	}
@@ -284,7 +284,7 @@ species Networking_Client skills: [network] {
 			'"properties": {"mesh": "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/humanoid_quad.obj"}}';
 		}
 
-		do send to: "ws://172.19.0.1:8001" contents: "[" + layers + "]";
+		do send to: "ws://172.20.0.7:8001" contents: "[" + layers + "]";
 	}
 }
 
