@@ -1,13 +1,9 @@
 FROM python:3.13.0-alpine
 
-WORKDIR /app
+RUN python -m venv /brix
 
-COPY ./scripts ./app/scripts
+RUN /brix/bin/python -m pip install --upgrade pip
 
-RUN python3 -m venv /app/brix
-RUN /app/brix/bin/python3 -m pip install --upgrade pip
-RUN /app/brix/bin/pip install gama-client==1.2.0
-RUN /app/brix/bin/pip install websockets==13.1
-RUN /app/brix/bin/pip install nest-asyncio==1.6.0
-
-CMD ["/app/brix/bin/python", "/app/scripts/brix.py"]
+RUN /brix/bin/pip install gama-client==1.2.0
+RUN /brix/bin/pip install websockets==13.1
+RUN /brix/bin/pip install nest-asyncio==1.6.0
