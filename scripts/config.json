@@ -3,10 +3,6 @@
         "table_name": "volpe-habm",
         "host_mode": "local"
     },
-    "networking_client": {
-        "host": "localhost",
-        "port": 8001
-    },
     "gama_sync_client": {
         "host": "localhost",
         "port": 8000,
