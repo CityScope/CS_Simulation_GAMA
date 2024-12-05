@@ -114,7 +114,7 @@ class Brix():
         host_mode=self.cityio_config.get('host_mode','remote')
         host_name=self.cityio_config.get('host_name',None)
 
-        host=f'{os.getenv('CityIO_IMAGE','127.0.0.1')}:8080' if host_mode=='local' else (
+        host=f'{os.getenv('CityIO_IMAGE','localhost')}:8080' if host_mode=='local' else (
             host_name.strip('/') if host_name is not None else self.remote_host
         )
         secure_protocol='' if host_mode=='local' else 's'
@@ -185,8 +185,8 @@ class Brix():
         )
         await self.gama_sync_client.connect(False)
 
-        gaml_path=os.path.abspath(os.path.join(
-            os.sep,'CS_CityScope_GAMA','models',gsc_config.get('file_path'))
+        gaml_path=os.path.join(self.project_root if os.getenv('Gama_IMAGE') is None else os.sep,
+            'CS_CityScope_GAMA','models',gsc_config.get('file_path')
         )
         self.load_answer=self.gama_sync_client.sync_load(gaml_path,gsc_config.get('expt_name'))
 
