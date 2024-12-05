@@ -1,6 +1,8 @@
 services:
   gama:
     image: gamaplatform/gama
+    networks:
+      - shared_network
     volumes:
       - ./CS_CityScope_GAMA:/CS_CityScope_GAMA
     command: ["gama", "-socket", "8000"]
@@ -13,13 +15,18 @@ services:
 
   brix:
     build: .
-    working_dir: /app
+    networks:
+      - shared_network
     environment:
       - CityIO_IMAGE=cityio
       - Gama_IMAGE=gama
     volumes:
-      - ./scripts:/app/scripts
-    command: ["/app/brix/bin/python", "/app/scripts/brix.py"]
+      - ./scripts:/scripts
+    command: ["/brix/bin/python", "/scripts/brix.py"]
     depends_on:
       gama:
         condition: service_healthy
+
+networks:
+  shared_network:
+    external: true
