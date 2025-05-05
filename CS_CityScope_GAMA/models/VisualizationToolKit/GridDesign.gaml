@@ -59,29 +59,29 @@ global {
 			location<-{2*width/nbCols+width/nbCols/2,4*height/nbRows+height/nbRows/2 };
 		}
 		
-		save bound to:"../results/bound.shp" type:"shp"; 
-		save legend to:"../results/legend.shp" type:"shp" attributes: ["type"::type]; 
-		save squareCell to:"../results/squareCell.shp" type:"shp"; 
+		save bound to:"../results/bound.shp" format:"shp"; 
+		save legend to:"../results/legend.shp" format:"shp" attributes: ["type"::type]; 
+		save squareCell to:"../results/squareCell.shp" format:"shp"; 
 	}
 	
 }
 
 species bound{
 	aspect default{
-	  draw shape color:#red empty:true;	
+	  draw shape color:#red wireframe:true;	
 	}
 }
 
 species legend{
 	string type;
 	aspect default{
-	  draw shape color:#green empty:true width:2;	
+	  draw shape color:#green wireframe:true width:2;	
 	}
 }
 
 species squareCell{
 	aspect default{
-	  draw shape color:#black empty:true;	
+	  draw shape color:#black wireframe:true;	
 	}	
 }
 

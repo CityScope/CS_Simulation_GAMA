@@ -13,7 +13,6 @@ model CityScopeCoronaizer
 
 import "./Autonomous_Covid_Community.gaml"
 
-
 global{
 	float socialDistance <- 2#m;
 	float quarantineRatio <- 0.0;
@@ -134,7 +133,7 @@ global{
 		length(people where (each.macroTrip=false)),length(people where (each.macroTrip=true)),
         PANDEMIC_LEVEL, CITY_EFFICIENCY, SAFETY_LEVEL,
 		nb_susceptible,nb_infected, nb_recovered, nb_death
-		] to: filePathName type:"csv" rewrite: false;
+		] to: filePathName format:"csv" rewrite: false;
 	}
 }
 
@@ -253,6 +252,7 @@ experiment Coronaizer type:gui autorun:true virtual:true{
 	parameter "Show People:" category: "Covid Visualization" var:showPeople;
 	parameter "Viral People Transparency:" category: "Covid Visualization" var:viralPeopleTransparency <-0.5 min:0.0 max:1.0 ;
 	parameter "Save results to CSV:" category: "Simulation Covid" var:savetoCSV;
+	
 	
 	output{
 	  layout #split;

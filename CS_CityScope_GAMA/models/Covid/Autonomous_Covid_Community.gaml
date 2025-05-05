@@ -7,7 +7,6 @@
 
 model AutonomousCovidCommunity
 
-
 import "./CityScope_Coronaizer.gaml"
 
 /* Insert your model definition here */
@@ -266,14 +265,14 @@ species district{
 	
 	aspect default{
 		if (isQuarantine){
-			draw shape*1.1 - shape color:rgb(255,0,0,0.25) border:conventionalDistrictColor-50 empty:false;
+			draw shape*1.1 - shape color:rgb(255,0,0,0.25) border:conventionalDistrictColor-50 wireframe:false;
 		}
 		if(isAutonomous){
 			//draw (shape*1.05)-shape at_location {location.x,location.y,-0.01} color:autonomousDistrictColor border:autonomousDistrictColor-50;
-			draw shape color:rgb(255,255,255,0.1) border:conventionalDistrictColor-50 empty:false;
+			draw shape color:rgb(255,255,255,0.1) border:conventionalDistrictColor-50 wireframe:false;
 		}else{
 			//draw (shape*1.05)-shape at_location {location.x,location.y,-0.01} color:buildingColors[conventionalType] border:buildingColors[conventionalType]-50;
-			draw shape color:rgb(255,255,255,0.1) border:buildingColors[conventionalType]-50 empty:false;
+			draw shape color:rgb(255,255,255,0.1) border:buildingColors[conventionalType]-50 wireframe:false;
 		}
 		
 	}
@@ -412,7 +411,7 @@ species hospital{
 species legend{
 	string type;
 	aspect default{
-		draw shape color:#white empty:true;
+		draw shape color:#white wireframe:true;
 	}
 }
 
@@ -432,7 +431,7 @@ experiment City parent:Coronaizer autorun:true{
     parameter "Simulation Step"  category: "Simulation" var:step min:1#sec max:60#sec step:1#sec;
 	
 	output {
-		display GotoOnNetworkAgent type:opengl background:backgroundColor draw_env:false synchronized:true toolbar:false 
+		display GotoOnNetworkAgent type:opengl background:backgroundColor axes:false toolbar:false 
 		{
 			graphics "title" { 
 		      draw !autonomy ? "Conventional Zoning" : "Autonomous Cities" color:#white at:{first(legend where (each.type="title")).location.x - first(legend where (each.type="title")).shape.width/2, first(legend where (each.type="title")).location.y} font:font("Helvetica", 50 , #bold);
@@ -445,12 +444,12 @@ experiment City parent:Coronaizer autorun:true{
 		    
 		    graphics "building"{
 		      loop i from:0 to:length(buildingColors)-1{
-				draw buildingShape[buildingColors.keys[i]] empty:false color: buildingColors.values[i] at: {first(legend where (each.type="left1")).location.x - first(legend where (each.type="left1")).shape.width/2, first(legend where (each.type="left1")).location.y - first(legend where (each.type="left1")).shape.height/2+i*first(legend where (each.type="left1")).shape.height/2};
+				draw buildingShape[buildingColors.keys[i]] wireframe:false color: buildingColors.values[i] at: {first(legend where (each.type="left1")).location.x - first(legend where (each.type="left1")).shape.width/2, first(legend where (each.type="left1")).location.y - first(legend where (each.type="left1")).shape.height/2+i*first(legend where (each.type="left1")).shape.height/2};
 				draw buildingColors.keys[i] color: buildingColors.values[i] perspective: true font:font("Helvetica", 25 , #plain) at: {40+ first(legend where (each.type="left1")).location.x - first(legend where (each.type="left1")).shape.width/2, 20+ first(legend where (each.type="left1")).location.y - first(legend where (each.type="left1")).shape.height/2+i*first(legend where (each.type="left1")).shape.height/2};
 			  }
 			  
 			  loop i from:0 to:length(proportion_per_type)-1{
-				draw circle (10)  empty:false color: color_per_type.values[i] at: {first(legend where (each.type="left3")).location.x - first(legend where (each.type="left3")).shape.width/2, first(legend where (each.type="left3")).location.y - first(legend where (each.type="left3")).shape.height/2+i*first(legend where (each.type="left3")).shape.height/2};
+				draw circle (10)  wireframe:false color: color_per_type.values[i] at: {first(legend where (each.type="left3")).location.x - first(legend where (each.type="left3")).shape.width/2, first(legend where (each.type="left3")).location.y - first(legend where (each.type="left3")).shape.height/2+i*first(legend where (each.type="left3")).shape.height/2};
 				draw proportion_per_type.keys[i] + " (" + proportion_per_type.values[i]+")" color: color_per_type.values[i] perspective: true font:font("Helvetica", 15 , #plain) at: {40+first(legend where (each.type="left3")).location.x - first(legend where (each.type="left3")).shape.width/2, first(legend where (each.type="left3")).location.y - first(legend where (each.type="left3")).shape.height/2+i*first(legend where (each.type="left3")).shape.height/2};
 			  }
 			}
@@ -507,12 +506,12 @@ experiment City parent:Coronaizer autorun:true{
 			  //CITY_EFFICIENCY<-	(length(people where (each.currentTransitStatus="shopping"))+ length(people where (each.currentTransitStatus="business")))/length(people);
 			  CITY_EFFICIENCY<-	length(people where (each.currentTransitStatus="shopping")) / (nbPeople - length(people where (each.currentTransitStatus="shopping")));
 			  draw "City Efficiency: " + CITY_EFFICIENCY color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
-			  draw rectangle(55,first(legend where (each.type="right1")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right1")).shape.height/2};
+			  draw rectangle(55,first(legend where (each.type="right1")).shape.height) color: #white wireframe:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right1")).shape.height/2};
 			  draw rectangle(50,CITY_EFFICIENCY*first(legend where (each.type="right1")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - CITY_EFFICIENCY*first(legend where (each.type="right1")).shape.height/2};
 			  
 			 
 			 
-			  float spacebetween<-first(legend where (each.type="right1")).shape.height/3; 	
+			  spacebetween<-first(legend where (each.type="right1")).shape.height/3; 	
 			  float offsetX<-first(legend where (each.type="right1")).shape.width/4;
 			  float offsetY<--first(legend where (each.type="right1")).shape.height/8;
 			  draw rectangle(nbWalk,20) color: buildingColors.values[1] at: {offsetX+posCE.x+nbWalk/2,posCE.y+spacebetween+20+offsetY};
@@ -539,7 +538,7 @@ experiment City parent:Coronaizer autorun:true{
 			 
 			  PANDEMIC_LEVEL<-nb_infected/length(ViralPeople);
 			  draw "Pandemic Level: " + PANDEMIC_LEVEL color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
-			  draw rectangle(55,first(legend where (each.type="right2")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right2")).shape.height/2};
+			  draw rectangle(55,first(legend where (each.type="right2")).shape.height) color: #white wireframe:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right2")).shape.height/2};
 			  draw rectangle(50,PANDEMIC_LEVEL*first(legend where (each.type="right2")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - PANDEMIC_LEVEL*first(legend where (each.type="right2")).shape.height/2};
 			    
 			  float offsetX<-first(legend where (each.type="right2")).shape.width/4;
@@ -564,7 +563,7 @@ experiment City parent:Coronaizer autorun:true{
 			  
 			  SAFETY_LEVEL<-((nbMask+nbQ)/200);	
 			  draw "Safety: " + SAFETY_LEVEL color: #white at:  {40+ posCE.x, posCE.y+40} perspective: true font:font("Helvetica", 20 , #bold);			  
-			  draw rectangle(55,first(legend where (each.type="right3")).shape.height) color: #white empty:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right3")).shape.height/2};
+			  draw rectangle(55,first(legend where (each.type="right3")).shape.height) color: #white wireframe:true at: {posCE.x, posCE.y + 2*spacebetween- first(legend where (each.type="right3")).shape.height/2};
 			  draw rectangle(50,SAFETY_LEVEL*first(legend where (each.type="right3")).shape.height) color: #white at: {posCE.x, posCE.y + 2*spacebetween - SAFETY_LEVEL*first(legend where (each.type="right3")).shape.height/2};
 			  
 			  
@@ -602,7 +601,7 @@ experiment City parent:Coronaizer autorun:true{
 			event "o" {stopCovid<-true;}
 		}
 		
-		display CoronaChart refresh:every(#mn)  {
+		display CoronaChart refresh:every(#mn) type:2d {
 			 chart "Population: " type: series x_serie_labels: "time" axes: rgb(142,142,142)  background: rgb(53,53,53) color: rgb (146,146,146) size: point (1,1) 
 			 x_label: 'Infection rate: '+infection_rate + " Quarantine: " + length(people where !each.isMoving) + " Mask: " + length( ViralPeople where each.as_mask)
 			 y_label: 'Case'{
