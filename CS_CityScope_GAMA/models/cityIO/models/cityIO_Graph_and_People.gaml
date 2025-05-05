@@ -14,7 +14,7 @@ global {
 	
 	graph road_network;
 	list<string> road_types <- ["Road", "LRT street"];	
-	bool display_road_network <- true parameter: "road network visualization";
+	bool display_road_network <- true;
 	
 	init {
 		create people number:10; 

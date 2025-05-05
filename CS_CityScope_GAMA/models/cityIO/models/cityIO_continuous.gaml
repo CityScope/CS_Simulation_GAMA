@@ -3,6 +3,7 @@ model citIOGAMA
 
 import "GAMABrix.gaml"
 
+
 global {
 	string city_io_table<-"cityscopejs_gama";
   
@@ -31,7 +32,7 @@ global {
 species my_cool_indicator parent: cityio_numeric_indicator {
 	// Users might want more complex indicators that cannot be constructed by passing indicator to the constructor for cityio_numeric_indicator 
 	float return_indicator {
-		return length(brix);
+		return float(length(brix));
 	}
 }
 

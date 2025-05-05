@@ -291,12 +291,12 @@ global {
 		if (time<=end_day_time) {
 			return time-start_day_time;
 		}else{
-			return -1;
+			return -1.0;
 		}
 	}
 	
 	float cycle_of_day {
-		return cycle-start_day_cycle;
+		return float(cycle-start_day_cycle);
 	}
 	
 	reflex pull_grid when: ((cycle mod update_frequency = 0) and (pull_only)) {
@@ -330,14 +330,14 @@ global {
 				do sendIndicators;
 			}
 			do pause;
-			idle_step_start<-machine_time/1000;
+			idle_step_start<-gama.machine_time/1000;
 			loop while: (idle_mode) {
-				if (machine_time/1000>=idle_step_start+idle_update_frequency) {
-					string new_grid_hash_id <- get_grid_hash();
-					if ((new_grid_hash_id != grid_hash_id))  {
+				if (gama.machine_time/1000>=idle_step_start+idle_update_frequency) {
+					string _new_grid_hash_id <- get_grid_hash();
+					if ((_new_grid_hash_id != grid_hash_id))  {
 						idle_mode<-false;
 					}
-					idle_step_start<-machine_time/1000;
+					idle_step_start<-gama.machine_time/1000;
 				}
 			}
 			do resume;
