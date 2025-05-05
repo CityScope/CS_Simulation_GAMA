@@ -10,9 +10,9 @@ model gamit
 global {
 	
 	//PARAMETERS
-	bool updatePollution <-false parameter: "Pollution:" category: "Simulation";
-	bool updateDensity <-false parameter: "Density:" category: "Simulation";
-	bool weatherImpact <-true parameter: "Weather impact:" category: "Simulation";
+	bool updatePollution <-false;
+	bool updateDensity <-false;
+	bool weatherImpact <-true;
 		
 	//ENVIRONMENT
 	float step <- 1 #mn;
@@ -59,7 +59,7 @@ global {
 	float weather_of_day min: 0.0 max: 1.0;	
 
 	init {
-		gama.pref_display_flat_charts <- true;
+		//gama.pref_display_flat_charts <- true;
 		do import_shapefiles;	
 		do profils_data_import;
 		do activity_data_import;
@@ -95,7 +95,7 @@ global {
 	}
 	
     reflex save_simu_attribute when: (cycle mod 100 = 0){
-    	save [cycle,transport_type_usage.values[0] ,transport_type_usage.values[1], transport_type_usage.values[2], transport_type_usage.values[3], mean (people collect (each.speed)), transport_type_distance.values[0],transport_type_distance.values[1],transport_type_distance.values[2],transport_type_distance.values[3],transport_type_distance.values[4]] rewrite:false to: "../results/mobility.csv" type:"csv";
+    	save [cycle,transport_type_usage.values[0] ,transport_type_usage.values[1], transport_type_usage.values[2], transport_type_usage.values[3], mean (people collect (each.speed)), transport_type_distance.values[0],transport_type_distance.values[1],transport_type_distance.values[2],transport_type_distance.values[3],transport_type_distance.values[4]] rewrite:false to: "../results/mobility.csv" format:"csv";
 	    // Reset value
 	    transport_type_usage <- map(mobility_list collect (each::0));
 	    transport_type_distance <- map(mobility_list collect (each::0.0)) + ["bus_people"::0.0];
@@ -151,15 +151,15 @@ global {
 		
 		loop i from: 5 to:  criteria_matrix.rows - 1 {
 			string people_type <- criteria_matrix[0,i];
-			int index <- 1;
+			int _index <- 1;
 			map<string, list<float>> m_temp <- map([]);
 			if(people_type != "") {
 				list<float> l <- [];
 				loop times: nbTO {
 					list<float> l2 <- [];
 					loop times: nbCriteria {
-						add float(criteria_matrix[index,i]) to: l2;
-						index <- index + 1;
+						add float(criteria_matrix[_index,i]) to: l2;
+						_index <- _index + 1;
 					}
 					string cat_name <-  criteria_matrix[index-nbTO,lignCategory];
 					loop cat over: cat_name split_with "|" {
@@ -567,8 +567,12 @@ species externalCities parent:building{
 }
 
 experiment gameit type: gui {
+	parameter "Pollution:" category: "Simulation" var: updatePollution;
+	parameter "Density:" category: "Simulation" var: updateDensity;
+    parameter "Weather impact:" category: "Simulation" var:weatherImpact;
+    
 	output {
-		display map type: opengl draw_env: false background: #black refresh:every(10#cycle){
+		display map type: opengl axes: false background: #black refresh:every(10#cycle){
 			//species gridHeatmaps aspect:pollution;
 			//species pie;
 			species building aspect:depth refresh: false;
@@ -613,15 +617,15 @@ experiment gameit type: gui {
 		        }     
             }
             
-            chart "Cumulative Trip" background:#black type: pie style:ring size: {0.5,0.5} position: {world.shape.width*1.1,world.shape.height*0} color: #white axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
-			tick_font: 'Monospaced' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Arial' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
+            chart "Cumulative Trip" background:#black type: pie style:ring size: {0.5,0.5} position: {world.shape.width*1.1,world.shape.height*0} color: #white axes: #yellow 
+            title_font: font( 'Helvetica', 12, #bold) tick_font: font('Monospaced',10,'bold') label_font: font('Arial' , 32, #bold) x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{
 				loop i from: 0 to: length(transport_type_cumulative_usage.keys)-1	{
 				  data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color:color_per_mobility[transport_type_cumulative_usage.keys[i]];
 				}
 			}
-			chart "People Distribution" background:#black  type: pie size: {0.5,0.5} position: {world.shape.width*1.1,world.shape.height*0.5} color: #white axes: #yellow title_font: 'Helvetica' title_font_size: 12.0 
-			tick_font: 'Helvetica' tick_font_size: 10 tick_font_style: 'bold' label_font: 'Helvetica' label_font_size: 32 label_font_style: 'bold' x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
+			chart "People Distribution" background:#black  type: pie size: {0.5,0.5} position: {world.shape.width*1.1,world.shape.height*0.5} color: #white axes: #yellow 
+			title_font: font( 'Helvetica', 12, #bold) tick_font: font('Monospaced',10,'bold') label_font: font('Arial' , 32, #bold) x_label: 'Nice Xlabel' y_label:'Nice Ylabel'
 			{
 				loop i from: 0 to: length(proportion_per_type.keys)-1	{
 				  data proportion_per_type.keys[i] value: proportion_per_type.values[i] color:color_per_type[proportion_per_type.keys[i]];
