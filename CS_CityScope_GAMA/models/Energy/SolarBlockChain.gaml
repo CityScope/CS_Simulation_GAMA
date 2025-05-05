@@ -38,7 +38,7 @@ global{
 	matrix production_matrix;
 	float max_produce_energy;
 
-	int distance <- 150 min: 1 max:1000 parameter: "Sharing Distance:" category: "Simulation";
+	int distance <- 150;
 	
 	init{
 		
@@ -85,7 +85,7 @@ global{
 
 species table{
 	aspect base{
-		draw shape color:#black empty:true;
+		draw shape color:#black wireframe:true;
 	}
 }
 
@@ -202,6 +202,7 @@ species road {
 }
 
 experiment start type: gui {
+	parameter "Sharing Distance:" category: "Simulation" min: 1 max:1000 var:distance;
 	output {
 		
 		display view1  type:opengl  {	
