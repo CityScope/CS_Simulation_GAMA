@@ -559,27 +559,22 @@ grid cell width: grid_width height: grid_height {
 experiment ABValuationDemo type: gui autorun:true{
 	parameter "Commuting cost" var: commutingCost min: 0.0 max: 1.0 step: 0.05; 
 	output { 
-		display map_3D  type:opengl background: #black draw_env: false  toolbar:false 
-		camera_pos: {-31.3849,154.8123,60.965} camera_look_pos: {39.7081,49.4125,-9.5042} camera_up_vector: {0.2711,0.4019,0.8746}
-//		autosave: true
-		synchronized: true
-		fullscreen:1
+		display map_3D  type:opengl background: #black axes: false  toolbar:false 
 		//camera_interaction:false
 		{
 			species cell aspect: dark_aspect;			
 			species worker aspect:threeD;
 			species firm aspect: threeD transparency: 0.25;
 			species building aspect:threeD transparency: 0.35;
-			
-			event mouse_down action: create_firm;
-			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
-			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
-			event "u" action: {if(shareLowIncome<0.9){shareLowIncome<-shareLowIncome+0.1;}};
-			event "e" action: {if(shareLowIncome>0.0){shareLowIncome<-shareLowIncome-0.1;}};
-			event "s" action: {updateUnitSize<-!updateUnitSize;};
-			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
-			event "l" action: {firmTypeToAdd<-'low'; firmDeleteMode<-false;};
-			event "d" action: {firmDeleteMode<-true;};
+			event #mouse_down {ask simulation {do create_firm;}}  
+			event "p" {if(commutingCost<1){commutingCost<-commutingCost+0.1;}}
+			event "m" {if(commutingCost>0){commutingCost<-commutingCost-0.1;}}
+			event "u" {if(shareLowIncome<0.9){shareLowIncome<-shareLowIncome+0.1;}}
+			event "e" {if(shareLowIncome>0.0){shareLowIncome<-shareLowIncome-0.1;}}
+			event "s" {updateUnitSize<-!updateUnitSize;}
+			event "h" {firmTypeToAdd<-'high'; firmDeleteMode<-false;}
+			event "l" {firmTypeToAdd<-'low'; firmDeleteMode<-false;}
+			event "d" {firmDeleteMode<-true;}
 			
 			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
             {   
@@ -639,24 +634,23 @@ experiment ABValuationDemo type: gui autorun:true{
 						
 
 		}
-		display map_2D  type:opengl background: #black draw_env: false 
+		display map_2D  type:opengl background: #black axes: false 
 		toolbar:false
-		camera_pos: {50.0,50.0025,145.6542} camera_look_pos: {50.0,50.0,0.0} camera_up_vector: {0.0,1.0,0.0}
 		{
 			species cell aspect: dark_aspect;			
 			species worker aspect:threeD;
 			species building aspect:twoD transparency: 0.5;
 			species firm aspect: twoD transparency: 0.5;
 
-			event mouse_down action: create_firm;
-			event "p" action: {if(commutingCost<1){commutingCost<-commutingCost+0.1;}};
-			event "m" action: {if(commutingCost>0){commutingCost<-commutingCost-0.1;}};
-			event "u" action: {if(shareLowIncome<0.9){shareLowIncome<-shareLowIncome+0.1;}};
-			event "e" action: {if(shareLowIncome>0.0){shareLowIncome<-shareLowIncome-0.1;}};
-			event "s" action: {updateUnitSize<-!updateUnitSize;};
-			event "h" action: {firmTypeToAdd<-'high'; firmDeleteMode<-false;};
-			event "l" action: {firmTypeToAdd<-'low'; firmDeleteMode<-false;};
-			event "d" action: {firmDeleteMode<-true;};
+			event #mouse_down {ask simulation {do create_firm;}} 
+			event "p" {if(commutingCost<1){commutingCost<-commutingCost+0.1;}}
+			event "m" {if(commutingCost>0){commutingCost<-commutingCost-0.1;}}
+			event "u" {if(shareLowIncome<0.9){shareLowIncome<-shareLowIncome+0.1;}}
+			event "e" {if(shareLowIncome>0.0){shareLowIncome<-shareLowIncome-0.1;}}
+			event "s" {updateUnitSize<-!updateUnitSize;}
+			event "h" {firmTypeToAdd<-'high'; firmDeleteMode<-false;}
+			event "l" {firmTypeToAdd<-'low'; firmDeleteMode<-false;}
+			event "d" {firmDeleteMode<-true;}
 		}
 	}
 	
